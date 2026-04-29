@@ -12,7 +12,32 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 const emailSchema = z.string().trim().email("Invalid email").max(255);
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(72)
+  .regex(/[A-Za-z]/, "Password must contain at least one letter")
+  .regex(/[0-9]/, "Password must contain at least one number");
+
+function friendlyAuthError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes("pwned") || m.includes("data breach") || m.includes("compromis")) {
+    return "This password has appeared in a known data breach. Please choose a different one.";
+  }
+  if (m.includes("weak_password") || m.includes("password should") || m.includes("password is too") || m.includes("weak password")) {
+    return "Password is too weak. Use at least 8 characters mixing letters, numbers, and a symbol.";
+  }
+  if (m.includes("already registered") || m.includes("already exists") || m.includes("user already")) {
+    return "An account with this email already exists. Try signing in instead.";
+  }
+  if (m.includes("invalid login") || m.includes("invalid credentials")) {
+    return "Wrong email or password.";
+  }
+  if (m.includes("rate limit") || m.includes("too many")) {
+    return "Too many attempts. Please wait a moment and try again.";
+  }
+  return msg;
+}
 
 export default function Auth() {
   const { user, loading } = useAuth();
