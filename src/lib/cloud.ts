@@ -3,6 +3,7 @@
 
 import { useEffect, useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
 import type {
@@ -11,10 +12,13 @@ import type {
 } from "./types";
 
 // ---------- helpers ----------
-const requireUid = (): string => {
-  const u = supabase.auth.getSession;
-  // we use auth context for user id; this file's hooks always pass through useAuth.
-  return "";
+const onSaveError = (e: any) => {
+  const msg = e?.message || "Save failed";
+  if (/jwt|expired|not authenticated|auth/i.test(msg)) {
+    toast.error("Session expired — please sign in again");
+  } else {
+    toast.error(`Save failed: ${msg}`);
+  }
 };
 
 // ---------- Profile ----------
@@ -51,6 +55,7 @@ export function useProfile() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["profile", user?.id] }),
+    onError: onSaveError,
   });
 
   return { profile: q.data ?? null, loading: q.isLoading, update: update.mutateAsync };
@@ -93,6 +98,7 @@ export function useGoals() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["goals", user?.id] }),
+    onError: onSaveError,
   });
 
   return {
@@ -129,6 +135,7 @@ export function useGymSessions() {
       return rowToGym(data);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["gym", user?.id] }),
+    onError: onSaveError,
   });
 
   const remove = useMutation({
@@ -137,6 +144,7 @@ export function useGymSessions() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["gym", user?.id] }),
+    onError: onSaveError,
   });
 
   return { sessions: q.data ?? [], loading: q.isLoading, create: create.mutateAsync, remove: remove.mutateAsync };
@@ -167,6 +175,7 @@ export function usePTSessions() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pt", user?.id] }),
+    onError: onSaveError,
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -174,6 +183,7 @@ export function usePTSessions() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pt", user?.id] }),
+    onError: onSaveError,
   });
   return { sessions: q.data ?? [], loading: q.isLoading, create: create.mutateAsync, remove: remove.mutateAsync };
 }
@@ -208,6 +218,7 @@ export function useCardioSessions() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cardio", user?.id] }),
+    onError: onSaveError,
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -215,6 +226,7 @@ export function useCardioSessions() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cardio", user?.id] }),
+    onError: onSaveError,
   });
   return { sessions: q.data ?? [], loading: q.isLoading, create: create.mutateAsync, remove: remove.mutateAsync };
 }
@@ -249,6 +261,7 @@ export function useBodyMetrics() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["body", user?.id] }),
+    onError: onSaveError,
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -256,6 +269,7 @@ export function useBodyMetrics() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["body", user?.id] }),
+    onError: onSaveError,
   });
   return { metrics: q.data ?? [], loading: q.isLoading, create: create.mutateAsync, remove: remove.mutateAsync };
 }
@@ -285,6 +299,7 @@ export function useCustomExercises(module: "gym" | "pt") {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["custom_ex", user?.id, module] }),
+    onError: onSaveError,
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -292,6 +307,7 @@ export function useCustomExercises(module: "gym" | "pt") {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["custom_ex", user?.id, module] }),
+    onError: onSaveError,
   });
   return { items: q.data ?? [], add: add.mutateAsync, remove: remove.mutateAsync };
 }
@@ -325,6 +341,7 @@ export function useFavorites(module: "gym" | "pt") {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["favs", user?.id, module] }),
+    onError: onSaveError,
   });
   return { favorites: q.data ?? new Set<string>(), toggle: toggle.mutateAsync };
 }
@@ -386,8 +403,35 @@ export function usePlanSchedule() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["sched", user?.id] }),
+    onError: onSaveError,
   });
-  return { days: q.data ?? [], upsertDay: upsertDay.mutateAsync };
+
+  const swapDays = useMutation({
+    mutationFn: async ({ a, b }: { a: number; b: number }) => {
+      const days = q.data ?? [];
+      const da = days.find((d) => d.day_of_week === a);
+      const db = days.find((d) => d.day_of_week === b);
+      // Move via temp slot (-1 is invalid by check; use upsert delete approach)
+      // Strategy: delete both, then insert swapped.
+      const { error: delErr } = await supabase
+        .from("plan_schedule")
+        .delete()
+        .eq("user_id", user!.id)
+        .in("day_of_week", [a, b]);
+      if (delErr) throw delErr;
+      const rows: any[] = [];
+      if (da) rows.push({ user_id: user!.id, day_of_week: b, module: da.module, template_id: da.template_id ?? null, label: da.label ?? null });
+      if (db) rows.push({ user_id: user!.id, day_of_week: a, module: db.module, template_id: db.template_id ?? null, label: db.label ?? null });
+      if (rows.length) {
+        const { error: insErr } = await supabase.from("plan_schedule").insert(rows);
+        if (insErr) throw insErr;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sched", user?.id] }),
+    onError: onSaveError,
+  });
+
+  return { days: q.data ?? [], upsertDay: upsertDay.mutateAsync, swapDays: swapDays.mutateAsync };
 }
 
 // ---------- Workout templates ----------
@@ -415,6 +459,7 @@ export function useWorkoutTemplates() {
       return data.id as string;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tpls", user?.id] }),
+    onError: onSaveError,
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -422,6 +467,7 @@ export function useWorkoutTemplates() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tpls", user?.id] }),
+    onError: onSaveError,
   });
   return { templates: q.data ?? [], create: create.mutateAsync, remove: remove.mutateAsync };
 }

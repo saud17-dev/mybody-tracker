@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee } from "lucide-react";
+import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee, GripVertical, ArrowDownToLine, RotateCcw, EyeOff, Eye } from "lucide-react";
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +23,7 @@ import { ExercisePicker } from "@/components/ExercisePicker";
 import { CsvImport } from "@/components/CsvImport";
 import { GYM_EXERCISES, PT_EXERCISES, CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { usePlanSchedule, useWorkoutTemplates } from "@/lib/cloud";
+import { usePlanSkips } from "@/lib/planSkips";
 import { SUMMER_PLAN_TEMPLATES } from "@/lib/seedPlan";
 import { parsePlanCsv, type ParsedPlan } from "@/lib/csvPlan";
 import { cn } from "@/lib/utils";
@@ -33,9 +42,15 @@ export default function Plan() {
   const navigate = useNavigate();
   const today = new Date();
   const todayDow = today.getDay();
-  const { days, upsertDay } = usePlanSchedule();
+  const { days, upsertDay, swapDays } = usePlanSchedule();
   const { templates, create: createTpl, remove: removeTpl } = useWorkoutTemplates();
+  const { skipped, toggle: toggleSkip, clearAll: clearSkips } = usePlanSkips();
   const [importing, setImporting] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const canImportSummer =
     days.length === 0 && !templates.some((t) => t.name === "Push");
@@ -64,7 +79,11 @@ export default function Plan() {
     return m;
   }, [days]);
 
-  const todayPlan = dayMap.get(todayDow);
+  const rawTodayPlan = dayMap.get(todayDow);
+  const todayIsSkipped = skipped.has(todayDow);
+  const todayPlan = todayIsSkipped
+    ? { day_of_week: todayDow, module: "rest" as const, template_id: null, label: "Skipped this week" }
+    : rawTodayPlan;
   const todayTpl = todayPlan?.template_id ? templates.find((t) => t.id === todayPlan.template_id) : null;
 
   const startToday = () => {
@@ -72,6 +91,22 @@ export default function Plan() {
     const url = `${moduleStyle[todayPlan.module].route}${todayPlan.template_id ? `?template=${todayPlan.template_id}` : ""}`;
     navigate(url);
   };
+
+  const moveToToday = async (sourceDow: number) => {
+    if (sourceDow === todayDow) return;
+    await swapDays({ a: sourceDow, b: todayDow });
+    toast.success(`Moved to ${DAYS[todayDow]}`);
+  };
+
+  const handleDragEnd = async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const a = Number(active.id);
+    const b = Number(over.id);
+    await swapDays({ a, b });
+  };
+
+  const dowOrder = [1, 2, 3, 4, 5, 6, 0];
 
   return (
     <AppShell title="Your Plan" subtitle={format(today, "EEEE, MMM d")} accent="primary">
@@ -173,44 +208,48 @@ export default function Plan() {
         />
       </section>
 
-      {/* Weekly schedule */}
+      {/* Weekly schedule — drag to swap, tap to edit */}
       <section className="mt-7">
-        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <CalendarDays className="h-3.5 w-3.5" /> Weekly schedule
-        </h2>
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
-            const plan = dayMap.get(dow);
-            const style = plan ? moduleStyle[plan.module] : moduleStyle.rest;
-            const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
-            const Icon = style.icon;
-            return (
-              <DayEditor key={dow} dayOfWeek={dow} current={plan} templates={templates}
-                onSave={async (m, tplId, label) => {
-                  await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
-                  toast.success(`${DAYS[dow]} updated`);
-                }}>
-                <Card className={cn("flex items-center gap-3 p-3 cursor-pointer hover:border-primary/40 transition", dow === todayDow && "ring-1 ring-primary/30")}>
-                  <div className="w-10 text-xs font-bold uppercase text-muted-foreground">{DAYS[dow]}</div>
-                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", style.bg)}>
-                    <Icon className={cn("h-4 w-4", style.text)} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    {plan ? (
-                      <>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">{plan.module}</p>
-                        <p className="truncate text-sm font-medium">{tpl?.name || plan.label || (plan.module === "rest" ? "Rest" : "No template")}</p>
-                      </>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">Tap to schedule</p>
-                    )}
-                  </div>
-                  <Pencil className="h-4 w-4 text-muted-foreground" />
-                </Card>
-              </DayEditor>
-            );
-          })}
+        <div className="mb-2 flex items-center justify-between gap-2 px-1">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <CalendarDays className="h-3.5 w-3.5" /> This week
+          </h2>
+          {skipped.size > 0 && (
+            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => clearSkips()}>
+              <RotateCcw className="h-3 w-3" /> Reset week
+            </Button>
+          )}
         </div>
+        <p className="mb-2 px-1 text-[11px] text-muted-foreground">
+          Drag <GripVertical className="inline h-3 w-3" /> to swap days. Tap a card to edit.
+        </p>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={dowOrder.map(String)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {dowOrder.map((dow) => {
+                const plan = dayMap.get(dow);
+                const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
+                return (
+                  <SortableDayRow
+                    key={dow}
+                    dow={dow}
+                    plan={plan}
+                    tplName={tpl?.name}
+                    isToday={dow === todayDow}
+                    isSkipped={skipped.has(dow)}
+                    templates={templates}
+                    onSave={async (m, tplId, label) => {
+                      await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
+                      toast.success(`${DAYS[dow]} updated`);
+                    }}
+                    onSkipToggle={() => toggleSkip(dow)}
+                    onMoveToToday={() => moveToToday(dow)}
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       </section>
 
       {/* Templates */}
@@ -254,6 +293,91 @@ export default function Plan() {
         </div>
       </section>
     </AppShell>
+  );
+}
+
+function SortableDayRow({
+  dow, plan, tplName, isToday, isSkipped, templates, onSave, onSkipToggle, onMoveToToday,
+}: {
+  dow: number;
+  plan?: { module: "gym" | "pt" | "cardio" | "rest"; template_id?: string | null; label?: string | null };
+  tplName?: string;
+  isToday: boolean;
+  isSkipped: boolean;
+  templates: { id: string; name: string; module: string }[];
+  onSave: (m: "gym" | "pt" | "cardio" | "rest", tplId?: string | null, label?: string | null) => Promise<void>;
+  onSkipToggle: () => void;
+  onMoveToToday: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(dow) });
+  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 50 : "auto" } as React.CSSProperties;
+  const ms = plan ? moduleStyle[plan.module] : moduleStyle.rest;
+  const Icon = ms.icon;
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-80")}>
+      <Card className={cn(
+        "flex items-center gap-2 p-3 transition",
+        isToday && "ring-1 ring-primary/30",
+        isSkipped && "opacity-60",
+      )}>
+        <button
+          {...attributes}
+          {...listeners}
+          aria-label="Drag day"
+          className="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <div className="w-10 text-xs font-bold uppercase text-muted-foreground">{DAYS[dow]}</div>
+        <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", ms.bg)}>
+          <Icon className={cn("h-4 w-4", ms.text)} />
+        </div>
+        <DayEditor
+          dayOfWeek={dow}
+          current={plan}
+          templates={templates}
+          onSave={onSave}
+        >
+          <div className="min-w-0 flex-1 cursor-pointer py-1">
+            {plan ? (
+              <>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {plan.module}{isSkipped && " · skipped"}
+                </p>
+                <p className={cn("truncate text-sm font-medium", isSkipped && "line-through")}>
+                  {tplName || plan.label || (plan.module === "rest" ? "Rest" : "No template")}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Tap to schedule</p>
+            )}
+          </div>
+        </DayEditor>
+        {!isToday && plan && plan.module !== "rest" && (
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Move to today"
+            className="h-8 w-8 shrink-0"
+            onClick={onMoveToToday}
+            title="Swap with today"
+          >
+            <ArrowDownToLine className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        )}
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={isSkipped ? "Unskip this week" : "Skip this week"}
+          title={isSkipped ? "Unskip this week" : "Skip this week"}
+          className="h-8 w-8 shrink-0"
+          onClick={onSkipToggle}
+        >
+          {isSkipped ? <Eye className="h-4 w-4 text-muted-foreground" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+        </Button>
+      </Card>
+    </div>
   );
 }
 
