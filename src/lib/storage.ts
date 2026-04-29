@@ -56,9 +56,10 @@ export const useCardioSessions = () => useStored<CardioSession[]>(KEYS.cardio, [
 export const useBodyMetrics = () => useStored<BodyMetric[]>(KEYS.body, []);
 export const useGoals = () =>
   useStored<Goals>(KEYS.goals, {
-    weeklyGym: 3,
-    weeklyPT: 2,
-    weeklyCardio: 3,
+    weeklyGym: 4,
+    weeklyPT: 1,
+    weeklyCardio: 2,
+    targetWeightKg: 80,
   });
 
 export const uid = () =>
