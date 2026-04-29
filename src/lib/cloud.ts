@@ -3,6 +3,7 @@
 
 import { useEffect, useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
 import type {
@@ -11,10 +12,13 @@ import type {
 } from "./types";
 
 // ---------- helpers ----------
-const requireUid = (): string => {
-  const u = supabase.auth.getSession;
-  // we use auth context for user id; this file's hooks always pass through useAuth.
-  return "";
+const onSaveError = (e: any) => {
+  const msg = e?.message || "Save failed";
+  if (/jwt|expired|not authenticated|auth/i.test(msg)) {
+    toast.error("Session expired — please sign in again");
+  } else {
+    toast.error(`Save failed: ${msg}`);
+  }
 };
 
 // ---------- Profile ----------
