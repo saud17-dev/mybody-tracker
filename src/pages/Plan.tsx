@@ -104,6 +104,27 @@ export default function Plan() {
         )}
       </section>
 
+      {canImportSummer && (
+        <section className="mt-6">
+          <Card className="overflow-hidden border-2 border-dashed border-primary/40 bg-primary/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">Import Summer Training Plan</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  7 templates (Push, Kettlebell, Pull, Football, Lower, Cycling, Fascia) wired to Mon–Sun.
+                </p>
+                <Button size="sm" className="mt-3" onClick={importSummerPlan} disabled={importing}>
+                  {importing ? "Importing..." : "Import plan"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
+
       {/* Weekly schedule */}
       <section className="mt-7">
         <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
