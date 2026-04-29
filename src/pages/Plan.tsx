@@ -168,18 +168,6 @@ export default function Plan() {
     });
   }, [today, dayMap, templates, skipped]);
 
-  // Most used templates: count appearances in plan_schedule (descending)
-  const mostUsedTemplates = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const d of days) {
-      if (d.template_id) counts.set(d.template_id, (counts.get(d.template_id) ?? 0) + 1);
-    }
-    const enriched = templates
-      .map((t) => ({ tpl: t, count: counts.get(t.id) ?? 0 }))
-      .sort((a, b) => b.count - a.count || a.tpl.name.localeCompare(b.tpl.name));
-    return enriched.slice(0, 5);
-  }, [days, templates]);
-
   const startTemplate = (t: { id: string; module: keyof typeof moduleStyle }) => {
     navigate(`${moduleStyle[t.module].route}?template=${t.id}`);
   };
