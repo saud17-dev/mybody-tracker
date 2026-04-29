@@ -405,7 +405,33 @@ export function usePlanSchedule() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["sched", user?.id] }),
     onError: onSaveError,
   });
-  return { days: q.data ?? [], upsertDay: upsertDay.mutateAsync };
+
+  const swapDays = useMutation({
+    mutationFn: async ({ a, b }: { a: number; b: number }) => {
+      const days = q.data ?? [];
+      const da = days.find((d) => d.day_of_week === a);
+      const db = days.find((d) => d.day_of_week === b);
+      // Move via temp slot (-1 is invalid by check; use upsert delete approach)
+      // Strategy: delete both, then insert swapped.
+      const { error: delErr } = await supabase
+        .from("plan_schedule")
+        .delete()
+        .eq("user_id", user!.id)
+        .in("day_of_week", [a, b]);
+      if (delErr) throw delErr;
+      const rows: any[] = [];
+      if (da) rows.push({ user_id: user!.id, day_of_week: b, module: da.module, template_id: da.template_id ?? null, label: da.label ?? null });
+      if (db) rows.push({ user_id: user!.id, day_of_week: a, module: db.module, template_id: db.template_id ?? null, label: db.label ?? null });
+      if (rows.length) {
+        const { error: insErr } = await supabase.from("plan_schedule").insert(rows);
+        if (insErr) throw insErr;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sched", user?.id] }),
+    onError: onSaveError,
+  });
+
+  return { days: q.data ?? [], upsertDay: upsertDay.mutateAsync, swapDays: swapDays.mutateAsync };
 }
 
 // ---------- Workout templates ----------
