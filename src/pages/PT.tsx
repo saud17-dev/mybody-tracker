@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Plus, Trash2, HeartPulse, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -13,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PT_EXERCISES } from "@/lib/exercises";
 import { usePTSessions, uid } from "@/lib/storage";
+import { getTemplateById } from "@/lib/plan";
 import type { PTExerciseEntry } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
