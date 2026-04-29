@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import {
   useGymSessions, usePTSessions, useCardioSessions, useBodyMetrics, useGoals, useProfile,
 } from "@/lib/cloud";
-import { useWeeklyCounts, useWeeklyMuscleVolume, useBodyTrends, type MetricTrend } from "@/lib/stats";
+import { useWeeklyCounts, useWeeklyMuscleVolume, useBodyTrends, useWorkoutStreaks, type MetricTrend, type ModuleStreak } from "@/lib/stats";
 import { toDisplay, fromInput, formatWeight } from "@/lib/units";
 import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
