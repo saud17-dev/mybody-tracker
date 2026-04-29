@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { GYM_EXERCISES, PT_EXERCISES, CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { usePlanSchedule, useWorkoutTemplates } from "@/lib/cloud";
+import { SUMMER_PLAN_TEMPLATES } from "@/lib/seedPlan";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
