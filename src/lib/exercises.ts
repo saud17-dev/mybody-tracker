@@ -72,6 +72,23 @@ export const GYM_EXERCISES: ExerciseDef[] = [
   { name: "Snatch", group: "Olympic" },
   { name: "Kettlebell Swing", group: "Olympic" },
   { name: "Thruster", group: "Olympic" },
+  { name: "Turkish Get-Up", group: "Olympic" },
+  { name: "Farmer's Carry", group: "Olympic" },
+  { name: "Single-Arm KB Row", group: "Back" },
+  // Functional / accessory
+  { name: "Cable Woodchop (High to Low)", group: "Core" },
+  { name: "Pallof Press", group: "Core" },
+  { name: "Dead Bug", group: "Core" },
+  { name: "Copenhagen Plank", group: "Core" },
+  { name: "Landmine Rotation", group: "Core" },
+  { name: "Cable Fly", group: "Chest" },
+  { name: "Incline Dumbbell Curl", group: "Arms" },
+  { name: "Single-Leg RDL", group: "Legs" },
+  { name: "Lying Leg Curl", group: "Legs" },
+  { name: "Hip Abduction Machine", group: "Legs" },
+  { name: "Step-Up (Low Box)", group: "Legs" },
+  { name: "Cable Lateral Raise", group: "Shoulders" },
+  { name: "Seated Dumbbell Shoulder Press", group: "Shoulders" },
 ];
 
 export const PT_EXERCISES: ExerciseDef[] = [
