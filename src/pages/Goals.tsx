@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import {
-  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, Trash2, BarChart3,
+  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid,
@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import {
   useGymSessions, usePTSessions, useCardioSessions, useBodyMetrics, useGoals, useProfile,
 } from "@/lib/cloud";
-import { useWeeklyCounts, useWeeklyMuscleVolume } from "@/lib/stats";
+import { useWeeklyCounts, useWeeklyMuscleVolume, useBodyTrends, type MetricTrend } from "@/lib/stats";
 import { toDisplay, fromInput, formatWeight } from "@/lib/units";
 import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
@@ -73,6 +73,8 @@ export default function GoalsPage() {
 
   const weekly = useWeeklyCounts(gym, pt, cardio);
   const muscleVolume = useWeeklyMuscleVolume(gym);
+
+  const trends = useBodyTrends(metrics, goals);
 
   const [metricOpen, setMetricOpen] = useState(false);
   const [weight, setWeight] = useState<number | "">("");
@@ -207,6 +209,45 @@ export default function GoalsPage() {
           <Card className="p-6 text-center text-sm text-muted-foreground">No measurements yet. Tap "Log" to add one.</Card>
         )}
       </section>
+
+      {(trends.weight.latest != null || trends.muscle.latest != null || trends.bodyFat.latest != null) && (
+        <section className="mt-7">
+          <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5" /> Trend insights
+          </h2>
+          <div className="space-y-2">
+            <TrendInsightCard
+              label="Weight"
+              trend={trends.weight}
+              unit={unit}
+              targetDisp={targetWeightDisp}
+              displayValue={(v) => toDisplay(v, unit) ?? v}
+              lowerIsBetter
+              Icon={Scale}
+              accent="text-primary"
+            />
+            <TrendInsightCard
+              label="Muscle mass"
+              trend={trends.muscle}
+              unit="%"
+              targetDisp={goals.targetMuscleMassPct}
+              displayValue={(v) => v}
+              Icon={TrendingUp}
+              accent="text-gym"
+            />
+            <TrendInsightCard
+              label="Body fat"
+              trend={trends.bodyFat}
+              unit="%"
+              targetDisp={goals.targetBodyFatPct}
+              displayValue={(v) => v}
+              lowerIsBetter
+              Icon={TrendingDown}
+              accent="text-cardio"
+            />
+          </div>
+        </section>
+      )}
 
       {chartData.length >= 2 && (
         <section className="mt-7">
@@ -409,3 +450,100 @@ function GoalEditor({ goals, unit, onSave }: { goals: Goals; unit: "kg" | "lbs";
     </Sheet>
   );
 }
+
+function TrendInsightCard({
+  label, trend, unit, targetDisp, displayValue, lowerIsBetter, Icon, accent,
+}: {
+  label: string;
+  trend: MetricTrend;
+  unit: string;
+  targetDisp?: number;
+  displayValue: (v: number) => number;
+  lowerIsBetter?: boolean;
+  Icon: React.ComponentType<{ className?: string }>;
+  accent: string;
+}) {
+  if (trend.latest == null) {
+    return (
+      <Card className="flex items-center gap-3 px-4 py-3">
+        <Icon className={cn("h-4 w-4", accent)} />
+        <div>
+          <p className="text-sm font-medium">{label}</p>
+          <p className="text-xs text-muted-foreground">No data yet</p>
+        </div>
+      </Card>
+    );
+  }
+
+  const fmt = (v: number, dec = 1) => v.toFixed(dec).replace(/\.0$/, "");
+  const renderChange = (change?: number, pct?: number) => {
+    if (change == null) return <span className="text-muted-foreground">—</span>;
+    const isFlat = Math.abs(change) < 0.05;
+    const ArrowIcon = isFlat ? Minus : change > 0 ? TrendingUp : TrendingDown;
+    const good = lowerIsBetter ? change < 0 : change > 0;
+    const cls = isFlat ? "text-muted-foreground" : good ? "text-emerald-500" : "text-destructive";
+    const dispChange = displayValue(Math.abs(change));
+    return (
+      <span className={cn("inline-flex items-center gap-0.5 font-semibold tabular-nums", cls)}>
+        <ArrowIcon className="h-3 w-3" />
+        {change > 0 ? "+" : change < 0 ? "−" : ""}{fmt(dispChange)}{unit}
+        {pct != null && !isFlat && <span className="ml-0.5 opacity-70">({pct > 0 ? "+" : ""}{fmt(pct)}%)</span>}
+      </span>
+    );
+  };
+
+  const targetProgress = trend.targetPct != null ? Math.round(trend.targetPct) : null;
+  const distance = trend.toTarget != null ? displayValue(Math.abs(trend.toTarget)) : null;
+  const atTarget = trend.toTarget != null && Math.abs(trend.toTarget) < 0.5;
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2">
+          <Icon className={cn("h-4 w-4", accent)} />
+          <div>
+            <p className="text-sm font-semibold">{label}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {fmt(displayValue(trend.latest))}{unit} <span className="opacity-50">now</span>
+            </p>
+          </div>
+        </div>
+        {trend.onTrack != null && targetDisp != null && (
+          <span className={cn(
+            "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+            atTarget ? "bg-primary/15 text-primary" :
+            trend.onTrack ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/10 text-destructive",
+          )}>
+            {atTarget ? "At target" : trend.onTrack ? "On track" : "Off track"}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">7-day</p>
+          <p className="mt-0.5">{renderChange(trend.weekChange, trend.weekPctChange)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">30-day</p>
+          <p className="mt-0.5">{renderChange(trend.monthChange, trend.monthPctChange)}</p>
+        </div>
+      </div>
+
+      {targetDisp != null && targetProgress != null && (
+        <div className="mt-3 space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Target className="h-3 w-3" /> Goal {fmt(targetDisp)}{unit}
+            </span>
+            <span className="font-semibold tabular-nums">
+              {atTarget ? "Reached 🎉" : `${distance != null ? fmt(distance) + unit : ""} to go`}
+            </span>
+          </div>
+          <Progress value={targetProgress} className="h-1.5" />
+        </div>
+      )}
+    </Card>
+  );
+}
+
