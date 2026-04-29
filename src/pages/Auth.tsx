@@ -41,15 +41,21 @@ export default function Auth() {
       passwordSchema.parse(password);
     } catch (e: any) { return toast.error(e.errors?.[0]?.message || "Invalid input"); }
     setSubmitting(true);
-    const { error } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email, password,
       options: {
         emailRedirectTo: window.location.origin,
         data: { display_name: displayName.trim() || email.split("@")[0] },
       },
     });
+    if (signUpError) {
+      setSubmitting(false);
+      return toast.error(signUpError.message);
+    }
+    // Auto sign-in (email confirmation is disabled server-side).
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
-    if (error) return toast.error(error.message);
+    if (signInError) return toast.error(signInError.message);
     toast.success("Account created — you're in!");
     navigate("/");
   };

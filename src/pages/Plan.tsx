@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { GYM_EXERCISES, PT_EXERCISES, CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { usePlanSchedule, useWorkoutTemplates } from "@/lib/cloud";
+import { SUMMER_PLAN_TEMPLATES } from "@/lib/seedPlan";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -32,6 +33,29 @@ export default function Plan() {
   const todayDow = today.getDay();
   const { days, upsertDay } = usePlanSchedule();
   const { templates, create: createTpl, remove: removeTpl } = useWorkoutTemplates();
+  const [importing, setImporting] = useState(false);
+
+  const canImportSummer =
+    days.length === 0 && !templates.some((t) => t.name === "Push");
+
+  const importSummerPlan = async () => {
+    setImporting(true);
+    try {
+      for (const t of SUMMER_PLAN_TEMPLATES) {
+        const id = await createTpl({
+          module: t.module, name: t.name, emoji: t.emoji, payload: t.payload,
+        });
+        await upsertDay({
+          day_of_week: t.dayOfWeek, module: t.module, template_id: id, label: t.label ?? null,
+        });
+      }
+      toast.success("Summer Plan imported");
+    } catch (e: any) {
+      toast.error(e.message || "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const dayMap = useMemo(() => {
     const m = new Map(days.map((d) => [d.day_of_week, d]));
@@ -79,6 +103,27 @@ export default function Plan() {
           </Card>
         )}
       </section>
+
+      {canImportSummer && (
+        <section className="mt-6">
+          <Card className="overflow-hidden border-2 border-dashed border-primary/40 bg-primary/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">Import Summer Training Plan</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  7 templates (Push, Kettlebell, Pull, Football, Lower, Cycling, Fascia) wired to Mon–Sun.
+                </p>
+                <Button size="sm" className="mt-3" onClick={importSummerPlan} disabled={importing}>
+                  {importing ? "Importing..." : "Import plan"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
 
       {/* Weekly schedule */}
       <section className="mt-7">
