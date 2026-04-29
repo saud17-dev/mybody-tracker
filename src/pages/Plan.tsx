@@ -83,6 +83,17 @@ export default function Plan() {
   const { templates, create: createTpl, remove: removeTpl } = useWorkoutTemplates();
   const { skipped, toggle: toggleSkip, clearAll: clearSkips } = usePlanSkips();
   const [importing, setImporting] = useState(false);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const [activeCard, setActiveCard] = useState(0);
+
+  const onCarouselScroll = () => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const card = el.firstElementChild as HTMLElement | null;
+    if (!card) return;
+    const w = card.getBoundingClientRect().width + 12; // gap-3 = 12px
+    setActiveCard(Math.round(el.scrollLeft / w));
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
