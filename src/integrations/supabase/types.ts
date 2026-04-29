@@ -14,7 +14,297 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      body_metrics: {
+        Row: {
+          body_fat_pct: number | null
+          created_at: string
+          date: string
+          id: string
+          muscle_mass_pct: number | null
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          body_fat_pct?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          muscle_mass_pct?: number | null
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          body_fat_pct?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          muscle_mass_pct?: number | null
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      cardio_sessions: {
+        Row: {
+          activity: string
+          created_at: string
+          date: string
+          distance_km: number | null
+          duration_min: number
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          activity: string
+          created_at?: string
+          date?: string
+          distance_km?: number | null
+          duration_min: number
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          activity?: string
+          created_at?: string
+          date?: string
+          distance_km?: number | null
+          duration_min?: number
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_exercises: {
+        Row: {
+          body_area: string | null
+          created_at: string
+          id: string
+          module: string
+          muscle_group: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          body_area?: string | null
+          created_at?: string
+          id?: string
+          module: string
+          muscle_group: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          body_area?: string | null
+          created_at?: string
+          id?: string
+          module?: string
+          muscle_group?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      favorite_exercises: {
+        Row: {
+          created_at: string
+          exercise_name: string
+          id: string
+          module: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_name: string
+          id?: string
+          module: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_name?: string
+          id?: string
+          module?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          target_body_fat_pct: number | null
+          target_muscle_mass_pct: number | null
+          target_weight: number | null
+          updated_at: string
+          user_id: string
+          weekly_cardio: number
+          weekly_gym: number
+          weekly_pt: number
+        }
+        Insert: {
+          target_body_fat_pct?: number | null
+          target_muscle_mass_pct?: number | null
+          target_weight?: number | null
+          updated_at?: string
+          user_id: string
+          weekly_cardio?: number
+          weekly_gym?: number
+          weekly_pt?: number
+        }
+        Update: {
+          target_body_fat_pct?: number | null
+          target_muscle_mass_pct?: number | null
+          target_weight?: number | null
+          updated_at?: string
+          user_id?: string
+          weekly_cardio?: number
+          weekly_gym?: number
+          weekly_pt?: number
+        }
+        Relationships: []
+      }
+      gym_sessions: {
+        Row: {
+          created_at: string
+          date: string
+          exercises: Json
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          exercises?: Json
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          exercises?: Json
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      plan_schedule: {
+        Row: {
+          day_of_week: number
+          id: string
+          label: string | null
+          module: string
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          day_of_week: number
+          id?: string
+          label?: string | null
+          module: string
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          day_of_week?: number
+          id?: string
+          label?: string | null
+          module?: string
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          rest_timer_seconds: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          rest_timer_seconds?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          rest_timer_seconds?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pt_sessions: {
+        Row: {
+          created_at: string
+          date: string
+          exercises: Json
+          id: string
+          overall_notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          exercises?: Json
+          id?: string
+          overall_notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          exercises?: Json
+          id?: string
+          overall_notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_templates: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          id: string
+          module: string
+          name: string
+          payload: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          module: string
+          name: string
+          payload?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          module?: string
+          name?: string
+          payload?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
