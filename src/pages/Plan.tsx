@@ -208,44 +208,48 @@ export default function Plan() {
         />
       </section>
 
-      {/* Weekly schedule */}
+      {/* Weekly schedule — drag to swap, tap to edit */}
       <section className="mt-7">
-        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <CalendarDays className="h-3.5 w-3.5" /> Weekly schedule
-        </h2>
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
-            const plan = dayMap.get(dow);
-            const style = plan ? moduleStyle[plan.module] : moduleStyle.rest;
-            const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
-            const Icon = style.icon;
-            return (
-              <DayEditor key={dow} dayOfWeek={dow} current={plan} templates={templates}
-                onSave={async (m, tplId, label) => {
-                  await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
-                  toast.success(`${DAYS[dow]} updated`);
-                }}>
-                <Card className={cn("flex items-center gap-3 p-3 cursor-pointer hover:border-primary/40 transition", dow === todayDow && "ring-1 ring-primary/30")}>
-                  <div className="w-10 text-xs font-bold uppercase text-muted-foreground">{DAYS[dow]}</div>
-                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", style.bg)}>
-                    <Icon className={cn("h-4 w-4", style.text)} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    {plan ? (
-                      <>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">{plan.module}</p>
-                        <p className="truncate text-sm font-medium">{tpl?.name || plan.label || (plan.module === "rest" ? "Rest" : "No template")}</p>
-                      </>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">Tap to schedule</p>
-                    )}
-                  </div>
-                  <Pencil className="h-4 w-4 text-muted-foreground" />
-                </Card>
-              </DayEditor>
-            );
-          })}
+        <div className="mb-2 flex items-center justify-between gap-2 px-1">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <CalendarDays className="h-3.5 w-3.5" /> This week
+          </h2>
+          {skipped.size > 0 && (
+            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => clearSkips()}>
+              <RotateCcw className="h-3 w-3" /> Reset week
+            </Button>
+          )}
         </div>
+        <p className="mb-2 px-1 text-[11px] text-muted-foreground">
+          Drag <GripVertical className="inline h-3 w-3" /> to swap days. Tap a card to edit.
+        </p>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={dowOrder.map(String)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {dowOrder.map((dow) => {
+                const plan = dayMap.get(dow);
+                const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
+                return (
+                  <SortableDayRow
+                    key={dow}
+                    dow={dow}
+                    plan={plan}
+                    tplName={tpl?.name}
+                    isToday={dow === todayDow}
+                    isSkipped={skipped.has(dow)}
+                    templates={templates}
+                    onSave={async (m, tplId, label) => {
+                      await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
+                      toast.success(`${DAYS[dow]} updated`);
+                    }}
+                    onSkipToggle={() => toggleSkip(dow)}
+                    onMoveToToday={() => moveToToday(dow)}
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       </section>
 
       {/* Templates */}
