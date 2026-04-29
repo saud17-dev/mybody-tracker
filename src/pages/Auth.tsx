@@ -12,7 +12,32 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 const emailSchema = z.string().trim().email("Invalid email").max(255);
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(72)
+  .regex(/[A-Za-z]/, "Password must contain at least one letter")
+  .regex(/[0-9]/, "Password must contain at least one number");
+
+function friendlyAuthError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes("pwned") || m.includes("data breach") || m.includes("compromis")) {
+    return "This password has appeared in a known data breach. Please choose a different one.";
+  }
+  if (m.includes("weak_password") || m.includes("password should") || m.includes("password is too") || m.includes("weak password")) {
+    return "Password is too weak. Use at least 8 characters mixing letters, numbers, and a symbol.";
+  }
+  if (m.includes("already registered") || m.includes("already exists") || m.includes("user already")) {
+    return "An account with this email already exists. Try signing in instead.";
+  }
+  if (m.includes("invalid login") || m.includes("invalid credentials")) {
+    return "Wrong email or password.";
+  }
+  if (m.includes("rate limit") || m.includes("too many")) {
+    return "Too many attempts. Please wait a moment and try again.";
+  }
+  return msg;
+}
 
 export default function Auth() {
   const { user, loading } = useAuth();
@@ -30,7 +55,7 @@ export default function Auth() {
     setSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message));
     toast.success("Welcome back!");
     navigate("/");
   };
@@ -50,12 +75,12 @@ export default function Auth() {
     });
     if (signUpError) {
       setSubmitting(false);
-      return toast.error(signUpError.message);
+      return toast.error(friendlyAuthError(signUpError.message));
     }
     // Auto sign-in (email confirmation is disabled server-side).
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
-    if (signInError) return toast.error(signInError.message);
+    if (signInError) return toast.error(friendlyAuthError(signInError.message));
     toast.success("Account created — you're in!");
     navigate("/");
   };
@@ -121,12 +146,31 @@ function SignUpForm({ onSubmit, submitting }: { onSubmit: (e: string, p: string,
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="su-pwd">Password</Label>
-        <Input id="su-pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" minLength={6} />
-        <p className="text-[10px] text-muted-foreground">At least 6 characters. Strong passwords recommended.</p>
+        <Input id="su-pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" minLength={8} />
+        <PasswordHints value={password} />
       </div>
       <Button type="submit" className="w-full" size="lg" disabled={submitting}>
         {submitting ? "Creating..." : "Create account"}
       </Button>
     </form>
+  );
+}
+
+function PasswordHints({ value }: { value: string }) {
+  const checks = [
+    { ok: value.length >= 8, label: "8+ characters" },
+    { ok: /[A-Za-z]/.test(value), label: "a letter" },
+    { ok: /[0-9]/.test(value), label: "a number" },
+    { ok: /[^A-Za-z0-9]/.test(value), label: "a symbol (recommended)" },
+  ];
+  return (
+    <ul className="text-[10px] text-muted-foreground space-y-0.5 mt-1">
+      {checks.map((c) => (
+        <li key={c.label} className={c.ok ? "text-emerald-600" : ""}>
+          {c.ok ? "✓" : "•"} {c.label}
+        </li>
+      ))}
+      <li className="opacity-70">Avoid passwords from known data breaches.</li>
+    </ul>
   );
 }
