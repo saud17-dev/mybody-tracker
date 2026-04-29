@@ -155,3 +155,22 @@ function SignUpForm({ onSubmit, submitting }: { onSubmit: (e: string, p: string,
     </form>
   );
 }
+
+function PasswordHints({ value }: { value: string }) {
+  const checks = [
+    { ok: value.length >= 8, label: "8+ characters" },
+    { ok: /[A-Za-z]/.test(value), label: "a letter" },
+    { ok: /[0-9]/.test(value), label: "a number" },
+    { ok: /[^A-Za-z0-9]/.test(value), label: "a symbol (recommended)" },
+  ];
+  return (
+    <ul className="text-[10px] text-muted-foreground space-y-0.5 mt-1">
+      {checks.map((c) => (
+        <li key={c.label} className={c.ok ? "text-emerald-600" : ""}>
+          {c.ok ? "✓" : "•"} {c.label}
+        </li>
+      ))}
+      <li className="opacity-70">Avoid passwords from known data breaches.</li>
+    </ul>
+  );
+}
