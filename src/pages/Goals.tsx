@@ -24,6 +24,8 @@ import { toDisplay, fromInput, formatWeight } from "@/lib/units";
 import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CsvImport } from "@/components/CsvImport";
+import { parseMetricsCsv, metricsToCsv, type ParsedMetrics } from "@/lib/csvMetrics";
 
 interface RingProps {
   label: string;
