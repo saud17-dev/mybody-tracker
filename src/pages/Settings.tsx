@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, LogOut, Scale, Timer, User as UserIcon } from "lucide-react";
+import { ArrowLeft, Download, Heart, LogOut, Scale, Timer, User as UserIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import {
   useProfile, useGymSessions, usePTSessions, useCardioSessions,
   useBodyMetrics, useGoals, useCustomExercises, useFavorites, useWorkoutTemplates, usePlanSchedule,
 } from "@/lib/cloud";
+import { metricsToCsv } from "@/lib/csvMetrics";
+import { isHealthAvailable, requestHealthPermissions, fetchHealthMetrics, fetchHealthWorkouts } from "@/lib/health";
 import { toast } from "sonner";
 
 export default function Settings() {
@@ -67,6 +69,43 @@ export default function Settings() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Data exported");
+  };
+
+  const exportMetricsCsv = () => {
+    const csv = metricsToCsv(metrics);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `body-metrics-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const healthAvailable = isHealthAvailable();
+  const [healthBusy, setHealthBusy] = useState(false);
+  const { create: createMetric } = useBodyMetrics();
+  const { create: createCardio } = useCardioSessions();
+
+  const syncHealth = async () => {
+    setHealthBusy(true);
+    try {
+      const ok = await requestHealthPermissions();
+      if (!ok) { toast.error("Health permission denied"); return; }
+      const [hm, hw] = await Promise.all([fetchHealthMetrics(90), fetchHealthWorkouts(90)]);
+      const existingDates = new Set(metrics.map((m) => m.date.slice(0, 10)));
+      let nm = 0, nw = 0;
+      for (const m of hm) {
+        if (existingDates.has(m.date.slice(0, 10))) continue;
+        await createMetric({ date: m.date, weightKg: m.weightKg, muscleMassPct: m.muscleMassPct, bodyFatPct: m.bodyFatPct });
+        nm++;
+      }
+      for (const w of hw) {
+        await createCardio({ date: w.date, activity: w.activity, durationMin: w.durationMin, distanceKm: w.distanceKm });
+        nw++;
+      }
+      toast.success(`Synced ${nm} measurement(s) and ${nw} workout(s)`);
+    } catch (e: any) {
+      toast.error(e.message || "Sync failed");
+    } finally { setHealthBusy(false); }
   };
 
   return (
@@ -129,9 +168,44 @@ export default function Settings() {
           <Button variant="outline" className="w-full" onClick={exportData}>
             <Download className="h-4 w-4 mr-2" /> Export all data (JSON)
           </Button>
+          <Button variant="outline" className="w-full" onClick={exportMetricsCsv}>
+            <Download className="h-4 w-4 mr-2" /> Export body metrics (CSV)
+          </Button>
           <p className="text-[11px] text-muted-foreground text-center">
             {gym.length} workouts · {pt.length} PT · {cardio.length} cardio · {metrics.length} measurements
           </p>
+        </Card>
+      </section>
+
+      <section className="mt-7">
+        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Heart className="h-3.5 w-3.5" /> Apple Health
+        </h2>
+        <Card className="p-4 space-y-3">
+          {healthAvailable ? (
+            <>
+              <p className="text-xs text-muted-foreground">
+                Pull weight, body-fat and workouts from the Health app on your iPhone.
+              </p>
+              <Button className="w-full" onClick={syncHealth} disabled={healthBusy}>
+                <Heart className="h-4 w-4 mr-2" />
+                {healthBusy ? "Syncing…" : "Sync last 90 days"}
+              </Button>
+            </>
+          ) : (
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground">iOS native app required</p>
+              <p>
+                Apple Health is only accessible to native iOS apps. To enable it: export this project to GitHub, then run locally:
+              </p>
+              <pre className="overflow-x-auto rounded bg-muted p-2 text-[10px] leading-relaxed">{`npm install
+npx cap add ios
+npm run build
+npx cap sync
+npx cap run ios`}</pre>
+              <p>Requires a Mac with Xcode. Once installed on iPhone, this section will activate.</p>
+            </div>
+          )}
         </Card>
       </section>
 
