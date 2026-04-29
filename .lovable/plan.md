@@ -1,62 +1,69 @@
-# Fix data loss + global sign-out + flexible plan
+# Plan page — mobile-first, ADHD-friendly redesign
 
-## 1. Why data appeared to vanish on refresh
+Goal: turn the top of the Plan page into something a phone-thumb loves and an ADHD brain instantly parses — bold module colors, large taps, swipeable cards, light motion, less visual noise.
 
-All your data (workouts, metrics, plan) is already saved to the cloud database — there's no local-only storage in the pages. The most likely cause is that **your session was signed out** when you refreshed (you're currently on `/auth` right now, which proves it). On a fresh sign-in, the app shows that account's data, but if writes were made before login or under a different account/device, they won't appear.
+## What changes (visible)
 
-Two real bugs contribute to the "lost" feeling and will be fixed:
+### 1. Next 4 days → swipeable card carousel
+- Replace the 2×2 grid with a horizontal **snap-scrolling row**. Each card is ~78% of the viewport width so the next card peeks in — a clear visual cue that you can swipe.
+- Cards become **bigger and bolder**:
+  - Full module color as the card background (`bg-gym`, `bg-pt`, `bg-cardio`) with white text — instantly distinguishable at a glance.
+  - Today's card gets a subtle ring + a small pulsing "TODAY" pill in the top-right.
+  - Big day name (`text-2xl`), date underneath, large emoji/icon in a frosted circle, template name in 2-line clamp.
+  - Full-width **"Start →"** button at the bottom of each card (44px tall — proper thumb target).
+  - Rest days use a calm muted card with a coffee icon (clearly different from active days).
+- Page indicator dots under the row to show position.
+- Native momentum scroll, no JS dependency — uses `snap-x snap-mandatory` + `overscroll-x-contain`. Works perfectly on iOS/Android.
 
-1. **Silent write failures**: today, `create()` calls (gym/PT/cardio/metrics) don't show an error toast if the Supabase insert fails (e.g. session expired mid-session). The UI cleared the form, you assumed it saved, refresh showed nothing.
-2. **No session-expiry handling**: when the auth token expires while the page is open, the next save just fails quietly. We'll detect this and prompt re-login.
+### 2. Most-used templates → touch-friendly chip strip
+- On mobile the "Most used" list moves **directly under** the next-4 carousel as a horizontal scrollable strip of chunky cards (each ~9rem wide, 56px tall icon, big tap area).
+- Each chip: colored left border in its module color (gym=green, pt=purple, cardio=orange) + colored icon badge — same color language as the day cards, so you learn the system once.
+- Usage count rendered as a tiny "×N" badge in the corner instead of a text line — more glanceable.
+- On desktop (lg+) it stays as a vertical list to the side, like today.
 
-### What we'll change
-- Wrap every mutation hook in `src/lib/cloud.ts` with proper error surfacing — every failed insert/update fires a `toast.error` with the real reason.
-- In `App.tsx`, listen for `SIGNED_OUT` / `TOKEN_REFRESHED` events; on unexpected sign-out show a toast "Session expired — please sign in again" before redirecting to `/auth`.
-- Add a small "Saving…/Saved ✓" indicator on the Goals/Gym/PT/Cardio save buttons so you visibly confirm the round-trip.
-- Add a retry on transient network failures (1 retry, 1s backoff) inside the cloud mutations.
+### 3. Visual stimulation (ADHD-friendly, not chaotic)
+- **One bold accent per element**, not rainbow soup. Module color = identity, neutral surfaces around it = breathing room.
+- Subtle gradient backgrounds on the day cards using existing `--gradient-gym/pt/cardio` tokens already in `index.css`.
+- Light **active-press scale** (`active:scale-95`) on every tappable card so taps feel responsive — instant feedback is huge for ADHD focus.
+- Today's card gets a soft pulse animation (`animate-pulse` on the TODAY pill only — not the whole card, that would be exhausting).
+- Larger type, more contrast on key info (day name, template name) — secondary info shrinks to 10–11px so eyes know what to land on first.
+- Rounded `rounded-2xl` everywhere on the hero for a friendlier, more "app-y" feel.
 
-This guarantees: if a save succeeds you see "Saved ✓", if it fails you see a red error — never silent loss.
+### 4. Layout below the hero (unchanged behavior, tightened spacing)
+- Summer-plan import banner, full-week accordion, all-templates accordion, CSV import — all stay collapsed by default. Spacing tightened from `mt-7` to `mt-5` so less scroll.
 
-## 2. Sign-out available on every page
+## What stays the same
 
-Currently sign-out lives only inside Settings. We'll add a header avatar/menu to the shared `AppShell` so it appears on Goals, Plan, Gym, PT, Cardio, and Settings.
-
-- Add a circular avatar button (initials from email) in the top-right of `AppShell.tsx`.
-- Tapping opens a small dropdown with: **Settings**, **Sign out**.
-- Sign out clears the session and routes to `/auth`.
-- Settings page keeps its existing in-page sign-out button as well.
-
-## 3. Flexible weekly plan (keep current data)
-
-Today the plan locks each weekday to one slot. We'll make it a **drag-and-arrange weekly board** while keeping the same database (`plan_schedule`) and your existing entries intact.
-
-### New behaviors
-- **Drag to reorder**: long-press any day card and drag it onto another weekday to swap their workouts. Useful when you want to move "Push" from Monday to Tuesday because you're tired.
-- **Quick swap**: tap a day → existing edit sheet now also has a "Swap with…" picker listing the other 6 days (one tap moves both).
-- **Move to today**: each day card gets a small "→ Today" action that swaps that workout into today's slot.
-- **Skip / mark as rest for this week**: a per-day "Skip this week" toggle (stored locally per ISO week) so the plan stays intact but today shows Rest without overwriting your template.
-- **Reset to original** button on the page that re-applies the saved schedule if you experimented.
-
-### Data model
-- No schema change needed. Reorder = two `upsertDay` calls (swap module/template_id/label between two `day_of_week` rows).
-- "Skip this week" stored in a new tiny table `plan_skips (user_id, week_start date, day_of_week int)` with own-row RLS, queried for the current week only. Auto-cleared on Monday rollover by a simple "where week_start = current monday" filter.
-
-### UI
-- Replace the static `space-y-2` list in `Plan.tsx` with a `@dnd-kit/sortable` vertical list (already a common Lovable pattern; lightweight, touch-friendly).
-- Keep the existing `DayEditor` sheet, the Today card, the Summer Plan import, and the CSV importer exactly as they are.
+- Drag-to-swap, skip-this-week, move-to-today, swap dialogs, CSV import, Summer plan seed — all unchanged. Same data, same routes, same templates table.
+- Desktop layout still uses the side-by-side hero (carousel + vertical "most used" list).
 
 ## Technical notes
 
 - Files touched:
-  - `src/lib/cloud.ts` — error toasts + retry on every mutation; helper to detect auth errors.
-  - `src/App.tsx` — global auth-state listener with toast on unexpected sign-out.
-  - `src/components/AppShell.tsx` — header avatar dropdown (Settings + Sign out).
-  - `src/pages/Plan.tsx` — dnd-kit sortable, swap action, "→ Today", "Skip this week", "Reset" button.
-  - New `src/lib/planSkips.ts` + migration to create `plan_skips` table with RLS `auth.uid() = user_id`.
-- New dep: `@dnd-kit/core`, `@dnd-kit/sortable` (small, no native deps).
-- No destructive migrations; existing `plan_schedule`, templates, sessions, metrics untouched.
+  - `src/pages/Plan.tsx` — restructure the hero section only (lines ~140–248); rest of file untouched.
+  - `src/index.css` — add a small `.snap-card` utility + safe horizontal padding helper if needed.
+- No new dependencies — pure CSS scroll-snap.
+- Module colors come from existing tokens: `bg-gym`, `bg-pt`, `bg-cardio`, `--gradient-gym/pt/cardio`. White-on-color contrast is already AA-compliant for these hues.
+- Carousel structure:
 
-## What stays the same
+```text
+┌──────────────────────────────────────────────────┐
+│  [TODAY •••]  [TUE]  [WED]  [THU]   →  swipe    │
+│  ┌─────────┐ ┌──────┐ ┌──────┐ ┌──────┐        │
+│  │  GREEN  │ │ PURP │ │ ORNG │ │ MUTE │        │
+│  │  PUSH   │ │  PT  │ │ RUN  │ │ REST │        │
+│  │ Start → │ │Start→│ │Start→│ │      │        │
+│  └─────────┘ └──────┘ └──────┘ └──────┘        │
+│        • ○ ○ ○                                  │
+└──────────────────────────────────────────────────┘
+[ 💪 Push ×3 ] [ 🏃 Run ×2 ] [ 🧘 Mobility ×1 ] →
+```
 
-- Your imported Summer Plan, CSV templates, body-metrics wizard, Apple-Health section, auth password rules — all unchanged.
-- Database tables for sessions/metrics/goals/templates/schedule are not migrated or rewritten.
+- Page-indicator dots derived from scroll position via a tiny `onScroll` handler (no library).
+- The "Most used" horizontal strip on mobile is the same data, just a different layout — flips to vertical at `lg:` breakpoint via Tailwind responsive classes.
+
+## Out of scope
+
+- No changes to the goals/streaks dashboard.
+- No new database fields or migrations.
+- No icon library swap — we keep lucide.
