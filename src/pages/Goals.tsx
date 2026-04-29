@@ -44,17 +44,24 @@ interface RingProps {
   label: string;
   current: number;
   target: number;
-  colorClass: string;
+  variant: "gym" | "pt" | "cardio";
   Icon: React.ComponentType<{ className?: string }>;
 }
 
-function GoalRing({ label, current, target, colorClass, Icon }: RingProps) {
+const variantStyles = {
+  gym: { bg: "bg-gym/10", text: "text-gym", bar: "[&>div]:bg-gym" },
+  pt: { bg: "bg-pt/10", text: "text-pt", bar: "[&>div]:bg-pt" },
+  cardio: { bg: "bg-cardio/10", text: "text-cardio", bar: "[&>div]:bg-cardio" },
+} as const;
+
+function GoalRing({ label, current, target, variant, Icon }: RingProps) {
   const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+  const s = variantStyles[variant];
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between">
-        <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", `bg-${colorClass}/10`)}>
-          <Icon className={cn("h-4 w-4", `text-${colorClass}`)} />
+        <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", s.bg)}>
+          <Icon className={cn("h-4 w-4", s.text)} />
         </div>
         <span className="text-xs font-semibold text-muted-foreground">{Math.round(pct)}%</span>
       </div>
@@ -63,7 +70,7 @@ function GoalRing({ label, current, target, colorClass, Icon }: RingProps) {
         {current}
         <span className="text-base font-normal text-muted-foreground">/{target}</span>
       </p>
-      <Progress value={pct} className={cn("mt-2 h-1.5", `[&>div]:bg-${colorClass}`)} />
+      <Progress value={pct} className={cn("mt-2 h-1.5", s.bar)} />
     </Card>
   );
 }
@@ -132,9 +139,9 @@ export default function Goals() {
           This week
         </h2>
         <div className="grid grid-cols-3 gap-3">
-          <GoalRing label="Gym" current={weekly.gym} target={goals.weeklyGym} colorClass="gym" Icon={Dumbbell} />
-          <GoalRing label="PT" current={weekly.pt} target={goals.weeklyPT} colorClass="pt" Icon={HeartPulse} />
-          <GoalRing label="Cardio" current={weekly.cardio} target={goals.weeklyCardio} colorClass="cardio" Icon={Activity} />
+          <GoalRing label="Gym" current={weekly.gym} target={goals.weeklyGym} variant="gym" Icon={Dumbbell} />
+          <GoalRing label="PT" current={weekly.pt} target={goals.weeklyPT} variant="pt" Icon={HeartPulse} />
+          <GoalRing label="Cardio" current={weekly.cardio} target={goals.weeklyCardio} variant="cardio" Icon={Activity} />
         </div>
       </section>
 
