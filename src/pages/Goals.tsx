@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import {
-  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target,
+  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, Flame, CalendarX,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid,
@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import {
   useGymSessions, usePTSessions, useCardioSessions, useBodyMetrics, useGoals, useProfile,
 } from "@/lib/cloud";
-import { useWeeklyCounts, useWeeklyMuscleVolume, useBodyTrends, type MetricTrend } from "@/lib/stats";
+import { useWeeklyCounts, useWeeklyMuscleVolume, useBodyTrends, useWorkoutStreaks, type MetricTrend, type ModuleStreak } from "@/lib/stats";
 import { toDisplay, fromInput, formatWeight } from "@/lib/units";
 import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
@@ -72,6 +72,7 @@ export default function GoalsPage() {
 
   const weekly = useWeeklyCounts(gym, pt, cardio);
   const muscleVolume = useWeeklyMuscleVolume(gym);
+  const streaks = useWorkoutStreaks(gym, pt, cardio);
 
   const trends = useBodyTrends(metrics, goals);
 
@@ -134,6 +135,25 @@ export default function GoalsPage() {
       <div className="mt-4 px-1">
         <GoalEditor goals={goals} unit={unit} onSave={async (g) => { await saveGoals(g); toast.success("Goals updated"); }} />
       </div>
+
+      {/* Streaks */}
+      <section className="mt-7">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Flame className="h-3.5 w-3.5" /> Streaks
+          </h2>
+          {streaks.any.current > 0 && (
+            <span className="text-[11px] font-semibold text-primary">
+              🔥 {streaks.any.current}-day overall
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <StreakCard label="Gym" streak={streaks.gym} variant="gym" Icon={Dumbbell} />
+          <StreakCard label="PT" streak={streaks.pt} variant="pt" Icon={HeartPulse} />
+          <StreakCard label="Cardio" streak={streaks.cardio} variant="cardio" Icon={Activity} />
+        </div>
+      </section>
 
       {/* Weekly volume by muscle group */}
       {muscleVolume.length > 0 && (
@@ -528,3 +548,53 @@ function TrendInsightCard({
   );
 }
 
+
+function StreakCard({
+  label, streak, variant, Icon,
+}: {
+  label: string;
+  streak: ModuleStreak;
+  variant: "gym" | "pt" | "cardio";
+  Icon: React.ComponentType<{ className?: string }>;
+}) {
+  const variantStyle = {
+    gym: { bg: "bg-gym/10", text: "text-gym" },
+    pt: { bg: "bg-pt/10", text: "text-pt" },
+    cardio: { bg: "bg-cardio/10", text: "text-cardio" },
+  }[variant];
+  const hasData = streak.totalActiveDays > 0;
+  return (
+    <Card className="flex flex-col items-center gap-1.5 p-3 text-center">
+      <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", variantStyle.bg)}>
+        <Icon className={cn("h-4 w-4", variantStyle.text)} />
+      </div>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-bold leading-none">{streak.current}</span>
+        <span className="text-[10px] text-muted-foreground">day{streak.current === 1 ? "" : "s"}</span>
+      </div>
+      {hasData ? (
+        <div className="mt-1 w-full space-y-0.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1"><Flame className="h-2.5 w-2.5" /> Best</span>
+            <span className="font-semibold text-foreground">{streak.best}d</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1"><CalendarX className="h-2.5 w-2.5" /> Longest off</span>
+            <span className="font-semibold text-foreground">{streak.longestGap}d</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Last</span>
+            <span className="font-semibold text-foreground">
+              {streak.lastSessionDaysAgo === 0 ? "Today" :
+               streak.lastSessionDaysAgo === 1 ? "1d ago" :
+               `${streak.lastSessionDaysAgo}d ago`}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-1 text-[10px] italic text-muted-foreground">No sessions yet</p>
+      )}
+    </Card>
+  );
+}
