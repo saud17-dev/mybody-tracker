@@ -218,6 +218,30 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_skips: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          id: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          id?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
