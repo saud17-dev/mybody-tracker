@@ -548,3 +548,50 @@ function TrendInsightCard({
   );
 }
 
+
+function StreakCard({
+  label, streak, variant, Icon,
+}: {
+  label: string;
+  streak: ModuleStreak;
+  variant: "gym" | "pt" | "cardio";
+  Icon: React.ComponentType<{ className?: string }>;
+}) {
+  const colorBg = `bg-${variant}/10`;
+  const colorText = `text-${variant}`;
+  const hasData = streak.totalActiveDays > 0;
+  return (
+    <Card className="flex flex-col items-center gap-1.5 p-3 text-center">
+      <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", colorBg)}>
+        <Icon className={cn("h-4 w-4", colorText)} />
+      </div>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-bold leading-none">{streak.current}</span>
+        <span className="text-[10px] text-muted-foreground">day{streak.current === 1 ? "" : "s"}</span>
+      </div>
+      {hasData ? (
+        <div className="mt-1 w-full space-y-0.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1"><Flame className="h-2.5 w-2.5" /> Best</span>
+            <span className="font-semibold text-foreground">{streak.best}d</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1"><CalendarX className="h-2.5 w-2.5" /> Longest off</span>
+            <span className="font-semibold text-foreground">{streak.longestGap}d</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Last</span>
+            <span className="font-semibold text-foreground">
+              {streak.lastSessionDaysAgo === 0 ? "Today" :
+               streak.lastSessionDaysAgo === 1 ? "1d ago" :
+               `${streak.lastSessionDaysAgo}d ago`}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-1 text-[10px] italic text-muted-foreground">No sessions yet</p>
+      )}
+    </Card>
+  );
+}
