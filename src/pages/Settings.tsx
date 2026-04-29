@@ -71,6 +71,43 @@ export default function Settings() {
     toast.success("Data exported");
   };
 
+  const exportMetricsCsv = () => {
+    const csv = metricsToCsv(metrics);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `body-metrics-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const healthAvailable = isHealthAvailable();
+  const [healthBusy, setHealthBusy] = useState(false);
+  const { create: createMetric } = useBodyMetrics();
+  const { create: createCardio } = useCardioSessions();
+
+  const syncHealth = async () => {
+    setHealthBusy(true);
+    try {
+      const ok = await requestHealthPermissions();
+      if (!ok) { toast.error("Health permission denied"); return; }
+      const [hm, hw] = await Promise.all([fetchHealthMetrics(90), fetchHealthWorkouts(90)]);
+      const existingDates = new Set(metrics.map((m) => m.date.slice(0, 10)));
+      let nm = 0, nw = 0;
+      for (const m of hm) {
+        if (existingDates.has(m.date.slice(0, 10))) continue;
+        await createMetric({ date: m.date, weightKg: m.weightKg, muscleMassPct: m.muscleMassPct, bodyFatPct: m.bodyFatPct });
+        nm++;
+      }
+      for (const w of hw) {
+        await createCardio({ date: w.date, activity: w.activity, durationMin: w.durationMin, distanceKm: w.distanceKm });
+        nw++;
+      }
+      toast.success(`Synced ${nm} measurement(s) and ${nw} workout(s)`);
+    } catch (e: any) {
+      toast.error(e.message || "Sync failed");
+    } finally { setHealthBusy(false); }
+  };
+
   return (
     <AppShell title="Settings" subtitle={user?.email || ""} accent="primary"
       right={
