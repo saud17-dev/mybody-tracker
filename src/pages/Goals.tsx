@@ -72,6 +72,7 @@ export default function GoalsPage() {
 
   const weekly = useWeeklyCounts(gym, pt, cardio);
   const muscleVolume = useWeeklyMuscleVolume(gym);
+  const streaks = useWorkoutStreaks(gym, pt, cardio);
 
   const trends = useBodyTrends(metrics, goals);
 
