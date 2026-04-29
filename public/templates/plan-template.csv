@@ -1,0 +1,9 @@
+template_name,emoji,module,day_of_week,label,exercise_name,muscle_group,sets,reps,cardio_activity,cardio_duration_min
+Push Day,💪,gym,Mon,Push,Dumbbell Bench Press,Chest,4,10,,
+Push Day,💪,gym,Mon,Push,Seated Shoulder Press,Shoulders,3,12,,
+Push Day,💪,gym,Mon,Push,Tricep Pushdown,Arms,3,15,,
+Pull Day,🪢,gym,Wed,Pull,Pull-Up,Back,4,8,,
+Pull Day,🪢,gym,Wed,Pull,Barbell Row,Back,3,10,,
+Morning Run,🏃,cardio,Thu,Easy run,,,,,Running,30
+Mobility,🧘,pt,Sun,Recovery,Hip Opener,Hips,3,10,,
+,,rest,Sat,,,,,,,
