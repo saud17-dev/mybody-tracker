@@ -55,7 +55,7 @@ export default function Auth() {
     setSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message));
     toast.success("Welcome back!");
     navigate("/");
   };
