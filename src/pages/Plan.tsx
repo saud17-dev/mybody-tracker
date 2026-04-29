@@ -42,9 +42,15 @@ export default function Plan() {
   const navigate = useNavigate();
   const today = new Date();
   const todayDow = today.getDay();
-  const { days, upsertDay } = usePlanSchedule();
+  const { days, upsertDay, swapDays } = usePlanSchedule();
   const { templates, create: createTpl, remove: removeTpl } = useWorkoutTemplates();
+  const { skipped, toggle: toggleSkip, clearAll: clearSkips } = usePlanSkips();
   const [importing, setImporting] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const canImportSummer =
     days.length === 0 && !templates.some((t) => t.name === "Push");
