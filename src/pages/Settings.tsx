@@ -168,9 +168,44 @@ export default function Settings() {
           <Button variant="outline" className="w-full" onClick={exportData}>
             <Download className="h-4 w-4 mr-2" /> Export all data (JSON)
           </Button>
+          <Button variant="outline" className="w-full" onClick={exportMetricsCsv}>
+            <Download className="h-4 w-4 mr-2" /> Export body metrics (CSV)
+          </Button>
           <p className="text-[11px] text-muted-foreground text-center">
             {gym.length} workouts · {pt.length} PT · {cardio.length} cardio · {metrics.length} measurements
           </p>
+        </Card>
+      </section>
+
+      <section className="mt-7">
+        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Heart className="h-3.5 w-3.5" /> Apple Health
+        </h2>
+        <Card className="p-4 space-y-3">
+          {healthAvailable ? (
+            <>
+              <p className="text-xs text-muted-foreground">
+                Pull weight, body-fat and workouts from the Health app on your iPhone.
+              </p>
+              <Button className="w-full" onClick={syncHealth} disabled={healthBusy}>
+                <Heart className="h-4 w-4 mr-2" />
+                {healthBusy ? "Syncing…" : "Sync last 90 days"}
+              </Button>
+            </>
+          ) : (
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground">iOS native app required</p>
+              <p>
+                Apple Health is only accessible to native iOS apps. To enable it: export this project to GitHub, then run locally:
+              </p>
+              <pre className="overflow-x-auto rounded bg-muted p-2 text-[10px] leading-relaxed">{`npm install
+npx cap add ios
+npm run build
+npx cap sync
+npx cap run ios`}</pre>
+              <p>Requires a Mac with Xcode. Once installed on iPhone, this section will activate.</p>
+            </div>
+          )}
         </Card>
       </section>
 
