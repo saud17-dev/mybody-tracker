@@ -557,13 +557,16 @@ function StreakCard({
   variant: "gym" | "pt" | "cardio";
   Icon: React.ComponentType<{ className?: string }>;
 }) {
-  const colorBg = `bg-${variant}/10`;
-  const colorText = `text-${variant}`;
+  const variantStyle = {
+    gym: { bg: "bg-gym/10", text: "text-gym" },
+    pt: { bg: "bg-pt/10", text: "text-pt" },
+    cardio: { bg: "bg-cardio/10", text: "text-cardio" },
+  }[variant];
   const hasData = streak.totalActiveDays > 0;
   return (
     <Card className="flex flex-col items-center gap-1.5 p-3 text-center">
-      <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", colorBg)}>
-        <Icon className={cn("h-4 w-4", colorText)} />
+      <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", variantStyle.bg)}>
+        <Icon className={cn("h-4 w-4", variantStyle.text)} />
       </div>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       <div className="flex items-baseline gap-1">
