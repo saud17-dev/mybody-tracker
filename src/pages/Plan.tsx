@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDays, format } from "date-fns";
 import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee, GripVertical, ArrowDownToLine, RotateCcw, EyeOff, Eye, Flame, ChevronRight } from "lucide-react";
