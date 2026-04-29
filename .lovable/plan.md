@@ -1,49 +1,106 @@
+# Plan import/export + body metrics CSV + Apple Health
 
-# Migrate Summer Training Plan into the App
+Three additions to make data entry faster and bring in Apple Health on iPhone.
 
-Your PDF is a 16-week, 3-phase program built around a fixed weekly split. Rather than just dumping it as text, I'll turn it into **structured workout templates** you can tap to start a pre-filled session — so the plan actually drives your logging instead of sitting in a drawer.
+---
 
-## What gets added
+## 1. Plan template — download, fill, upload (CSV)
 
-### 1. New "Plan" tab (5th bottom-nav item)
-A dedicated module showing:
-- **Today's session** card at the top (auto-picks based on day of week + current phase)
-- **Weekly schedule** (Mon–Sun grid with session type + location)
-- **Phase tracker** — current phase (Foundation / Build / Sharpen), week number, dates, goal summary
-- **Notes panel** — your patella alta rules ("avoid", "what helps"), fascia principles, "rules for looking sharp"
+A simple CSV format anyone can edit in Numbers/Excel/Sheets. One row = one exercise within a template; templates and the schedule are derived from the rows.
 
-### 2. Workout templates (data layer)
-Each scheduled session becomes a reusable template with prescribed exercises, sets × reps, and notes. Tapping **Start session** opens the existing Gym/PT/Cardio sheet **pre-filled** with all exercises — you just enter the actual weights.
+**CSV columns:**
+```text
+template_name, emoji, module, day_of_week, label, exercise_name, muscle_group, sets, reps, cardio_activity, cardio_duration_min
+```
 
-Templates created:
-- **Mon — Push** (Gym): DB bench 4×10, incline DB 3×12, seated DB press 3×12, cable lat raises 3×15, face pulls 3×15, tricep pushdown 3×15, push-ups to failure
-- **Tue — Kettlebell + Core** (Gym): KB swing 4×15, Turkish get-up 3×3, single-arm KB row 3×12, goblet squat 3×10, farmer's carry 3×30m, Pallof press, cable woodchop, dead bug
-- **Wed — Pull** (Gym): pull-ups 4×10, seated cable row 3×12, single-arm DB row 3×12, face pulls 3×15, barbell curl 3×12, hammer curl 3×12
-- **Thu — Football** (Cardio): activity=Football, default 60 min, with warm-up reminder
-- **Fri — Lower (knee-safe)** (Gym): leg press 4×12, RDL 4×10, lying leg curl 3×15, hip abduction 3×15, calf raise 4×20, step-ups 3×10, glute bridge 3×15, Copenhagen plank, landmine rotation
-- **Sat — Cycling** (Cardio): activity=Cycling, default 50 min Zone 2
-- **Sun — Fascia & Stretch** (PT): foam roll IT band / quad / hip flexor / thoracic + 6 held stretches (90s each), pain scale per area
+- `module` — `gym` | `pt` | `cardio` | `rest`
+- `day_of_week` — `Mon`..`Sun` (or 0–6) or blank if the template isn't scheduled
+- For `cardio` rows: leave exercise/sets/reps blank, fill `cardio_activity` + `cardio_duration_min`
+- For `rest` rows: only `day_of_week` + `module=rest` matter
+- Multiple rows with the same `template_name` are grouped into one template
 
-Phase 2 adds cable flyes, lateral raise drop sets, incline curl, overhead tricep extension, single-leg RDL — surfaced as "Phase 2 additions" inside affected templates and auto-included once your current date crosses week 7.
+**Example bundled file** (`public/templates/plan-template.csv`) preloaded with 2 sample rows + a comment header so users can see exactly how to fill it.
 
-Phase 3 adds HIIT finisher prompts on Tue/Fri and switches Saturday cycling to interval mode.
+### UI (in Plan page, next to "Import Summer Plan")
+A new card "Import from CSV" with two buttons:
+- **Download template** — serves `/templates/plan-template.csv`
+- **Upload CSV** — file input → parse → preview dialog showing detected templates + scheduled days → "Confirm import" inserts into `workout_templates` and `plan_schedule` (idempotent: skip templates whose name already exists).
 
-### 3. Exercise library additions
-A few exercises in your plan aren't yet in the library — I'll add: Turkish Get-Up, Farmer's Carry, Cable Woodchop, Copenhagen Plank, Landmine Rotation, Single-Leg RDL, Cable Fly, Incline Curl, Foam Roll (IT Band / Quad / Hip Flexor / Thoracic), Hip Flexor Lunge Stretch, Pigeon Pose, Doorway Chest Stretch, Standing Quad Stretch, Wall Calf Stretch, Seated Hamstring Stretch. Football added to cardio activities.
+Errors surface inline (row number + reason).
 
-### 4. Goals auto-set from the plan
-Weekly targets pre-filled to match the schedule: **Gym 4 / PT 1 / Cardio 2**. Body composition: starting weight 77kg recorded; you set the target.
+---
 
-### 5. Patella alta safety chips
-Knee-risky exercises (anything with "Squat", "Lunge", "Leg Extension", "Box Jump") get a small ⚠ chip in the Gym picker with the reason — soft warning, not a block.
+## 2. Body metrics / composition — download, fill, upload (CSV)
 
-## Technical notes
+Same pattern, in the Goals page (Body tab) and Settings → Data section.
 
-- New file `src/lib/plan.ts`: types for `WorkoutTemplate`, `PhaseDef`, the Saud plan data, and helpers `getCurrentPhase(date)`, `getTodayTemplate(date)`.
-- New page `src/pages/Plan.tsx` + route `/plan`; `BottomNav` extended to 5 items (icons compress slightly on narrow screens).
-- Gym/PT/Cardio sheets accept an optional `?template=<id>` query param; when present, the sheet opens auto and seeds `exercises` state from the template. Existing manual flow unchanged.
-- Exercise library extended in `src/lib/exercises.ts`; new "Stretch" and "Recovery" PT groups added.
-- All plan data is static (no migration needed); your existing localStorage sessions are untouched.
+**CSV columns:**
+```text
+date, weight_kg, muscle_mass_pct, body_fat_pct
+```
 
-## Out of scope for this pass
-Supplement tracker, nutrition logging, video links inside the app, and progressive-overload auto-suggestions. Easy to add next if useful.
+- `date` — `YYYY-MM-DD`
+- Empty cells are ignored (only fields you measured)
+- Bundled `public/templates/body-metrics-template.csv` with 3 example rows
+
+**UI:**
+- "Download template" + "Upload CSV" buttons in Body section
+- On upload: parse → preview table → confirm → batch insert into `body_metrics` (skip rows whose date already exists for that user)
+
+Also add **CSV export** alongside the existing JSON export in Settings (one button each for body metrics, gym log, PT log, cardio log).
+
+---
+
+## 3. Apple Health integration
+
+Apple Health (HealthKit) is iOS-only and only accessible to **native iOS apps**, not websites or PWAs. So this requires wrapping the app with Capacitor and using a HealthKit plugin.
+
+### What we'll set up
+1. **Capacitor scaffolding** — install `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`; add `capacitor.config.ts` (appId `app.lovable.c1564c344d9a425482365642091f9ed1`, appName `mybody-tracker`, sandbox URL for hot-reload).
+2. **Health plugin** — install `capacitor-health` (community plugin supporting HealthKit on iOS and Health Connect on Android).
+3. **Health service wrapper** (`src/lib/health.ts`):
+   - `isAvailable()` — returns false on web/Android-without-Health-Connect
+   - `requestPermissions()` — body mass, body fat %, lean body mass, workouts (read), plus write for workouts
+   - `syncBodyMetrics(sinceDate)` — pulls weight / body fat / muscle mass samples and inserts into `body_metrics` (dedup by date)
+   - `syncWorkouts(sinceDate)` — pulls HKWorkout samples; maps running/cycling/etc → `cardio_sessions`, strength training → `gym_sessions` (as a single empty session you can fill in)
+   - `pushWorkout(session)` — optional: writes a finished cardio/gym session back to Health
+4. **Settings UI** — new "Apple Health" section that:
+   - Hides itself unless `isAvailable()` is true (so web users don't see a dead button)
+   - "Connect Apple Health" → permission prompt
+   - "Sync now" → pulls last 90 days, shows toast with counts imported
+   - Toggle "Auto-sync on open"
+
+### Caveats to share with the user
+- Apple Health data only flows once the app is installed as a native iOS app via Xcode (Mac required). Steps:
+  1. Export to GitHub → `git pull` locally
+  2. `npm install`
+  3. `npx cap add ios`
+  4. `npm run build && npx cap sync`
+  5. `npx cap run ios` (Xcode + a Mac required; for App Store you'll need an Apple Developer account)
+- Until then, the CSV upload above is the practical way to bring weight history in.
+
+---
+
+## Files to change
+
+- `public/templates/plan-template.csv` *(new)* — sample CSV
+- `public/templates/body-metrics-template.csv` *(new)* — sample CSV
+- `src/lib/csvPlan.ts` *(new)* — parse/serialize plan CSV
+- `src/lib/csvMetrics.ts` *(new)* — parse/serialize metrics CSV
+- `src/components/CsvImport.tsx` *(new)* — generic upload + preview dialog
+- `src/pages/Plan.tsx` — add "Import from CSV" card
+- `src/pages/Goals.tsx` — add CSV import/export to Body tab
+- `src/pages/Settings.tsx` — add per-table CSV export + Apple Health section
+- `src/lib/health.ts` *(new)* — HealthKit wrapper with web no-op fallback
+- `package.json` — add `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`, `capacitor-health`, `papaparse`
+- `capacitor.config.ts` *(new)* — Capacitor config with sandbox URL for hot reload
+
+No DB migrations needed — uses existing tables.
+
+---
+
+## Open questions
+
+1. **Android Health Connect** too, or iPhone-only for now? (Same plugin supports it, just adds Android setup.)
+2. **CSV vs Excel (.xlsx)** for the template — CSV is universal and editable everywhere; .xlsx allows dropdowns for `module` but adds a heavier parser. Default: CSV.
+3. **Apple Health write-back** (push your logged workouts into Health) or read-only? Default: read-only to start.
