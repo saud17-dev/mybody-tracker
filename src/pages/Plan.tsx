@@ -109,37 +109,142 @@ export default function Plan() {
 
   const dowOrder = [1, 2, 3, 4, 5, 6, 0];
 
+  // Next 4 days starting today
+  const next4 = useMemo(() => {
+    return Array.from({ length: 4 }, (_, i) => {
+      const d = addDays(today, i);
+      const dow = d.getDay();
+      const plan = dayMap.get(dow);
+      const isSkipped = i === 0 ? skipped.has(dow) : false; // skip only applies to current week's today logic
+      const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
+      return { date: d, dow, plan, tpl, isToday: i === 0, isSkipped };
+    });
+  }, [today, dayMap, templates, skipped]);
+
+  // Most used templates: count appearances in plan_schedule (descending)
+  const mostUsedTemplates = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const d of days) {
+      if (d.template_id) counts.set(d.template_id, (counts.get(d.template_id) ?? 0) + 1);
+    }
+    const enriched = templates
+      .map((t) => ({ tpl: t, count: counts.get(t.id) ?? 0 }))
+      .sort((a, b) => b.count - a.count || a.tpl.name.localeCompare(b.tpl.name));
+    return enriched.slice(0, 5);
+  }, [days, templates]);
+
+  const startTemplate = (t: { id: string; module: keyof typeof moduleStyle }) => {
+    navigate(`${moduleStyle[t.module].route}?template=${t.id}`);
+  };
+
   return (
     <AppShell title="Your Plan" subtitle={format(today, "EEEE, MMM d")} accent="primary">
-      {/* Today */}
+      {/* Hero: Next 4 days + most used templates */}
       <section>
-        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <Sparkles className="h-3.5 w-3.5" /> Today · {DAYS[todayDow]}
-        </h2>
-        {todayPlan ? (
-          <Card className={cn("overflow-hidden border-2 border-primary shadow-[var(--shadow-elevated)]")}>
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className={cn("flex h-10 w-10 items-center justify-center rounded-full", moduleStyle[todayPlan.module].bg)}>
-                {(() => { const I = moduleStyle[todayPlan.module].icon; return <I className={cn("h-5 w-5", moduleStyle[todayPlan.module].text)} />; })()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {todayPlan.module === "rest" ? "Rest day" : todayPlan.module}
-                </p>
-                <p className="truncate font-semibold">{todayTpl?.name || todayPlan.label || (todayPlan.module === "rest" ? "Recover" : "No template")}</p>
-              </div>
-              {todayPlan.module !== "rest" && (
-                <Button size="sm" className="gap-1 shrink-0" onClick={startToday}>
-                  <Play className="h-3.5 w-3.5" /> Start
-                </Button>
-              )}
+        <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
+          {/* Next 4 days */}
+          <div>
+            <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5" /> Next 4 days
+            </h2>
+            <div className="grid grid-cols-2 gap-2.5">
+              {next4.map(({ date, dow, plan, tpl, isToday, isSkipped }) => {
+                const effectivePlan = isSkipped
+                  ? { module: "rest" as const, template_id: null, label: "Skipped" }
+                  : plan;
+                const ms = effectivePlan ? moduleStyle[effectivePlan.module] : moduleStyle.rest;
+                const Icon = ms.icon;
+                const title = isSkipped
+                  ? "Skipped this week"
+                  : tpl?.name || effectivePlan?.label || (effectivePlan?.module === "rest" ? "Rest" : "No plan");
+                const canStart = effectivePlan && effectivePlan.module !== "rest";
+                return (
+                  <Card
+                    key={`${date.toISOString()}`}
+                    className={cn(
+                      "group flex flex-col overflow-hidden p-3 transition",
+                      isToday && "border-2 border-primary shadow-[var(--shadow-elevated)]",
+                      isSkipped && "opacity-60",
+                    )}
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {isToday ? "Today" : format(date, "EEE")}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">{format(date, "MMM d")}</p>
+                      </div>
+                      <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", ms.bg)}>
+                        <Icon className={cn("h-4 w-4", ms.text)} />
+                      </div>
+                    </div>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      {effectivePlan?.module ?? "—"}
+                    </p>
+                    <p className={cn("mb-2 line-clamp-2 text-sm font-semibold leading-tight", isSkipped && "line-through")}>
+                      {title}
+                    </p>
+                    {canStart ? (
+                      <Button
+                        size="sm"
+                        variant={isToday ? "default" : "outline"}
+                        className="mt-auto h-8 gap-1 text-xs"
+                        onClick={() => {
+                          const url = `${moduleStyle[effectivePlan!.module].route}${effectivePlan!.template_id ? `?template=${effectivePlan!.template_id}` : ""}`;
+                          navigate(url);
+                        }}
+                      >
+                        <Play className="h-3 w-3" /> Start
+                      </Button>
+                    ) : (
+                      <div className="mt-auto h-8" />
+                    )}
+                  </Card>
+                );
+              })}
             </div>
-          </Card>
-        ) : (
-          <Card className="p-6 text-center text-sm text-muted-foreground">
-            No plan for today. Tap a day below to set one.
-          </Card>
-        )}
+          </div>
+
+          {/* Most used templates */}
+          <div>
+            <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Flame className="h-3.5 w-3.5" /> Most used
+            </h2>
+            {mostUsedTemplates.length === 0 ? (
+              <Card className="p-4 text-center text-xs text-muted-foreground">
+                No templates yet.
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {mostUsedTemplates.map(({ tpl, count }) => {
+                  const style = moduleStyle[tpl.module as keyof typeof moduleStyle] ?? moduleStyle.rest;
+                  const Icon = style.icon;
+                  return (
+                    <Card
+                      key={tpl.id}
+                      role="button"
+                      onClick={() => startTemplate({ id: tpl.id, module: tpl.module as any })}
+                      className="flex cursor-pointer items-center gap-2.5 p-2.5 transition hover:border-primary/40 hover:shadow-sm"
+                    >
+                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", style.bg)}>
+                        <Icon className={cn("h-4 w-4", style.text)} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold leading-tight">
+                          {tpl.emoji ? `${tpl.emoji} ` : ""}{tpl.name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {tpl.module} {count > 0 && `· used ${count}×/wk`}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       {canImportSummer && (
@@ -152,7 +257,7 @@ export default function Plan() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">Import Summer Training Plan</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  7 templates (Push, Kettlebell, Pull, Football, Lower, Cycling, Fascia) wired to Mon–Sun.
+                  7 templates wired to Mon–Sun.
                 </p>
                 <Button size="sm" className="mt-3" onClick={importSummerPlan} disabled={importing}>
                   {importing ? "Importing..." : "Import plan"}
@@ -163,135 +268,162 @@ export default function Plan() {
         </section>
       )}
 
-      {/* CSV import */}
+      {/* Collapsible: full week, all templates, import/export */}
       <section className="mt-6">
-        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Import / export
-        </h2>
-        <CsvImport<ParsedPlan>
-          title="Import plan from CSV"
-          description="Download the template, fill it in Excel/Numbers/Sheets, then upload to create templates and schedule days in one go."
-          templateUrl="/templates/plan-template.csv"
-          templateFilename="plan-template.csv"
-          parse={parsePlanCsv}
-          isEmpty={(p) => p.templates.length === 0 && p.rests.length === 0}
-          renderPreview={(p) => (
-            <div className="space-y-2 text-xs">
-              <p className="font-semibold">{p.templates.length} template(s), {p.rests.length} rest day(s)</p>
-              {p.templates.map((t) => (
-                <div key={t.template_name} className="rounded-md border p-2">
-                  <p className="font-medium">{t.emoji ? `${t.emoji} ` : ""}{t.template_name} <span className="text-muted-foreground">· {t.module}{t.day_of_week != null ? ` · ${DAYS[t.day_of_week]}` : ""}</span></p>
-                  {t.cardio
-                    ? <p className="text-muted-foreground">{t.cardio.activity} · {t.cardio.durationMin}m</p>
-                    : <p className="text-muted-foreground">{t.exercises.length} exercises</p>}
+        <Accordion type="multiple" className="space-y-2">
+          {/* Full week */}
+          <AccordionItem value="week" className="rounded-lg border bg-card px-4">
+            <AccordionTrigger className="py-3 text-sm">
+              <span className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                Full week schedule
+                {skipped.size > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 text-[10px]">
+                    {skipped.size} skipped
+                  </Badge>
+                )}
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              {skipped.size > 0 && (
+                <div className="mb-2 flex justify-end">
+                  <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => clearSkips()}>
+                    <RotateCcw className="h-3 w-3" /> Reset week
+                  </Button>
                 </div>
-              ))}
-            </div>
-          )}
-          onConfirm={async (p) => {
-            const existingNames = new Set(templates.map((t) => t.name.toLowerCase()));
-            for (const t of p.templates) {
-              if (existingNames.has(t.template_name.toLowerCase())) continue;
-              const payload = t.module === "cardio"
-                ? (t.cardio ?? { activity: "Cardio", durationMin: 30 })
-                : { exercises: t.exercises };
-              const id = await createTpl({
-                module: t.module, name: t.template_name, emoji: t.emoji, payload,
-              });
-              if (t.day_of_week != null) {
-                await upsertDay({ day_of_week: t.day_of_week, module: t.module, template_id: id, label: t.label ?? null });
-              }
-            }
-            for (const r of p.rests) {
-              await upsertDay({ day_of_week: r.day_of_week, module: "rest", template_id: null, label: null });
-            }
-          }}
-        />
-      </section>
+              )}
+              <p className="mb-2 text-[11px] text-muted-foreground">
+                Drag <GripVertical className="inline h-3 w-3" /> to swap days. Tap a card to edit.
+              </p>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={dowOrder.map(String)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {dowOrder.map((dow) => {
+                      const plan = dayMap.get(dow);
+                      const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
+                      return (
+                        <SortableDayRow
+                          key={dow}
+                          dow={dow}
+                          plan={plan}
+                          tplName={tpl?.name}
+                          isToday={dow === todayDow}
+                          isSkipped={skipped.has(dow)}
+                          templates={templates}
+                          onSave={async (m, tplId, label) => {
+                            await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
+                            toast.success(`${DAYS[dow]} updated`);
+                          }}
+                          onSkipToggle={() => toggleSkip(dow)}
+                          onMoveToToday={() => moveToToday(dow)}
+                        />
+                      );
+                    })}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </AccordionContent>
+          </AccordionItem>
 
-      {/* Weekly schedule — drag to swap, tap to edit */}
-      <section className="mt-7">
-        <div className="mb-2 flex items-center justify-between gap-2 px-1">
-          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <CalendarDays className="h-3.5 w-3.5" /> This week
-          </h2>
-          {skipped.size > 0 && (
-            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => clearSkips()}>
-              <RotateCcw className="h-3 w-3" /> Reset week
-            </Button>
-          )}
-        </div>
-        <p className="mb-2 px-1 text-[11px] text-muted-foreground">
-          Drag <GripVertical className="inline h-3 w-3" /> to swap days. Tap a card to edit.
-        </p>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={dowOrder.map(String)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
-              {dowOrder.map((dow) => {
-                const plan = dayMap.get(dow);
-                const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
-                return (
-                  <SortableDayRow
-                    key={dow}
-                    dow={dow}
-                    plan={plan}
-                    tplName={tpl?.name}
-                    isToday={dow === todayDow}
-                    isSkipped={skipped.has(dow)}
-                    templates={templates}
-                    onSave={async (m, tplId, label) => {
-                      await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
-                      toast.success(`${DAYS[dow]} updated`);
-                    }}
-                    onSkipToggle={() => toggleSkip(dow)}
-                    onMoveToToday={() => moveToToday(dow)}
-                  />
-                );
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </section>
+          {/* All templates */}
+          <AccordionItem value="templates" className="rounded-lg border bg-card px-4">
+            <AccordionTrigger className="py-3 text-sm">
+              <span className="flex items-center gap-2">
+                <Dumbbell className="h-4 w-4 text-muted-foreground" />
+                All templates
+                <Badge variant="secondary" className="ml-1 h-5 text-[10px]">{templates.length}</Badge>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="mb-2 flex justify-end">
+                <NewTemplateDialog onCreate={createTpl} />
+              </div>
+              {templates.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">
+                  No templates yet. Create one to reuse exercise lists.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {templates.map((t) => {
+                    const style = moduleStyle[t.module as keyof typeof moduleStyle] ?? moduleStyle.rest;
+                    const Icon = style.icon;
+                    const count =
+                      t.module === "cardio" ? `${t.payload?.activity || ""} · ${t.payload?.durationMin || 0}m` :
+                      `${(t.payload?.exercises || []).length} exercises`;
+                    return (
+                      <Card key={t.id} className="flex items-center gap-3 p-3">
+                        <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", style.bg)}>
+                          <Icon className={cn("h-4 w-4", style.text)} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{t.emoji ? `${t.emoji} ` : ""}{t.name}</p>
+                          <p className="text-xs text-muted-foreground">{count}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => navigate(`${style.route}?template=${t.id}`)}>
+                          <Play className="h-3 w-3 mr-1" /> Start
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => removeTpl(t.id)}>
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
 
-      {/* Templates */}
-      <section className="mt-7">
-        <div className="mb-3 flex items-center justify-between px-1">
-          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Workout templates
-          </h2>
-          <NewTemplateDialog onCreate={createTpl} />
-        </div>
-        {templates.length === 0 && (
-          <Card className="p-6 text-center text-sm text-muted-foreground">
-            No templates yet. Create one to reuse exercise lists.
-          </Card>
-        )}
-        <div className="space-y-2">
-          {templates.map((t) => {
-            const style = moduleStyle[t.module];
-            const Icon = style.icon;
-            const count =
-              t.module === "cardio" ? `${t.payload?.activity || ""} · ${t.payload?.durationMin || 0}m` :
-              `${(t.payload?.exercises || []).length} exercises`;
-            return (
-              <Card key={t.id} className="flex items-center gap-3 p-3">
-                <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", style.bg)}>
-                  <Icon className={cn("h-4 w-4", style.text)} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{t.emoji ? `${t.emoji} ` : ""}{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{count}</p>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => navigate(`${style.route}?template=${t.id}`)}>
-                  <Play className="h-3 w-3 mr-1" /> Start
-                </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => removeTpl(t.id)}>
-                  <Trash2 className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </Card>
-            );
-          })}
-        </div>
+          {/* Import / export */}
+          <AccordionItem value="import" className="rounded-lg border bg-card px-4">
+            <AccordionTrigger className="py-3 text-sm">
+              <span className="flex items-center gap-2">
+                <ArrowDownToLine className="h-4 w-4 text-muted-foreground" />
+                Import / export plan (CSV)
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CsvImport<ParsedPlan>
+                title="Import plan from CSV"
+                description="Download the template, fill it in Excel/Numbers/Sheets, then upload to create templates and schedule days in one go."
+                templateUrl="/templates/plan-template.csv"
+                templateFilename="plan-template.csv"
+                parse={parsePlanCsv}
+                isEmpty={(p) => p.templates.length === 0 && p.rests.length === 0}
+                renderPreview={(p) => (
+                  <div className="space-y-2 text-xs">
+                    <p className="font-semibold">{p.templates.length} template(s), {p.rests.length} rest day(s)</p>
+                    {p.templates.map((t) => (
+                      <div key={t.template_name} className="rounded-md border p-2">
+                        <p className="font-medium">{t.emoji ? `${t.emoji} ` : ""}{t.template_name} <span className="text-muted-foreground">· {t.module}{t.day_of_week != null ? ` · ${DAYS[t.day_of_week]}` : ""}</span></p>
+                        {t.cardio
+                          ? <p className="text-muted-foreground">{t.cardio.activity} · {t.cardio.durationMin}m</p>
+                          : <p className="text-muted-foreground">{t.exercises.length} exercises</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                onConfirm={async (p) => {
+                  const existingNames = new Set(templates.map((t) => t.name.toLowerCase()));
+                  for (const t of p.templates) {
+                    if (existingNames.has(t.template_name.toLowerCase())) continue;
+                    const payload = t.module === "cardio"
+                      ? (t.cardio ?? { activity: "Cardio", durationMin: 30 })
+                      : { exercises: t.exercises };
+                    const id = await createTpl({
+                      module: t.module, name: t.template_name, emoji: t.emoji, payload,
+                    });
+                    if (t.day_of_week != null) {
+                      await upsertDay({ day_of_week: t.day_of_week, module: t.module, template_id: id, label: t.label ?? null });
+                    }
+                  }
+                  for (const r of p.rests) {
+                    await upsertDay({ day_of_week: r.day_of_week, module: "rest", template_id: null, label: null });
+                  }
+                }}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </section>
     </AppShell>
   );
