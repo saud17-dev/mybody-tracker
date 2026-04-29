@@ -296,6 +296,91 @@ export default function Plan() {
   );
 }
 
+function SortableDayRow({
+  dow, plan, tplName, isToday, isSkipped, templates, onSave, onSkipToggle, onMoveToToday,
+}: {
+  dow: number;
+  plan?: { module: "gym" | "pt" | "cardio" | "rest"; template_id?: string | null; label?: string | null };
+  tplName?: string;
+  isToday: boolean;
+  isSkipped: boolean;
+  templates: { id: string; name: string; module: string }[];
+  onSave: (m: "gym" | "pt" | "cardio" | "rest", tplId?: string | null, label?: string | null) => Promise<void>;
+  onSkipToggle: () => void;
+  onMoveToToday: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(dow) });
+  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 50 : "auto" } as React.CSSProperties;
+  const ms = plan ? moduleStyle[plan.module] : moduleStyle.rest;
+  const Icon = ms.icon;
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-80")}>
+      <Card className={cn(
+        "flex items-center gap-2 p-3 transition",
+        isToday && "ring-1 ring-primary/30",
+        isSkipped && "opacity-60",
+      )}>
+        <button
+          {...attributes}
+          {...listeners}
+          aria-label="Drag day"
+          className="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <div className="w-10 text-xs font-bold uppercase text-muted-foreground">{DAYS[dow]}</div>
+        <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", ms.bg)}>
+          <Icon className={cn("h-4 w-4", ms.text)} />
+        </div>
+        <DayEditor
+          dayOfWeek={dow}
+          current={plan}
+          templates={templates}
+          onSave={onSave}
+        >
+          <div className="min-w-0 flex-1 cursor-pointer py-1">
+            {plan ? (
+              <>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {plan.module}{isSkipped && " · skipped"}
+                </p>
+                <p className={cn("truncate text-sm font-medium", isSkipped && "line-through")}>
+                  {tplName || plan.label || (plan.module === "rest" ? "Rest" : "No template")}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Tap to schedule</p>
+            )}
+          </div>
+        </DayEditor>
+        {!isToday && plan && plan.module !== "rest" && (
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Move to today"
+            className="h-8 w-8 shrink-0"
+            onClick={onMoveToToday}
+            title="Swap with today"
+          >
+            <ArrowDownToLine className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        )}
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={isSkipped ? "Unskip this week" : "Skip this week"}
+          title={isSkipped ? "Unskip this week" : "Skip this week"}
+          className="h-8 w-8 shrink-0"
+          onClick={onSkipToggle}
+        >
+          {isSkipped ? <Eye className="h-4 w-4 text-muted-foreground" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+        </Button>
+      </Card>
+    </div>
+  );
+}
+
 function DayEditor({
   dayOfWeek, current, templates, onSave, children,
 }: {
