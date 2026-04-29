@@ -186,105 +186,157 @@ export default function Plan() {
 
   return (
     <AppShell title="Your Plan" subtitle={format(today, "EEEE, MMM d")} accent="primary">
-      {/* Hero: Next 4 days + most used templates */}
-      <section>
-        <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
+      {/* Hero: Next 4 days carousel + most used templates strip */}
+      <section className="-mx-4 sm:mx-0">
+        <div className="lg:grid lg:gap-4 lg:grid-cols-[1fr_18rem] lg:mx-0">
           {/* Next 4 days */}
           <div>
-            <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" /> Next 4 days
+            <h2 className="mb-2 flex items-center gap-1.5 px-5 sm:px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> Next 4 days · swipe →
             </h2>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div
+              ref={carouselRef}
+              onScroll={onCarouselScroll}
+              className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 pt-1 sm:px-1 lg:grid lg:grid-cols-2 lg:gap-2.5 lg:overflow-visible lg:px-0"
+            >
               {next4.map(({ date, dow, plan, tpl, isToday, isSkipped }) => {
                 const effectivePlan = isSkipped
                   ? { module: "rest" as const, template_id: null, label: "Skipped" }
                   : plan;
-                const ms = effectivePlan ? moduleStyle[effectivePlan.module] : moduleStyle.rest;
+                const modKey = (effectivePlan?.module ?? "rest") as keyof typeof moduleHero;
+                const hero = moduleHero[modKey];
+                const ms = moduleStyle[modKey];
                 const Icon = ms.icon;
                 const title = isSkipped
                   ? "Skipped this week"
-                  : tpl?.name || effectivePlan?.label || (effectivePlan?.module === "rest" ? "Rest" : "No plan");
+                  : tpl?.name || effectivePlan?.label || (effectivePlan?.module === "rest" ? "Rest day" : "No plan");
                 const canStart = effectivePlan && effectivePlan.module !== "rest";
                 return (
                   <Card
                     key={`${date.toISOString()}`}
                     className={cn(
-                      "group flex flex-col overflow-hidden p-3 transition",
-                      isToday && "border-2 border-primary shadow-[var(--shadow-elevated)]",
+                      "relative flex shrink-0 snap-center snap-always flex-col overflow-hidden rounded-2xl border-0 p-4 shadow-[var(--shadow-card)] transition active:scale-[0.97] lg:w-auto",
+                      "w-[78%] min-h-[180px]",
+                      hero.surface,
+                      isToday && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[var(--shadow-elevated)]",
                       isSkipped && "opacity-60",
                     )}
                   >
-                    <div className="mb-2 flex items-center justify-between">
+                    {isToday && (
+                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-foreground shadow-sm">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                        Today
+                      </span>
+                    )}
+
+                    <div className="mb-3 flex items-start justify-between">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                          {isToday ? "Today" : format(date, "EEE")}
+                        <p className="text-2xl font-extrabold leading-none tracking-tight">
+                          {format(date, "EEE")}
                         </p>
-                        <p className="text-[10px] text-muted-foreground">{format(date, "MMM d")}</p>
+                        <p className="mt-1 text-xs font-medium opacity-80">{format(date, "MMM d")}</p>
                       </div>
-                      <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", ms.bg)}>
-                        <Icon className={cn("h-4 w-4", ms.text)} />
+                      <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl backdrop-blur-sm", hero.chip)}>
+                        {tpl?.emoji ? (
+                          <span className="text-2xl leading-none">{tpl.emoji}</span>
+                        ) : (
+                          <Icon className="h-5 w-5" />
+                        )}
                       </div>
                     </div>
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {effectivePlan?.module ?? "—"}
-                    </p>
-                    <p className={cn("mb-2 line-clamp-2 text-sm font-semibold leading-tight", isSkipped && "line-through")}>
-                      {title}
-                    </p>
+
+                    <div className="flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-75">
+                        {hero.label}
+                      </p>
+                      <p className={cn("mt-1 line-clamp-2 text-base font-bold leading-snug", isSkipped && "line-through")}>
+                        {title}
+                      </p>
+                    </div>
+
                     {canStart ? (
                       <Button
                         size="sm"
-                        variant={isToday ? "default" : "outline"}
-                        className="mt-auto h-8 gap-1 text-xs"
                         onClick={() => {
                           const url = `${moduleStyle[effectivePlan!.module].route}${effectivePlan!.template_id ? `?template=${effectivePlan!.template_id}` : ""}`;
                           navigate(url);
                         }}
+                        className="mt-3 h-11 w-full gap-1.5 rounded-xl bg-white text-sm font-bold text-foreground hover:bg-white/90"
                       >
-                        <Play className="h-3 w-3" /> Start
+                        <Play className="h-4 w-4 fill-current" /> Start workout
                       </Button>
                     ) : (
-                      <div className="mt-auto h-8" />
+                      <div className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-foreground/5 text-xs font-medium opacity-80">
+                        {isSkipped ? "Skipped" : "Recover & rest 💤"}
+                      </div>
                     )}
                   </Card>
                 );
               })}
             </div>
+
+            {/* Page dots — mobile only */}
+            <div className="mt-1 flex justify-center gap-1.5 lg:hidden">
+              {next4.map((_, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    activeCard === i ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/30",
+                  )}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Most used templates */}
-          <div>
-            <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Flame className="h-3.5 w-3.5" /> Most used
+          <div className="mt-5 lg:mt-0">
+            <h2 className="mb-2 flex items-center gap-1.5 px-5 sm:px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              <Flame className="h-3.5 w-3.5 text-accent" /> Most used
             </h2>
             {mostUsedTemplates.length === 0 ? (
-              <Card className="p-4 text-center text-xs text-muted-foreground">
-                No templates yet.
-              </Card>
+              <div className="px-4 sm:px-1 lg:px-0">
+                <Card className="rounded-2xl p-4 text-center text-xs text-muted-foreground">
+                  No templates yet.
+                </Card>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="no-scrollbar flex gap-2.5 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:px-1 lg:flex-col lg:gap-2 lg:overflow-visible lg:px-0">
                 {mostUsedTemplates.map(({ tpl, count }) => {
-                  const style = moduleStyle[tpl.module as keyof typeof moduleStyle] ?? moduleStyle.rest;
+                  const modKey = tpl.module as keyof typeof moduleHero;
+                  const hero = moduleHero[modKey] ?? moduleHero.rest;
+                  const style = moduleStyle[modKey] ?? moduleStyle.rest;
                   const Icon = style.icon;
                   return (
                     <Card
                       key={tpl.id}
                       role="button"
                       onClick={() => startTemplate({ id: tpl.id, module: tpl.module as any })}
-                      className="flex cursor-pointer items-center gap-2.5 p-2.5 transition hover:border-primary/40 hover:shadow-sm"
+                      className={cn(
+                        "relative flex shrink-0 cursor-pointer items-center gap-3 rounded-2xl border-l-4 p-3 transition active:scale-[0.97] hover:shadow-md",
+                        hero.border,
+                        "min-w-[10.5rem] lg:min-w-0 lg:w-full",
+                      )}
                     >
-                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", style.bg)}>
-                        <Icon className={cn("h-4 w-4", style.text)} />
+                      <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", hero.soft)}>
+                        {tpl.emoji ? (
+                          <span className="text-xl leading-none">{tpl.emoji}</span>
+                        ) : (
+                          <Icon className={cn("h-5 w-5", hero.accent)} />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold leading-tight">
-                          {tpl.emoji ? `${tpl.emoji} ` : ""}{tpl.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {tpl.module} {count > 0 && `· used ${count}×/wk`}
+                        <p className="truncate text-sm font-bold leading-tight">{tpl.name}</p>
+                        <p className={cn("mt-0.5 text-[10px] font-bold uppercase tracking-wider", hero.accent)}>
+                          {hero.label}
                         </p>
                       </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      {count > 0 && (
+                        <span className="shrink-0 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-foreground">
+                          ×{count}
+                        </span>
+                      )}
+                      <ChevronRight className="hidden h-4 w-4 shrink-0 text-muted-foreground lg:block" />
                     </Card>
                   );
                 })}
