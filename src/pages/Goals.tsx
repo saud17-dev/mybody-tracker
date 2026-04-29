@@ -210,6 +210,45 @@ export default function GoalsPage() {
         )}
       </section>
 
+      {(trends.weight.latest != null || trends.muscle.latest != null || trends.bodyFat.latest != null) && (
+        <section className="mt-7">
+          <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5" /> Trend insights
+          </h2>
+          <div className="space-y-2">
+            <TrendInsightCard
+              label="Weight"
+              trend={trends.weight}
+              unit={unit}
+              targetDisp={targetWeightDisp}
+              displayValue={(v) => toDisplay(v, unit) ?? v}
+              lowerIsBetter
+              Icon={Scale}
+              accent="text-primary"
+            />
+            <TrendInsightCard
+              label="Muscle mass"
+              trend={trends.muscle}
+              unit="%"
+              targetDisp={goals.targetMuscleMassPct}
+              displayValue={(v) => v}
+              Icon={TrendingUp}
+              accent="text-gym"
+            />
+            <TrendInsightCard
+              label="Body fat"
+              trend={trends.bodyFat}
+              unit="%"
+              targetDisp={goals.targetBodyFatPct}
+              displayValue={(v) => v}
+              lowerIsBetter
+              Icon={TrendingDown}
+              accent="text-cardio"
+            />
+          </div>
+        </section>
+      )}
+
       {chartData.length >= 2 && (
         <section className="mt-7">
           <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Progress</h2>
