@@ -7,6 +7,7 @@ import Goals from "./pages/Goals";
 import Gym from "./pages/Gym";
 import PT from "./pages/PT";
 import Cardio from "./pages/Cardio";
+import Plan from "./pages/Plan";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Goals />} />
+          <Route path="/plan" element={<Plan />} />
           <Route path="/gym" element={<Gym />} />
           <Route path="/pt" element={<PT />} />
           <Route path="/cardio" element={<Cardio />} />

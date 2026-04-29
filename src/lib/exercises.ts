@@ -72,6 +72,23 @@ export const GYM_EXERCISES: ExerciseDef[] = [
   { name: "Snatch", group: "Olympic" },
   { name: "Kettlebell Swing", group: "Olympic" },
   { name: "Thruster", group: "Olympic" },
+  { name: "Turkish Get-Up", group: "Olympic" },
+  { name: "Farmer's Carry", group: "Olympic" },
+  { name: "Single-Arm KB Row", group: "Back" },
+  // Functional / accessory
+  { name: "Cable Woodchop (High to Low)", group: "Core" },
+  { name: "Pallof Press", group: "Core" },
+  { name: "Dead Bug", group: "Core" },
+  { name: "Copenhagen Plank", group: "Core" },
+  { name: "Landmine Rotation", group: "Core" },
+  { name: "Cable Fly", group: "Chest" },
+  { name: "Incline Dumbbell Curl", group: "Arms" },
+  { name: "Single-Leg RDL", group: "Legs" },
+  { name: "Lying Leg Curl", group: "Legs" },
+  { name: "Hip Abduction Machine", group: "Legs" },
+  { name: "Step-Up (Low Box)", group: "Legs" },
+  { name: "Cable Lateral Raise", group: "Shoulders" },
+  { name: "Seated Dumbbell Shoulder Press", group: "Shoulders" },
 ];
 
 export const PT_EXERCISES: ExerciseDef[] = [
@@ -117,6 +134,18 @@ export const PT_EXERCISES: ExerciseDef[] = [
   { name: "Chin Tuck", group: "Neck" },
   { name: "Neck Rotation Stretch", group: "Neck" },
   { name: "Upper Trap Stretch", group: "Neck" },
+  // Fascia / Recovery
+  { name: "Foam Roll - IT Band", group: "Fascia" },
+  { name: "Foam Roll - Quad", group: "Fascia" },
+  { name: "Foam Roll - Hip Flexor", group: "Fascia" },
+  { name: "Foam Roll - Thoracic", group: "Fascia" },
+  // Stretches (90s holds)
+  { name: "Hip Flexor Lunge Stretch", group: "Stretch" },
+  { name: "Seated Hamstring Stretch", group: "Stretch" },
+  { name: "Pigeon Pose", group: "Stretch" },
+  { name: "Standing Quad Stretch", group: "Stretch" },
+  { name: "Doorway Chest Stretch", group: "Stretch" },
+  { name: "Wall Calf Stretch", group: "Stretch" },
 ];
 
 export const CARDIO_ACTIVITIES = [
@@ -133,4 +162,15 @@ export const CARDIO_ACTIVITIES = [
   "Jump Rope",
   "HIIT",
   "Boxing",
+  "Football",
 ];
+
+// Knee-risky exercises (patella alta safety warning)
+export const KNEE_RISKY = new Set<string>([
+  "Back Squat",
+  "Front Squat",
+  "Walking Lunges",
+  "Bulgarian Split Squat",
+  "Leg Extension",
+]);
+

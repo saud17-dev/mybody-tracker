@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Plus, Trash2, Activity } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -12,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { useCardioSessions, uid } from "@/lib/storage";
+import { getTemplateById } from "@/lib/plan";
 import { toast } from "sonner";
 
 export default function Cardio() {
@@ -21,6 +23,26 @@ export default function Cardio() {
   const [duration, setDuration] = useState<number>(30);
   const [distance, setDistance] = useState<number | "">("");
   const [notes, setNotes] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const tplId = searchParams.get("template");
+    if (!tplId) return;
+    const tpl = getTemplateById(tplId);
+    if (!tpl || tpl.module !== "cardio" || !tpl.cardio) {
+      toast.error("Template not found");
+    } else {
+      const match = CARDIO_ACTIVITIES.find((a) => a.toLowerCase() === tpl.cardio!.activity.toLowerCase());
+      setActivity(match ?? CARDIO_ACTIVITIES[0]);
+      setDuration(tpl.cardio.durationMin);
+      setNotes([tpl.cardio.note, tpl.notes].filter(Boolean).join(" — "));
+      setOpen(true);
+      toast.success(`Loaded "${tpl.title}"`);
+    }
+    searchParams.delete("template");
+    setSearchParams(searchParams, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const reset = () => {
     setActivity(CARDIO_ACTIVITIES[0]);

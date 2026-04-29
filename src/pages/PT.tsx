@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Plus, Trash2, HeartPulse, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -13,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PT_EXERCISES } from "@/lib/exercises";
 import { usePTSessions, uid } from "@/lib/storage";
+import { getTemplateById } from "@/lib/plan";
 import type { PTExerciseEntry } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -26,6 +28,34 @@ export default function PT() {
   const [exercises, setExercises] = useState<PTExerciseEntry[]>([]);
   const [overallNotes, setOverallNotes] = useState("");
   const [picker, setPicker] = useState<{ name: string; group: string } | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const tplId = searchParams.get("template");
+    if (!tplId) return;
+    const tpl = getTemplateById(tplId);
+    if (!tpl || tpl.module !== "pt" || !tpl.pt) {
+      toast.error("Template not found");
+    } else {
+      setExercises(
+        tpl.pt.map((e) => ({
+          id: uid(),
+          exerciseName: e.name,
+          category: e.group,
+          sets: e.sets,
+          reps: e.reps,
+          painScale: 2,
+          notes: e.note || "",
+        })),
+      );
+      setOverallNotes([tpl.title, tpl.notes].filter(Boolean).join(" — "));
+      setOpen(true);
+      toast.success(`Loaded "${tpl.title}"`);
+    }
+    searchParams.delete("template");
+    setSearchParams(searchParams, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addExerciseFromPicker = () => {
     if (!picker) return;

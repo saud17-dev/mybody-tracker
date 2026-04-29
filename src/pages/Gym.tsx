@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, Dumbbell, ChevronRight, X } from "lucide-react";
+import { Plus, Trash2, Dumbbell, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { GYM_EXERCISES } from "@/lib/exercises";
 import { useGymSessions, uid } from "@/lib/storage";
+import { getTemplateById, getCurrentPhase, exercisesForPhase } from "@/lib/plan";
 import type { GymExerciseEntry, GymSet } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -21,6 +23,34 @@ export default function Gym() {
   const [exercises, setExercises] = useState<GymExerciseEntry[]>([]);
   const [notes, setNotes] = useState("");
   const [picker, setPicker] = useState<{ name: string; group: string } | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Load template from ?template=<id>
+  useEffect(() => {
+    const tplId = searchParams.get("template");
+    if (!tplId) return;
+    const tpl = getTemplateById(tplId);
+    if (!tpl || tpl.module !== "gym" || !tpl.gym) {
+      toast.error("Template not found");
+    } else {
+      const phase = getCurrentPhase();
+      const filtered = exercisesForPhase(tpl.gym, phase.id);
+      setExercises(
+        filtered.map((e) => ({
+          id: uid(),
+          exerciseName: e.name,
+          muscleGroup: e.group,
+          sets: Array.from({ length: e.sets }, () => ({ reps: e.reps, weight: 0 })),
+        })),
+      );
+      setNotes([tpl.title, tpl.notes].filter(Boolean).join(" — "));
+      setOpen(true);
+      toast.success(`Loaded "${tpl.title}"`);
+    }
+    searchParams.delete("template");
+    setSearchParams(searchParams, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addExerciseFromPicker = () => {
     if (!picker) return;
