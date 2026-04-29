@@ -12,9 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ExercisePicker } from "@/components/ExercisePicker";
+import { CsvImport } from "@/components/CsvImport";
 import { GYM_EXERCISES, PT_EXERCISES, CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { usePlanSchedule, useWorkoutTemplates } from "@/lib/cloud";
 import { SUMMER_PLAN_TEMPLATES } from "@/lib/seedPlan";
+import { parsePlanCsv, type ParsedPlan } from "@/lib/csvPlan";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
