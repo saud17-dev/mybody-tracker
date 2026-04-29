@@ -75,12 +75,12 @@ export default function Auth() {
     });
     if (signUpError) {
       setSubmitting(false);
-      return toast.error(signUpError.message);
+      return toast.error(friendlyAuthError(signUpError.message));
     }
     // Auto sign-in (email confirmation is disabled server-side).
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
-    if (signInError) return toast.error(signInError.message);
+    if (signInError) return toast.error(friendlyAuthError(signInError.message));
     toast.success("Account created — you're in!");
     navigate("/");
   };
