@@ -123,7 +123,7 @@ export function useGymSessions() {
   const create = useMutation({
     mutationFn: async (s: Omit<GymSession, "id">) => {
       const { data, error } = await supabase.from("gym_sessions").insert({
-        user_id: user!.id, date: s.date, exercises: s.exercises, notes: s.notes ?? null,
+        user_id: user!.id, date: s.date, exercises: s.exercises as any, notes: s.notes ?? null,
       }).select().single();
       if (error) throw error;
       return rowToGym(data);
@@ -162,7 +162,7 @@ export function usePTSessions() {
   const create = useMutation({
     mutationFn: async (s: Omit<PTSession, "id">) => {
       const { error } = await supabase.from("pt_sessions").insert({
-        user_id: user!.id, date: s.date, exercises: s.exercises, overall_notes: s.overallNotes ?? null,
+        user_id: user!.id, date: s.date, exercises: s.exercises as any, overall_notes: s.overallNotes ?? null,
       });
       if (error) throw error;
     },
