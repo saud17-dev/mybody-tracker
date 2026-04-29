@@ -33,6 +33,29 @@ export default function Plan() {
   const todayDow = today.getDay();
   const { days, upsertDay } = usePlanSchedule();
   const { templates, create: createTpl, remove: removeTpl } = useWorkoutTemplates();
+  const [importing, setImporting] = useState(false);
+
+  const canImportSummer =
+    days.length === 0 && !templates.some((t) => t.name === "Push");
+
+  const importSummerPlan = async () => {
+    setImporting(true);
+    try {
+      for (const t of SUMMER_PLAN_TEMPLATES) {
+        const id = await createTpl({
+          module: t.module, name: t.name, emoji: t.emoji, payload: t.payload,
+        });
+        await upsertDay({
+          day_of_week: t.dayOfWeek, module: t.module, template_id: id, label: t.label ?? null,
+        });
+      }
+      toast.success("Summer Plan imported");
+    } catch (e: any) {
+      toast.error(e.message || "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const dayMap = useMemo(() => {
     const m = new Map(days.map((d) => [d.day_of_week, d]));
