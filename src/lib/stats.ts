@@ -215,3 +215,99 @@ export function exerciseSeries(gym: GymSession[], exerciseName: string) {
   }
   return points;
 }
+
+// ----- Workout streaks -----
+export interface ModuleStreak {
+  current: number;       // consecutive days with at least one session, ending today or yesterday
+  best: number;          // longest such streak in history
+  longestGap: number;    // longest stretch of inactive days between sessions (or up to today)
+  lastSessionDaysAgo?: number;
+  totalActiveDays: number;
+}
+
+function computeStreak(dates: string[]): ModuleStreak {
+  if (dates.length === 0) {
+    return { current: 0, best: 0, longestGap: 0, totalActiveDays: 0 };
+  }
+  // Unique day timestamps (local) sorted ascending
+  const dayMs = new Set<number>();
+  for (const iso of dates) {
+    try {
+      const d = startOfDay(parseISO(iso)).getTime();
+      dayMs.add(d);
+    } catch { /* ignore */ }
+  }
+  const days = Array.from(dayMs).sort((a, b) => a - b);
+  if (days.length === 0) {
+    return { current: 0, best: 0, longestGap: 0, totalActiveDays: 0 };
+  }
+
+  const ONE_DAY = 86_400_000;
+  const today = startOfDay(new Date()).getTime();
+
+  // Best consecutive-day streak (any time in history)
+  let best = 1;
+  let run = 1;
+  for (let i = 1; i < days.length; i++) {
+    if (days[i] - days[i - 1] === ONE_DAY) {
+      run += 1;
+      if (run > best) best = run;
+    } else if (days[i] !== days[i - 1]) {
+      run = 1;
+    }
+  }
+
+  // Current streak: must end today or yesterday
+  let current = 0;
+  const lastDay = days[days.length - 1];
+  const daysSinceLast = Math.round((today - lastDay) / ONE_DAY);
+  if (daysSinceLast <= 1) {
+    current = 1;
+    for (let i = days.length - 2; i >= 0; i--) {
+      if (days[i + 1] - days[i] === ONE_DAY) current += 1;
+      else break;
+    }
+  }
+
+  // Longest inactive gap (between sessions, plus the open trailing gap to today)
+  let longestGap = 0;
+  for (let i = 1; i < days.length; i++) {
+    const gap = Math.round((days[i] - days[i - 1]) / ONE_DAY) - 1;
+    if (gap > longestGap) longestGap = gap;
+  }
+  const trailing = Math.max(0, daysSinceLast); // open gap up to today
+  if (trailing > longestGap) longestGap = trailing;
+
+  return {
+    current,
+    best,
+    longestGap,
+    lastSessionDaysAgo: daysSinceLast,
+    totalActiveDays: days.length,
+  };
+}
+
+export interface WorkoutStreaks {
+  gym: ModuleStreak;
+  pt: ModuleStreak;
+  cardio: ModuleStreak;
+  any: ModuleStreak; // streak across any of the 3 modules
+}
+
+export function useWorkoutStreaks(
+  gym: GymSession[],
+  pt: PTSession[],
+  cardio: CardioSession[],
+): WorkoutStreaks {
+  return useMemo(() => {
+    const gymDates = gym.map((s) => s.date);
+    const ptDates = pt.map((s) => s.date);
+    const cardioDates = cardio.map((s) => s.date);
+    return {
+      gym: computeStreak(gymDates),
+      pt: computeStreak(ptDates),
+      cardio: computeStreak(cardioDates),
+      any: computeStreak([...gymDates, ...ptDates, ...cardioDates]),
+    };
+  }, [gym, pt, cardio]);
+}
