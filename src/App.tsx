@@ -23,6 +23,23 @@ const queryClient = new QueryClient({
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const wasSignedIn = useRef(false);
+
+  useEffect(() => {
+    if (user) wasSignedIn.current = true;
+  }, [user]);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT" && wasSignedIn.current) {
+        toast.error("Session expired — please sign in again");
+        navigate("/auth", { replace: true });
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [navigate]);
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
