@@ -127,6 +127,52 @@ export default function Plan() {
         </section>
       )}
 
+      {/* CSV import */}
+      <section className="mt-6">
+        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Import / export
+        </h2>
+        <CsvImport<ParsedPlan>
+          title="Import plan from CSV"
+          description="Download the template, fill it in Excel/Numbers/Sheets, then upload to create templates and schedule days in one go."
+          templateUrl="/templates/plan-template.csv"
+          templateFilename="plan-template.csv"
+          parse={parsePlanCsv}
+          isEmpty={(p) => p.templates.length === 0 && p.rests.length === 0}
+          renderPreview={(p) => (
+            <div className="space-y-2 text-xs">
+              <p className="font-semibold">{p.templates.length} template(s), {p.rests.length} rest day(s)</p>
+              {p.templates.map((t) => (
+                <div key={t.template_name} className="rounded-md border p-2">
+                  <p className="font-medium">{t.emoji ? `${t.emoji} ` : ""}{t.template_name} <span className="text-muted-foreground">· {t.module}{t.day_of_week != null ? ` · ${DAYS[t.day_of_week]}` : ""}</span></p>
+                  {t.cardio
+                    ? <p className="text-muted-foreground">{t.cardio.activity} · {t.cardio.durationMin}m</p>
+                    : <p className="text-muted-foreground">{t.exercises.length} exercises</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          onConfirm={async (p) => {
+            const existingNames = new Set(templates.map((t) => t.name.toLowerCase()));
+            for (const t of p.templates) {
+              if (existingNames.has(t.template_name.toLowerCase())) continue;
+              const payload = t.module === "cardio"
+                ? (t.cardio ?? { activity: "Cardio", durationMin: 30 })
+                : { exercises: t.exercises };
+              const id = await createTpl({
+                module: t.module, name: t.template_name, emoji: t.emoji, payload,
+              });
+              if (t.day_of_week != null) {
+                await upsertDay({ day_of_week: t.day_of_week, module: t.module, template_id: id, label: t.label ?? null });
+              }
+            }
+            for (const r of p.rests) {
+              await upsertDay({ day_of_week: r.day_of_week, module: "rest", template_id: null, label: null });
+            }
+          }}
+        />
+      </section>
+
       {/* Weekly schedule */}
       <section className="mt-7">
         <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
