@@ -252,6 +252,46 @@ export default function GoalsPage() {
           </div>
         </section>
       )}
+
+      <section className="mt-7">
+        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Bulk import measurements
+        </h2>
+        <CsvImport<ParsedMetrics>
+          title="Body metrics from CSV"
+          description="Download the template, fill historical weight / muscle / body-fat readings, then upload."
+          templateUrl="/templates/body-metrics-template.csv"
+          templateFilename="body-metrics-template.csv"
+          parse={parseMetricsCsv}
+          isEmpty={(p) => p.rows.length === 0}
+          renderPreview={(p) => (
+            <div className="space-y-1 text-xs max-h-60 overflow-auto">
+              <p className="font-semibold mb-1">{p.rows.length} measurement(s)</p>
+              {p.rows.slice(0, 20).map((r, i) => (
+                <p key={i} className="text-muted-foreground">
+                  {r.date.slice(0, 10)} · {[
+                    r.weightKg && `${r.weightKg}kg`,
+                    r.muscleMassPct && `${r.muscleMassPct}% muscle`,
+                    r.bodyFatPct && `${r.bodyFatPct}% fat`,
+                  ].filter(Boolean).join(" · ") || "—"}
+                </p>
+              ))}
+            </div>
+          )}
+          onConfirm={async (p) => {
+            const existing = new Set(metrics.map((m) => m.date.slice(0, 10)));
+            for (const r of p.rows) {
+              if (existing.has(r.date.slice(0, 10))) continue;
+              await createMetric({
+                date: r.date,
+                weightKg: r.weightKg,
+                muscleMassPct: r.muscleMassPct,
+                bodyFatPct: r.bodyFatPct,
+              });
+            }
+          }}
+        />
+      </section>
     </AppShell>
   );
 }
