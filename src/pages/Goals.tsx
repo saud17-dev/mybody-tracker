@@ -74,6 +74,8 @@ export default function GoalsPage() {
   const weekly = useWeeklyCounts(gym, pt, cardio);
   const muscleVolume = useWeeklyMuscleVolume(gym);
 
+  const trends = useBodyTrends(metrics, goals);
+
   const [metricOpen, setMetricOpen] = useState(false);
   const [weight, setWeight] = useState<number | "">("");
   const [muscle, setMuscle] = useState<number | "">("");
