@@ -1,8 +1,9 @@
 export type ModuleType = "gym" | "pt" | "cardio";
+export type Unit = "kg" | "lbs";
 
 export interface GymSet {
   reps: number;
-  weight: number;
+  weight: number; // always stored in kg
 }
 
 export interface GymExerciseEntry {
@@ -14,18 +15,23 @@ export interface GymExerciseEntry {
 
 export interface GymSession {
   id: string;
-  date: string; // ISO
+  date: string;
   exercises: GymExerciseEntry[];
   notes?: string;
+}
+
+export interface PTSet {
+  reps: number;       // reps OR seconds for held stretches
+  weight?: number;    // optional, kg
+  painScale: number;  // 1-10
 }
 
 export interface PTExerciseEntry {
   id: string;
   exerciseName: string;
   category: string;
-  sets: number;
-  reps: number;
-  painScale: number; // 1-10
+  bodyArea?: string;
+  sets: PTSet[];
   notes?: string;
 }
 
@@ -60,4 +66,34 @@ export interface Goals {
   targetWeightKg?: number;
   targetMuscleMassPct?: number;
   targetBodyFatPct?: number;
+}
+
+export interface Profile {
+  id: string;
+  displayName: string | null;
+  unit: Unit;
+  restTimerSeconds: number;
+}
+
+export interface CustomExercise {
+  id: string;
+  module: "gym" | "pt";
+  name: string;
+  muscleGroup: string;
+  bodyArea?: string;
+}
+
+export interface PlanDay {
+  day_of_week: number; // 0-6, Sun-Sat
+  module: "gym" | "pt" | "cardio" | "rest";
+  template_id?: string | null;
+  label?: string | null;
+}
+
+export interface WorkoutTemplate {
+  id: string;
+  module: "gym" | "pt" | "cardio";
+  name: string;
+  emoji?: string;
+  payload: any;
 }
