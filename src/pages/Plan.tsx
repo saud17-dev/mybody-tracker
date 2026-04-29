@@ -79,7 +79,11 @@ export default function Plan() {
     return m;
   }, [days]);
 
-  const todayPlan = dayMap.get(todayDow);
+  const rawTodayPlan = dayMap.get(todayDow);
+  const todayIsSkipped = skipped.has(todayDow);
+  const todayPlan = todayIsSkipped
+    ? { day_of_week: todayDow, module: "rest" as const, template_id: null, label: "Skipped this week" }
+    : rawTodayPlan;
   const todayTpl = todayPlan?.template_id ? templates.find((t) => t.id === todayPlan.template_id) : null;
 
   const startToday = () => {
@@ -87,6 +91,22 @@ export default function Plan() {
     const url = `${moduleStyle[todayPlan.module].route}${todayPlan.template_id ? `?template=${todayPlan.template_id}` : ""}`;
     navigate(url);
   };
+
+  const moveToToday = async (sourceDow: number) => {
+    if (sourceDow === todayDow) return;
+    await swapDays({ a: sourceDow, b: todayDow });
+    toast.success(`Moved to ${DAYS[todayDow]}`);
+  };
+
+  const handleDragEnd = async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const a = Number(active.id);
+    const b = Number(over.id);
+    await swapDays({ a, b });
+  };
+
+  const dowOrder = [1, 2, 3, 4, 5, 6, 0];
 
   return (
     <AppShell title="Your Plan" subtitle={format(today, "EEEE, MMM d")} accent="primary">
