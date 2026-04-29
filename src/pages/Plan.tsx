@@ -39,6 +39,42 @@ const moduleStyle = {
   rest: { bg: "bg-muted", text: "text-muted-foreground", icon: Coffee, route: "" },
 } as const;
 
+// Bold, full-color treatments for the hero day cards (ADHD-friendly visual identity)
+const moduleHero = {
+  gym: {
+    surface: "bg-[image:var(--gradient-gym)] text-white",
+    chip: "bg-white/20 text-white",
+    border: "border-gym",
+    accent: "text-gym",
+    soft: "bg-gym/10",
+    label: "Gym",
+  },
+  pt: {
+    surface: "bg-[image:var(--gradient-pt)] text-white",
+    chip: "bg-white/20 text-white",
+    border: "border-pt",
+    accent: "text-pt",
+    soft: "bg-pt/10",
+    label: "PT",
+  },
+  cardio: {
+    surface: "bg-[image:var(--gradient-cardio)] text-white",
+    chip: "bg-white/20 text-white",
+    border: "border-cardio",
+    accent: "text-cardio",
+    soft: "bg-cardio/10",
+    label: "Cardio",
+  },
+  rest: {
+    surface: "bg-muted text-muted-foreground",
+    chip: "bg-foreground/10 text-foreground",
+    border: "border-border",
+    accent: "text-muted-foreground",
+    soft: "bg-muted",
+    label: "Rest",
+  },
+} as const;
+
 export default function Plan() {
   const navigate = useNavigate();
   const today = new Date();
