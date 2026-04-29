@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Plus, Trash2, Activity } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -12,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { useCardioSessions, uid } from "@/lib/storage";
+import { getTemplateById } from "@/lib/plan";
 import { toast } from "sonner";
 
 export default function Cardio() {
