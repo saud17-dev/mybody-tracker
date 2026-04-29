@@ -168,9 +168,6 @@ export default function Plan() {
     });
   }, [today, dayMap, templates, skipped]);
 
-  const startTemplate = (t: { id: string; module: keyof typeof moduleStyle }) => {
-    navigate(`${moduleStyle[t.module].route}?template=${t.id}`);
-  };
 
   return (
     <AppShell title="Your Plan" subtitle={format(today, "EEEE, MMM d")} accent="primary">
