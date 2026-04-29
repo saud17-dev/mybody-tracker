@@ -136,6 +136,25 @@ export default function GoalsPage() {
         <GoalEditor goals={goals} unit={unit} onSave={async (g) => { await saveGoals(g); toast.success("Goals updated"); }} />
       </div>
 
+      {/* Streaks */}
+      <section className="mt-7">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Flame className="h-3.5 w-3.5" /> Streaks
+          </h2>
+          {streaks.any.current > 0 && (
+            <span className="text-[11px] font-semibold text-primary">
+              🔥 {streaks.any.current}-day overall
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <StreakCard label="Gym" streak={streaks.gym} variant="gym" Icon={Dumbbell} />
+          <StreakCard label="PT" streak={streaks.pt} variant="pt" Icon={HeartPulse} />
+          <StreakCard label="Cardio" streak={streaks.cardio} variant="cardio" Icon={Activity} />
+        </div>
+      </section>
+
       {/* Weekly volume by muscle group */}
       {muscleVolume.length > 0 && (
         <section className="mt-7">
