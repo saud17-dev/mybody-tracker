@@ -146,8 +146,8 @@ function SignUpForm({ onSubmit, submitting }: { onSubmit: (e: string, p: string,
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="su-pwd">Password</Label>
-        <Input id="su-pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" minLength={6} />
-        <p className="text-[10px] text-muted-foreground">At least 6 characters. Strong passwords recommended.</p>
+        <Input id="su-pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" minLength={8} />
+        <PasswordHints value={password} />
       </div>
       <Button type="submit" className="w-full" size="lg" disabled={submitting}>
         {submitting ? "Creating..." : "Create account"}
