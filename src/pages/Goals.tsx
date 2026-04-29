@@ -1,24 +1,12 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import {
-  Plus,
-  Settings as SettingsIcon,
-  Dumbbell,
-  HeartPulse,
-  Activity,
-  Scale,
-  TrendingUp,
-  Trash2,
+  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, Trash2, BarChart3,
 } from "lucide-react";
 import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ReferenceLine,
-  CartesianGrid,
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid,
+  BarChart, Bar,
 } from "recharts";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -29,14 +17,11 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
-  useGymSessions,
-  usePTSessions,
-  useCardioSessions,
-  useBodyMetrics,
-  useGoals,
-  uid,
-} from "@/lib/storage";
-import { useWeeklyCounts } from "@/lib/stats";
+  useGymSessions, usePTSessions, useCardioSessions, useBodyMetrics, useGoals, useProfile,
+} from "@/lib/cloud";
+import { useWeeklyCounts, useWeeklyMuscleVolume } from "@/lib/stats";
+import { toDisplay, fromInput, formatWeight } from "@/lib/units";
+import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -67,77 +52,74 @@ function GoalRing({ label, current, target, variant, Icon }: RingProps) {
       </div>
       <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums">
-        {current}
-        <span className="text-base font-normal text-muted-foreground">/{target}</span>
+        {current}<span className="text-base font-normal text-muted-foreground">/{target}</span>
       </p>
       <Progress value={pct} className={cn("mt-2 h-1.5", s.bar)} />
     </Card>
   );
 }
 
-export default function Goals() {
-  const [gym] = useGymSessions();
-  const [pt] = usePTSessions();
-  const [cardio] = useCardioSessions();
-  const [metrics, setMetrics] = useBodyMetrics();
-  const [goals, setGoals] = useGoals();
+export default function GoalsPage() {
+  const navigate = useNavigate();
+  const { sessions: gym } = useGymSessions();
+  const { sessions: pt } = usePTSessions();
+  const { sessions: cardio } = useCardioSessions();
+  const { metrics, create: createMetric, remove: removeMetric } = useBodyMetrics();
+  const { goals, save: saveGoals } = useGoals();
+  const { profile } = useProfile();
+  const unit = profile?.unit ?? "kg";
 
   const weekly = useWeeklyCounts(gym, pt, cardio);
+  const muscleVolume = useWeeklyMuscleVolume(gym);
 
   const [metricOpen, setMetricOpen] = useState(false);
   const [weight, setWeight] = useState<number | "">("");
   const [muscle, setMuscle] = useState<number | "">("");
   const [bodyFat, setBodyFat] = useState<number | "">("");
 
-  const addMetric = () => {
-    if (weight === "" && muscle === "" && bodyFat === "") {
-      toast.error("Enter at least one value");
-      return;
-    }
-    setMetrics((prev) => [
-      ...prev,
-      {
-        id: uid(),
+  const addMetric = async () => {
+    if (weight === "" && muscle === "" && bodyFat === "") return toast.error("Enter at least one value");
+    try {
+      await createMetric({
         date: new Date().toISOString(),
-        weightKg: weight === "" ? undefined : Number(weight),
+        weightKg: weight === "" ? undefined : fromInput(Number(weight), unit),
         muscleMassPct: muscle === "" ? undefined : Number(muscle),
         bodyFatPct: bodyFat === "" ? undefined : Number(bodyFat),
-      },
-    ]);
-    setWeight(""); setMuscle(""); setBodyFat("");
-    setMetricOpen(false);
-    toast.success("Measurement added");
+      });
+      setWeight(""); setMuscle(""); setBodyFat("");
+      setMetricOpen(false);
+      toast.success("Measurement added");
+    } catch (e: any) { toast.error(e.message); }
   };
 
   const sortedMetrics = useMemo(
     () => [...metrics].sort((a, b) => a.date.localeCompare(b.date)),
     [metrics],
   );
-
   const chartData = useMemo(
-    () =>
-      sortedMetrics.map((m) => ({
-        date: format(parseISO(m.date), "MMM d"),
-        weight: m.weightKg ?? null,
-        muscle: m.muscleMassPct ?? null,
-        bodyFat: m.bodyFatPct ?? null,
-      })),
-    [sortedMetrics],
+    () => sortedMetrics.map((m) => ({
+      date: format(parseISO(m.date), "MMM d"),
+      weight: toDisplay(m.weightKg, unit) ?? null,
+      muscle: m.muscleMassPct ?? null,
+      bodyFat: m.bodyFatPct ?? null,
+    })),
+    [sortedMetrics, unit],
   );
-
   const latest = sortedMetrics[sortedMetrics.length - 1];
+  const targetWeightDisp = toDisplay(goals.targetWeightKg, unit);
 
   return (
-    <AppShell
-      title="Your Goals"
-      subtitle={format(new Date(), "EEEE, MMM d")}
-      accent="primary"
-      right={<GoalSettings goals={goals} setGoals={setGoals} />}
-    >
+    <AppShell title="Your Goals" subtitle={format(new Date(), "EEEE, MMM d")} accent="primary"
+      right={
+        <div className="flex gap-2">
+          <Button size="icon" className="h-11 w-11 rounded-full bg-white/15 text-white hover:bg-white/25"
+            onClick={() => navigate("/settings")} aria-label="Settings">
+            <SettingsIcon className="h-5 w-5" />
+          </Button>
+        </div>
+      }>
       <section>
-        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          This week
-        </h2>
+        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">This week</h2>
         <div className="grid grid-cols-3 gap-3">
           <GoalRing label="Gym" current={weekly.gym} target={goals.weeklyGym} variant="gym" Icon={Dumbbell} />
           <GoalRing label="PT" current={weekly.pt} target={goals.weeklyPT} variant="pt" Icon={HeartPulse} />
@@ -145,11 +127,44 @@ export default function Goals() {
         </div>
       </section>
 
+      {/* Edit goals */}
+      <div className="mt-4 px-1">
+        <GoalEditor goals={goals} unit={unit} onSave={async (g) => { await saveGoals(g); toast.success("Goals updated"); }} />
+      </div>
+
+      {/* Weekly volume by muscle group */}
+      {muscleVolume.length > 0 && (
+        <section className="mt-7">
+          <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <BarChart3 className="h-3.5 w-3.5" /> Volume by muscle (this week)
+          </h2>
+          <Card className="p-3">
+            <div className="h-56 w-full">
+              <ResponsiveContainer>
+                <BarChart data={muscleVolume.map((v) => ({
+                  group: v.group,
+                  volume: Math.round(toDisplay(v.volume, unit) ?? 0),
+                  sets: v.sets,
+                }))} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="group" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+                    formatter={(v: any, name: string) => [name === "volume" ? `${v} ${unit}` : `${v} sets`, ""]}
+                  />
+                  <Bar dataKey="volume" fill="hsl(var(--gym))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="mt-1 text-center text-[10px] text-muted-foreground">Total weekly tonnage by muscle</p>
+          </Card>
+        </section>
+      )}
+
       <section className="mt-7">
         <div className="mb-3 flex items-center justify-between px-1">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Body composition
-          </h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Body composition</h2>
           <Sheet open={metricOpen} onOpenChange={setMetricOpen}>
             <SheetTrigger asChild>
               <Button size="sm" variant="ghost" className="h-7 gap-1 text-primary">
@@ -157,12 +172,10 @@ export default function Goals() {
               </Button>
             </SheetTrigger>
             <SheetContent side="bottom" className="rounded-t-3xl">
-              <SheetHeader>
-                <SheetTitle>Add measurement</SheetTitle>
-              </SheetHeader>
+              <SheetHeader><SheetTitle>Add measurement</SheetTitle></SheetHeader>
               <div className="mt-5 space-y-4">
                 <div className="space-y-2">
-                  <Label>Weight (kg)</Label>
+                  <Label>Weight ({unit})</Label>
                   <Input type="number" inputMode="decimal" step="0.1" value={weight}
                     onChange={(e) => setWeight(e.target.value === "" ? "" : Number(e.target.value))} />
                 </div>
@@ -184,22 +197,18 @@ export default function Goals() {
 
         {latest ? (
           <div className="grid grid-cols-3 gap-3">
-            <BodyStat label="Weight" unit="kg" current={latest.weightKg} target={goals.targetWeightKg} Icon={Scale} />
-            <BodyStat label="Muscle" unit="%" current={latest.muscleMassPct} target={goals.targetMuscleMassPct} Icon={TrendingUp} />
-            <BodyStat label="Body fat" unit="%" current={latest.bodyFatPct} target={goals.targetBodyFatPct} Icon={TrendingUp} />
+            <BodyStat label="Weight" unit={unit} currentDisp={toDisplay(latest.weightKg, unit)} targetDisp={targetWeightDisp} Icon={Scale} />
+            <BodyStat label="Muscle" unit="%" currentDisp={latest.muscleMassPct} targetDisp={goals.targetMuscleMassPct} Icon={TrendingUp} />
+            <BodyStat label="Body fat" unit="%" currentDisp={latest.bodyFatPct} targetDisp={goals.targetBodyFatPct} Icon={TrendingUp} />
           </div>
         ) : (
-          <Card className="p-6 text-center text-sm text-muted-foreground">
-            No measurements yet. Tap "Log" to add one.
-          </Card>
+          <Card className="p-6 text-center text-sm text-muted-foreground">No measurements yet. Tap "Log" to add one.</Card>
         )}
       </section>
 
       {chartData.length >= 2 && (
         <section className="mt-7">
-          <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Progress
-          </h2>
+          <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Progress</h2>
           <Tabs defaultValue="weight">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="weight">Weight</TabsTrigger>
@@ -207,7 +216,7 @@ export default function Goals() {
               <TabsTrigger value="bodyFat">Body fat</TabsTrigger>
             </TabsList>
             <TabsContent value="weight">
-              <MetricChart data={chartData} dataKey="weight" target={goals.targetWeightKg} color="hsl(var(--primary))" unit="kg" />
+              <MetricChart data={chartData} dataKey="weight" target={targetWeightDisp} color="hsl(var(--primary))" unit={unit} />
             </TabsContent>
             <TabsContent value="muscle">
               <MetricChart data={chartData} dataKey="muscle" target={goals.targetMuscleMassPct} color="hsl(var(--gym))" unit="%" />
@@ -221,26 +230,21 @@ export default function Goals() {
 
       {metrics.length > 0 && (
         <section className="mt-7">
-          <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Recent measurements
-          </h2>
+          <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent measurements</h2>
           <div className="space-y-2">
-            {[...metrics].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6).map((m) => (
+            {[...metrics].slice(0, 6).map((m) => (
               <Card key={m.id} className="flex items-center justify-between px-4 py-3">
                 <div>
                   <p className="text-sm font-medium">{format(parseISO(m.date), "MMM d, yyyy")}</p>
                   <p className="text-xs text-muted-foreground">
                     {[
-                      m.weightKg != null && `${m.weightKg} kg`,
+                      m.weightKg != null && formatWeight(m.weightKg, unit, 1),
                       m.muscleMassPct != null && `${m.muscleMassPct}% muscle`,
                       m.bodyFatPct != null && `${m.bodyFatPct}% fat`,
                     ].filter(Boolean).join(" · ")}
                   </p>
                 </div>
-                <button
-                  onClick={() => setMetrics((prev) => prev.filter((x) => x.id !== m.id))}
-                  className="text-muted-foreground hover:text-destructive"
-                >
+                <button onClick={() => removeMetric(m.id)} className="text-muted-foreground hover:text-destructive">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </Card>
@@ -253,20 +257,20 @@ export default function Goals() {
 }
 
 function BodyStat({
-  label, unit, current, target, Icon,
-}: { label: string; unit: string; current?: number; target?: number; Icon: React.ComponentType<{ className?: string }> }) {
-  const diff = current != null && target != null ? current - target : null;
+  label, unit, currentDisp, targetDisp, Icon,
+}: { label: string; unit: string; currentDisp?: number; targetDisp?: number; Icon: React.ComponentType<{ className?: string }> }) {
+  const diff = currentDisp != null && targetDisp != null ? currentDisp - targetDisp : null;
   return (
     <Card className="p-4">
       <Icon className="h-4 w-4 text-muted-foreground" />
       <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums">
-        {current != null ? current : "—"}
-        {current != null && <span className="text-xs font-normal text-muted-foreground">{unit}</span>}
+        {currentDisp != null ? currentDisp.toFixed(1).replace(/\.0$/, "") : "—"}
+        {currentDisp != null && <span className="text-xs font-normal text-muted-foreground">{unit}</span>}
       </p>
-      {target != null && (
+      {targetDisp != null && (
         <p className="mt-0.5 text-[10px] text-muted-foreground">
-          Goal: {target}{unit}
+          Goal: {targetDisp.toFixed(1).replace(/\.0$/, "")}{unit}
           {diff != null && (
             <span className={cn("ml-1 font-semibold", Math.abs(diff) < 0.5 ? "text-primary" : diff > 0 ? "text-destructive" : "text-emerald-500")}>
               {diff > 0 ? "+" : ""}{diff.toFixed(1)}
@@ -278,16 +282,11 @@ function BodyStat({
   );
 }
 
-function MetricChart({
-  data, dataKey, target, color, unit,
-}: { data: any[]; dataKey: string; target?: number; color: string; unit: string }) {
+function MetricChart({ data, dataKey, target, color, unit }:
+  { data: any[]; dataKey: string; target?: number; color: string; unit: string }) {
   const filtered = data.filter((d) => d[dataKey] != null);
   if (filtered.length < 2) {
-    return (
-      <Card className="mt-3 p-6 text-center text-sm text-muted-foreground">
-        Need at least 2 data points
-      </Card>
-    );
+    return <Card className="mt-3 p-6 text-center text-sm text-muted-foreground">Need at least 2 data points</Card>;
   }
   return (
     <Card className="mt-3 p-3">
@@ -297,12 +296,11 @@ function MetricChart({
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
             <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} domain={["auto", "auto"]} />
-            <Tooltip
-              contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-              formatter={(v: any) => [`${v}${unit}`, ""]}
-            />
+            <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+              formatter={(v: any) => [`${v}${unit}`, ""]} />
             {target != null && (
-              <ReferenceLine y={target} stroke={color} strokeDasharray="4 4" strokeOpacity={0.5} label={{ value: `Goal ${target}${unit}`, fontSize: 10, fill: color, position: "right" }} />
+              <ReferenceLine y={target} stroke={color} strokeDasharray="4 4" strokeOpacity={0.5}
+                label={{ value: `Goal ${target}${unit}`, fontSize: 10, fill: color, position: "right" }} />
             )}
             <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2.5} dot={{ r: 4, fill: color }} activeDot={{ r: 6 }} />
           </LineChart>
@@ -312,65 +310,56 @@ function MetricChart({
   );
 }
 
-function GoalSettings({ goals, setGoals }: { goals: ReturnType<typeof useGoals>[0]; setGoals: ReturnType<typeof useGoals>[1] }) {
+function GoalEditor({ goals, unit, onSave }: { goals: Goals; unit: "kg" | "lbs"; onSave: (g: Goals) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(goals);
-
-  const num = (v: any) => (v === "" || v == null ? undefined : Number(v));
 
   return (
     <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (o) setDraft(goals); }}>
       <SheetTrigger asChild>
-        <Button size="icon" className="h-11 w-11 rounded-full bg-white/15 text-white hover:bg-white/25">
-          <SettingsIcon className="h-5 w-5" />
+        <Button variant="outline" size="sm" className="w-full">
+          <SettingsIcon className="h-4 w-4 mr-1" /> Edit weekly targets & body goals
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-3xl">
-        <SheetHeader>
-          <SheetTitle>Edit Goals</SheetTitle>
-        </SheetHeader>
+        <SheetHeader><SheetTitle>Edit Goals</SheetTitle></SheetHeader>
         <div className="mt-5 space-y-5">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Weekly frequency</p>
             <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Gym</Label>
-                <Input type="number" min={0} value={draft.weeklyGym}
-                  onChange={(e) => setDraft({ ...draft, weeklyGym: Number(e.target.value) || 0 })} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">PT</Label>
-                <Input type="number" min={0} value={draft.weeklyPT}
-                  onChange={(e) => setDraft({ ...draft, weeklyPT: Number(e.target.value) || 0 })} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Cardio</Label>
-                <Input type="number" min={0} value={draft.weeklyCardio}
-                  onChange={(e) => setDraft({ ...draft, weeklyCardio: Number(e.target.value) || 0 })} />
-              </div>
+              {(["weeklyGym","weeklyPT","weeklyCardio"] as const).map((k, i) => (
+                <div key={k} className="space-y-1">
+                  <Label className="text-xs">{["Gym","PT","Cardio"][i]}</Label>
+                  <Input type="number" min={0} value={draft[k]}
+                    onChange={(e) => setDraft({ ...draft, [k]: Number(e.target.value) || 0 })} />
+                </div>
+              ))}
             </div>
           </div>
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Body composition targets</p>
             <div className="space-y-3">
               <div className="space-y-1">
-                <Label className="text-xs">Target weight (kg)</Label>
-                <Input type="number" step="0.1" value={draft.targetWeightKg ?? ""}
-                  onChange={(e) => setDraft({ ...draft, targetWeightKg: num(e.target.value) })} />
+                <Label className="text-xs">Target weight ({unit})</Label>
+                <Input type="number" step="0.1" value={toDisplay(draft.targetWeightKg, unit) ?? ""}
+                  onChange={(e) => setDraft({
+                    ...draft,
+                    targetWeightKg: e.target.value === "" ? undefined : fromInput(Number(e.target.value), unit),
+                  })} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Target muscle mass (%)</Label>
                 <Input type="number" step="0.1" value={draft.targetMuscleMassPct ?? ""}
-                  onChange={(e) => setDraft({ ...draft, targetMuscleMassPct: num(e.target.value) })} />
+                  onChange={(e) => setDraft({ ...draft, targetMuscleMassPct: e.target.value === "" ? undefined : Number(e.target.value) })} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Target body fat (%)</Label>
                 <Input type="number" step="0.1" value={draft.targetBodyFatPct ?? ""}
-                  onChange={(e) => setDraft({ ...draft, targetBodyFatPct: num(e.target.value) })} />
+                  onChange={(e) => setDraft({ ...draft, targetBodyFatPct: e.target.value === "" ? undefined : Number(e.target.value) })} />
               </div>
             </div>
           </div>
-          <Button size="lg" className="w-full" onClick={() => { setGoals(draft); setOpen(false); toast.success("Goals updated"); }}>
+          <Button size="lg" className="w-full" onClick={async () => { await onSave(draft); setOpen(false); }}>
             Save goals
           </Button>
         </div>

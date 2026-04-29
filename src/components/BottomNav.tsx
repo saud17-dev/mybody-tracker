@@ -26,16 +26,11 @@ export function BottomNav() {
           const Icon = it.icon;
           return (
             <li key={it.to}>
-              <NavLink
-                to={it.to}
-                end={it.end}
-                className={({ isActive }) =>
-                  cn(
-                    "flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors",
-                    isActive ? colorMap[it.to] : "text-muted-foreground",
-                  )
-                }
-              >
+              <NavLink to={it.to} end={it.end}
+                className={({ isActive }) => cn(
+                  "flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors",
+                  isActive ? colorMap[it.to] : "text-muted-foreground",
+                )}>
                 {({ isActive }) => (
                   <>
                     <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />

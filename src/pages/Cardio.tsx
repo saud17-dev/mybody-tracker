@@ -12,12 +12,17 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CARDIO_ACTIVITIES } from "@/lib/exercises";
-import { useCardioSessions, uid } from "@/lib/storage";
-import { getTemplateById } from "@/lib/plan";
+import { useCardioSessions, useProfile, useWorkoutTemplates } from "@/lib/cloud";
+import { distanceLabel, distanceToDisplay, distanceFromInput } from "@/lib/units";
 import { toast } from "sonner";
 
 export default function Cardio() {
-  const [sessions, setSessions] = useCardioSessions();
+  const { sessions, create, remove } = useCardioSessions();
+  const { profile } = useProfile();
+  const unit = profile?.unit ?? "kg";
+  const distLbl = distanceLabel(unit);
+  const { templates } = useWorkoutTemplates();
+
   const [open, setOpen] = useState(false);
   const [activity, setActivity] = useState(CARDIO_ACTIVITIES[0]);
   const [duration, setDuration] = useState<number>(30);
@@ -28,59 +33,46 @@ export default function Cardio() {
   useEffect(() => {
     const tplId = searchParams.get("template");
     if (!tplId) return;
-    const tpl = getTemplateById(tplId);
-    if (!tpl || tpl.module !== "cardio" || !tpl.cardio) {
-      toast.error("Template not found");
-    } else {
-      const match = CARDIO_ACTIVITIES.find((a) => a.toLowerCase() === tpl.cardio!.activity.toLowerCase());
-      setActivity(match ?? CARDIO_ACTIVITIES[0]);
-      setDuration(tpl.cardio.durationMin);
-      setNotes([tpl.cardio.note, tpl.notes].filter(Boolean).join(" — "));
+    const tpl = templates.find((t) => t.id === tplId);
+    if (tpl && tpl.module === "cardio") {
+      setActivity(tpl.payload?.activity || CARDIO_ACTIVITIES[0]);
+      setDuration(tpl.payload?.durationMin || 30);
+      setNotes(tpl.name);
       setOpen(true);
-      toast.success(`Loaded "${tpl.title}"`);
+    } else if (templates.length > 0) {
+      toast.error("Template not found");
     }
     searchParams.delete("template");
     setSearchParams(searchParams, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [templates.length]);
 
   const reset = () => {
-    setActivity(CARDIO_ACTIVITIES[0]);
-    setDuration(30);
-    setDistance("");
-    setNotes("");
+    setActivity(CARDIO_ACTIVITIES[0]); setDuration(30); setDistance(""); setNotes("");
   };
 
-  const save = () => {
-    if (!duration || duration <= 0) {
-      toast.error("Add a duration");
-      return;
+  const save = async () => {
+    if (!duration || duration <= 0) return toast.error("Add a duration");
+    const distKm = distance === "" ? undefined : distanceFromInput(Number(distance), unit);
+    try {
+      await create({
+        date: new Date().toISOString(), activity, durationMin: duration,
+        distanceKm: distKm, notes: notes || undefined,
+      });
+      toast.success("Cardio logged");
+      reset();
+      setOpen(false);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save");
     }
-    setSessions((prev) => [
-      {
-        id: uid(),
-        date: new Date().toISOString(),
-        activity,
-        durationMin: duration,
-        distanceKm: distance === "" ? undefined : Number(distance),
-        notes: notes || undefined,
-      },
-      ...prev,
-    ]);
-    toast.success("Cardio logged");
-    reset();
-    setOpen(false);
   };
 
-  const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+  const sorted = sessions;
   const totalMin = sessions.reduce((a, s) => a + s.durationMin, 0);
-  const totalKm = sessions.reduce((a, s) => a + (s.distanceKm || 0), 0);
+  const totalDistDisp = sessions.reduce((a, s) => a + (distanceToDisplay(s.distanceKm, unit) ?? 0), 0);
 
   return (
-    <AppShell
-      title="Cardio Log"
-      subtitle={`${sessions.length} sessions · ${totalMin} min`}
-      accent="cardio"
+    <AppShell title="Cardio Log" subtitle={`${sessions.length} sessions · ${totalMin} min`} accent="cardio"
       right={
         <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
           <SheetTrigger asChild>
@@ -98,41 +90,28 @@ export default function Cardio() {
                 <Select value={activity} onValueChange={setActivity}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CARDIO_ACTIVITIES.map((a) => (
-                      <SelectItem key={a} value={a}>{a}</SelectItem>
-                    ))}
+                    {CARDIO_ACTIVITIES.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Duration (min)</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    value={duration}
-                    onChange={(e) => setDuration(Number(e.target.value) || 0)}
-                  />
+                  <Input type="number" inputMode="numeric" value={duration}
+                    onChange={(e) => setDuration(Number(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Distance (km)</Label>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    value={distance}
+                  <Label>Distance ({distLbl})</Label>
+                  <Input type="number" inputMode="decimal" step="0.1" value={distance}
                     onChange={(e) => setDistance(e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder="Optional"
-                  />
+                    placeholder="Optional" />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Notes</Label>
                 <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
               </div>
-              <Button onClick={save} className="w-full bg-cardio hover:bg-cardio/90" size="lg">
-                Save session
-              </Button>
+              <Button onClick={save} className="w-full bg-cardio hover:bg-cardio/90" size="lg">Save session</Button>
             </div>
           </SheetContent>
         </Sheet>
@@ -150,33 +129,33 @@ export default function Cardio() {
               <p className="text-sm text-muted-foreground">No cardio sessions yet.</p>
             </div>
           )}
-          {sorted.map((s) => (
-            <Card key={s.id} className="flex items-center gap-4 p-4 shadow-[var(--shadow-card)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cardio/10 text-cardio">
-                <Activity className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold">{s.activity}</p>
-                <p className="text-xs text-muted-foreground">{format(parseISO(s.date), "EEE, MMM d • HH:mm")}</p>
-                {s.notes && <p className="mt-1 text-xs italic text-muted-foreground">"{s.notes}"</p>}
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-bold tabular-nums">{s.durationMin}<span className="text-xs font-normal text-muted-foreground"> min</span></p>
-                {s.distanceKm != null && (
-                  <p className="text-xs text-muted-foreground">{s.distanceKm} km</p>
-                )}
-              </div>
-              <button
-                onClick={() => {
-                  setSessions((prev) => prev.filter((x) => x.id !== s.id));
-                  toast("Deleted");
-                }}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </Card>
-          ))}
+          {sorted.map((s) => {
+            const distDisp = distanceToDisplay(s.distanceKm, unit);
+            return (
+              <Card key={s.id} className="flex items-center gap-4 p-4 shadow-[var(--shadow-card)]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cardio/10 text-cardio">
+                  <Activity className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold">{s.activity}</p>
+                  <p className="text-xs text-muted-foreground">{format(parseISO(s.date), "EEE, MMM d • HH:mm")}</p>
+                  {s.notes && <p className="mt-1 text-xs italic text-muted-foreground">"{s.notes}"</p>}
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold tabular-nums">
+                    {s.durationMin}<span className="text-xs font-normal text-muted-foreground"> min</span>
+                  </p>
+                  {distDisp != null && (
+                    <p className="text-xs text-muted-foreground">{distDisp.toFixed(1)} {distLbl}</p>
+                  )}
+                </div>
+                <button onClick={() => { remove(s.id); toast("Deleted"); }}
+                  className="text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </Card>
+            );
+          })}
         </TabsContent>
         <TabsContent value="stats" className="mt-4 grid grid-cols-2 gap-3">
           <Card className="p-4">
@@ -189,7 +168,7 @@ export default function Cardio() {
           </Card>
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">Total distance</p>
-            <p className="text-2xl font-bold">{totalKm.toFixed(1)}<span className="text-sm font-normal"> km</span></p>
+            <p className="text-2xl font-bold">{totalDistDisp.toFixed(1)}<span className="text-sm font-normal"> {distLbl}</span></p>
           </Card>
           <Card className="p-4">
             <p className="text-xs text-muted-foreground">Avg session</p>
