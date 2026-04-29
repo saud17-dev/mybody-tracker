@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { format, parseISO, subDays } from "date-fns";
+import { format, parseISO } from "date-fns";
 import {
   Plus,
   Settings as SettingsIcon,
