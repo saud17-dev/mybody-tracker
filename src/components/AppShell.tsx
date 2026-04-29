@@ -77,7 +77,10 @@ export function AppShell({ title, subtitle, accent = "primary", right, children 
               <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
               {subtitle && <p className="mt-1 text-sm text-white/80">{subtitle}</p>}
             </div>
-            {right}
+            <div className="flex items-center gap-2">
+              {right}
+              <UserMenu />
+            </div>
           </div>
         </header>
         <main className="-mt-4 rounded-t-3xl bg-background px-4 pb-28 pt-6">{children}</main>
