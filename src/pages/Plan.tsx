@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee } from "lucide-react";
+import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee, GripVertical, ArrowDownToLine, RotateCcw, EyeOff, Eye } from "lucide-react";
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +23,7 @@ import { ExercisePicker } from "@/components/ExercisePicker";
 import { CsvImport } from "@/components/CsvImport";
 import { GYM_EXERCISES, PT_EXERCISES, CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { usePlanSchedule, useWorkoutTemplates } from "@/lib/cloud";
+import { usePlanSkips } from "@/lib/planSkips";
 import { SUMMER_PLAN_TEMPLATES } from "@/lib/seedPlan";
 import { parsePlanCsv, type ParsedPlan } from "@/lib/csvPlan";
 import { cn } from "@/lib/utils";
