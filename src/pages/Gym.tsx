@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, Dumbbell, ChevronRight, X } from "lucide-react";
+import { Plus, Trash2, Dumbbell, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { GYM_EXERCISES } from "@/lib/exercises";
 import { useGymSessions, uid } from "@/lib/storage";
+import { getTemplateById, getCurrentPhase, exercisesForPhase } from "@/lib/plan";
 import type { GymExerciseEntry, GymSet } from "@/lib/types";
 import { toast } from "sonner";
 
