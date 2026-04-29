@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, LogOut, Scale, Timer, User as UserIcon } from "lucide-react";
+import { ArrowLeft, Download, Heart, LogOut, Scale, Timer, User as UserIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import {
   useProfile, useGymSessions, usePTSessions, useCardioSessions,
   useBodyMetrics, useGoals, useCustomExercises, useFavorites, useWorkoutTemplates, usePlanSchedule,
 } from "@/lib/cloud";
+import { metricsToCsv } from "@/lib/csvMetrics";
+import { isHealthAvailable, requestHealthPermissions, fetchHealthMetrics, fetchHealthWorkouts } from "@/lib/health";
 import { toast } from "sonner";
 
 export default function Settings() {
