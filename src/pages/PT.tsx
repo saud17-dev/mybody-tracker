@@ -48,9 +48,7 @@ export default function PT() {
           category: e.group,
           bodyArea: e.bodyArea,
           notes: "",
-          sets: Array.from({ length: e.sets || 3 }, () => ({
-            reps: e.reps || 10, painScale: 2,
-          } as PTSet)),
+          sets: [{ reps: e.reps || 10, painScale: 2 } as PTSet],
         })),
       );
       setOverallNotes(tpl.name);
