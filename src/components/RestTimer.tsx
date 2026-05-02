@@ -48,7 +48,7 @@ export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProp
       }
     }, 250);
     return () => window.clearInterval(id);
-  }, [paused, onComplete]);
+  }, [paused, completed, onComplete]);
 
   const adjust = (delta: number) => {
     baseRef.current = Math.max(5, baseRef.current + delta);
