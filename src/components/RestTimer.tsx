@@ -19,17 +19,19 @@ const fmt = (s: number) => {
 export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProps) {
   const [remaining, setRemaining] = useState(initialSeconds);
   const [paused, setPaused] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const startRef = useRef(Date.now());
   const baseRef = useRef(initialSeconds);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || completed) return;
     const id = window.setInterval(() => {
       const elapsed = Math.floor((Date.now() - startRef.current) / 1000);
       const next = baseRef.current - elapsed;
       setRemaining(next);
       if (next <= 0) {
         window.clearInterval(id);
+        setCompleted(true);
         try {
           // brief beep
           const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
