@@ -335,7 +335,7 @@ export default function Gym() {
       </Tabs>
 
       {restRunning && (
-        <RestTimer initialSeconds={restDefault} onClose={() => setRestRunning(false)} />
+        <RestTimer key={restKey} initialSeconds={restDefault} onClose={() => setRestRunning(false)} />
       )}
 
       <ExerciseChartDialog name={chartFor} sessions={sessions} unit={unit} onClose={() => setChartFor(null)} />
