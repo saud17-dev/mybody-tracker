@@ -149,11 +149,8 @@ export default function Gym() {
             <div className="space-y-4 p-5">
               <div className="space-y-2">
                 <Label>Add exercise</Label>
-                <div className="flex gap-2">
-                  <ExercisePicker module="gym" exercises={GYM_EXERCISES} recent={recent}
-                    value={picker?.name} onChange={(name, group) => setPicker({ name, group })} />
-                  <Button onClick={addExercise} disabled={!picker} className="bg-gym hover:bg-gym/90">Add</Button>
-                </div>
+                <ExercisePicker module="gym" exercises={GYM_EXERCISES} recent={recent}
+                  onChange={(name, group) => addExercise(name, group)} />
               </div>
 
               {exercises.length === 0 && (
