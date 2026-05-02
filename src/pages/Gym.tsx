@@ -70,13 +70,11 @@ export default function Gym() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templates.length]);
 
-  const addExercise = () => {
-    if (!picker) return;
+  const addExercise = (name: string, group: string) => {
     setExercises((p) => [
       ...p,
-      { id: uid(), exerciseName: picker.name, muscleGroup: picker.group, sets: [{ reps: 8, weight: 0 }] },
+      { id: uid(), exerciseName: name, muscleGroup: group, sets: [{ reps: 8, weight: 0 }] },
     ]);
-    setPicker(null);
   };
 
   const updateSet = (exId: string, idx: number, patch: Partial<GymSet>) =>
@@ -91,12 +89,27 @@ export default function Gym() {
       return { ...e, sets: [...e.sets, { ...last }] };
     }));
 
-  const removeSet = (exId: string, i: number) =>
+  const removeSet = (exId: string, i: number) => {
     setExercises((p) => p.map((e) => e.id === exId ? { ...e, sets: e.sets.filter((_, ix) => ix !== i) } : e));
+    setDoneSets((d) => { const n = { ...d }; delete n[`${exId}:${i}`]; return n; });
+  };
 
   const removeExercise = (id: string) => setExercises((p) => p.filter((e) => e.id !== id));
 
-  const reset = () => { setExercises([]); setNotes(""); setPicker(null); setRestRunning(false); };
+  const toggleSetDone = (exId: string, idx: number) => {
+    const key = `${exId}:${idx}`;
+    setDoneSets((d) => {
+      const next = { ...d, [key]: !d[key] };
+      if (next[key]) {
+        // start (or restart) rest timer
+        setRestKey((k) => k + 1);
+        setRestRunning(true);
+      }
+      return next;
+    });
+  };
+
+  const reset = () => { setExercises([]); setNotes(""); setDoneSets({}); setRestRunning(false); };
 
   const save = async () => {
     if (exercises.length === 0) return toast.error("Add at least one exercise");
