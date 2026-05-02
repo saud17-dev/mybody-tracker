@@ -54,6 +54,7 @@ export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProp
     baseRef.current = Math.max(5, baseRef.current + delta);
     startRef.current = Date.now();
     setRemaining(baseRef.current);
+    setCompleted(false);
   };
 
   const restart = () => {
@@ -61,9 +62,10 @@ export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProp
     startRef.current = Date.now();
     setRemaining(initialSeconds);
     setPaused(false);
+    setCompleted(false);
   };
 
-  const done = remaining <= 0;
+  const done = completed;
   const pct = Math.max(0, Math.min(100, (remaining / initialSeconds) * 100));
 
   return (
