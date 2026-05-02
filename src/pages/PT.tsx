@@ -156,11 +156,12 @@ export default function PT() {
 
               {exercises.map((ex) => (
                 <Card key={ex.id} className="overflow-hidden">
-                  <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
-                    <div>
-                      <p className="font-semibold">{ex.exerciseName}</p>
+                  <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{ex.exerciseName}</p>
                       <p className="text-xs text-muted-foreground">{ex.category}{ex.bodyArea ? ` · ${ex.bodyArea}` : ""}</p>
                     </div>
+                    <ExerciseCountdown defaultSeconds={30} />
                     <Button size="icon" variant="ghost" onClick={() => removeExercise(ex.id)}>
                       <X className="h-4 w-4" />
                     </Button>
