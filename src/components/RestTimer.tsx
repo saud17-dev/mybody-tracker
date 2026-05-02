@@ -19,17 +19,19 @@ const fmt = (s: number) => {
 export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProps) {
   const [remaining, setRemaining] = useState(initialSeconds);
   const [paused, setPaused] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const startRef = useRef(Date.now());
   const baseRef = useRef(initialSeconds);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || completed) return;
     const id = window.setInterval(() => {
       const elapsed = Math.floor((Date.now() - startRef.current) / 1000);
       const next = baseRef.current - elapsed;
       setRemaining(next);
       if (next <= 0) {
         window.clearInterval(id);
+        setCompleted(true);
         try {
           // brief beep
           const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -46,12 +48,13 @@ export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProp
       }
     }, 250);
     return () => window.clearInterval(id);
-  }, [paused, onComplete]);
+  }, [paused, completed, onComplete]);
 
   const adjust = (delta: number) => {
     baseRef.current = Math.max(5, baseRef.current + delta);
     startRef.current = Date.now();
     setRemaining(baseRef.current);
+    setCompleted(false);
   };
 
   const restart = () => {
@@ -59,9 +62,10 @@ export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProp
     startRef.current = Date.now();
     setRemaining(initialSeconds);
     setPaused(false);
+    setCompleted(false);
   };
 
-  const done = remaining <= 0;
+  const done = completed;
   const pct = Math.max(0, Math.min(100, (remaining / initialSeconds) * 100));
 
   return (

@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, Dumbbell, X, Trophy, TrendingUp, Timer } from "lucide-react";
+import { Plus, Trash2, Dumbbell, X, Trophy, TrendingUp, Timer, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
@@ -38,8 +39,9 @@ export default function Gym() {
   const [open, setOpen] = useState(false);
   const [exercises, setExercises] = useState<GymExerciseEntry[]>([]);
   const [notes, setNotes] = useState("");
-  const [picker, setPicker] = useState<{ name: string; group: string } | null>(null);
+  const [doneSets, setDoneSets] = useState<Record<string, boolean>>({});
   const [restRunning, setRestRunning] = useState(false);
+  const [restKey, setRestKey] = useState(0);
   const [prCelebrate, setPrCelebrate] = useState<{ exerciseName: string; weight: number; reps: number }[] | null>(null);
   const [chartFor, setChartFor] = useState<string | null>(null);
 
@@ -68,13 +70,11 @@ export default function Gym() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templates.length]);
 
-  const addExercise = () => {
-    if (!picker) return;
+  const addExercise = (name: string, group: string) => {
     setExercises((p) => [
       ...p,
-      { id: uid(), exerciseName: picker.name, muscleGroup: picker.group, sets: [{ reps: 8, weight: 0 }] },
+      { id: uid(), exerciseName: name, muscleGroup: group, sets: [{ reps: 8, weight: 0 }] },
     ]);
-    setPicker(null);
   };
 
   const updateSet = (exId: string, idx: number, patch: Partial<GymSet>) =>
@@ -89,12 +89,27 @@ export default function Gym() {
       return { ...e, sets: [...e.sets, { ...last }] };
     }));
 
-  const removeSet = (exId: string, i: number) =>
+  const removeSet = (exId: string, i: number) => {
     setExercises((p) => p.map((e) => e.id === exId ? { ...e, sets: e.sets.filter((_, ix) => ix !== i) } : e));
+    setDoneSets((d) => { const n = { ...d }; delete n[`${exId}:${i}`]; return n; });
+  };
 
   const removeExercise = (id: string) => setExercises((p) => p.filter((e) => e.id !== id));
 
-  const reset = () => { setExercises([]); setNotes(""); setPicker(null); setRestRunning(false); };
+  const toggleSetDone = (exId: string, idx: number) => {
+    const key = `${exId}:${idx}`;
+    setDoneSets((d) => {
+      const next = { ...d, [key]: !d[key] };
+      if (next[key]) {
+        // start (or restart) rest timer
+        setRestKey((k) => k + 1);
+        setRestRunning(true);
+      }
+      return next;
+    });
+  };
+
+  const reset = () => { setExercises([]); setNotes(""); setDoneSets({}); setRestRunning(false); };
 
   const save = async () => {
     if (exercises.length === 0) return toast.error("Add at least one exercise");
@@ -134,11 +149,8 @@ export default function Gym() {
             <div className="space-y-4 p-5">
               <div className="space-y-2">
                 <Label>Add exercise</Label>
-                <div className="flex gap-2">
-                  <ExercisePicker module="gym" exercises={GYM_EXERCISES} recent={recent}
-                    value={picker?.name} onChange={(name, group) => setPicker({ name, group })} />
-                  <Button onClick={addExercise} disabled={!picker} className="bg-gym hover:bg-gym/90">Add</Button>
-                </div>
+                <ExercisePicker module="gym" exercises={GYM_EXERCISES} recent={recent}
+                  onChange={(name, group) => addExercise(name, group)} />
               </div>
 
               {exercises.length === 0 && (
@@ -160,28 +172,50 @@ export default function Gym() {
                   </div>
                   <div className="space-y-2 p-3">
                     <div className="grid grid-cols-[2rem_1fr_1fr_2.5rem_2rem] items-center gap-2 px-1 text-xs font-medium text-muted-foreground">
-                      <span>#</span><span>Reps</span><span>Weight ({unit})</span><span /><span />
+                      <span>#</span><span>Reps</span><span>Weight ({unit})</span><span>Done</span><span />
                     </div>
-                    {ex.sets.map((s, i) => (
-                      <div key={i} className="grid grid-cols-[2rem_1fr_1fr_2.5rem_2rem] items-center gap-2">
-                        <span className="text-sm font-semibold text-muted-foreground">{i + 1}</span>
-                        <Input type="number" inputMode="numeric" value={s.reps || ""}
-                          onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })} />
-                        <Input type="number" inputMode="decimal" step="0.5"
-                          value={inputForWeight(s.weight)}
-                          onChange={(e) => {
-                            const v = e.target.value === "" ? 0 : Number(e.target.value);
-                            updateSet(ex.id, i, { weight: fromInput(v, unit) });
-                          }} />
-                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setRestRunning(true)} title="Start rest timer">
-                          <Timer className="h-4 w-4 text-gym" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8"
-                          onClick={() => removeSet(ex.id, i)} disabled={ex.sets.length === 1}>
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    ))}
+                    {ex.sets.map((s, i) => {
+                      const isDone = !!doneSets[`${ex.id}:${i}`];
+                      return (
+                        <div key={i} className={cn(
+                          "grid grid-cols-[2rem_1fr_1fr_2.5rem_2rem] items-center gap-2 rounded-md transition-colors",
+                          isDone && "bg-emerald-500/10",
+                        )}>
+                          <span className={cn(
+                            "text-sm font-semibold tabular-nums",
+                            isDone ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+                          )}>{i + 1}</span>
+                          <Input type="number" inputMode="numeric" value={s.reps || ""}
+                            onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })}
+                            className={cn(isDone && "line-through text-muted-foreground opacity-70")} />
+                          <Input type="number" inputMode="decimal" step="0.5"
+                            value={inputForWeight(s.weight)}
+                            onChange={(e) => {
+                              const v = e.target.value === "" ? 0 : Number(e.target.value);
+                              updateSet(ex.id, i, { weight: fromInput(v, unit) });
+                            }}
+                            className={cn(isDone && "line-through text-muted-foreground opacity-70")} />
+                          <button
+                            type="button"
+                            onClick={() => toggleSetDone(ex.id, i)}
+                            className={cn(
+                              "flex h-9 w-9 items-center justify-center rounded-md border-2 transition-all active:scale-90",
+                              isDone
+                                ? "border-emerald-500 bg-emerald-500 text-white"
+                                : "border-muted-foreground/30 bg-background hover:border-gym hover:bg-gym/10",
+                            )}
+                            title={isDone ? "Mark not done" : "Mark set done & start rest"}
+                            aria-pressed={isDone}
+                          >
+                            {isDone ? <Check className="h-5 w-5" /> : <Timer className="h-4 w-4 text-gym" />}
+                          </button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8"
+                            onClick={() => removeSet(ex.id, i)} disabled={ex.sets.length === 1}>
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                     <Button variant="outline" size="sm" className="w-full" onClick={() => addSet(ex.id)}>
                       <Plus className="h-4 w-4" /> Add set
                     </Button>
@@ -301,7 +335,7 @@ export default function Gym() {
       </Tabs>
 
       {restRunning && (
-        <RestTimer initialSeconds={restDefault} onClose={() => setRestRunning(false)} />
+        <RestTimer key={restKey} initialSeconds={restDefault} onClose={() => setRestRunning(false)} />
       )}
 
       <ExerciseChartDialog name={chartFor} sessions={sessions} unit={unit} onClose={() => setChartFor(null)} />
