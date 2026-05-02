@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Dumbbell, X, Trophy, TrendingUp, Timer, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
