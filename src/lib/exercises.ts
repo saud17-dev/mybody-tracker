@@ -146,17 +146,15 @@ export const PT_EXERCISES: ExerciseDef[] = [
   { name: "Standing Quad Stretch", group: "Stretch", bodyArea: "Knee" },
   { name: "Doorway Chest Stretch", group: "Stretch", bodyArea: "Shoulder" },
   { name: "Wall Calf Stretch", group: "Stretch", bodyArea: "Ankle" },
-  // Leg Strength (28)
+  // Leg Strength (no jumping variants)
   { name: "Squat to Calf Raise", group: "Leg Strength", bodyArea: "Knee" },
   { name: "90-Degree Glute Kickback with Pulses", group: "Leg Strength", bodyArea: "Hip" },
   { name: "Sumo Squat Pulses", group: "Leg Strength", bodyArea: "Hip" },
-  { name: "Squat to Calf Raise and Squat Jump Combination", group: "Leg Strength", bodyArea: "Knee" },
   { name: "Squat with Knee Drive", group: "Leg Strength", bodyArea: "Knee" },
   { name: "Crab Position Cross-Legged Hip Thrusts", group: "Leg Strength", bodyArea: "Hip" },
   { name: "Superman Leg Abductions", group: "Leg Strength", bodyArea: "Hip" },
   { name: "Modified Side Plank with Leg Raises", group: "Leg Strength", bodyArea: "Core" },
   { name: "Bird-Dog", group: "Leg Strength", bodyArea: "Core" },
-  { name: "Squat Jumps", group: "Leg Strength", bodyArea: "Knee" },
   { name: "Squat with 3-Second Isometric Holds", group: "Leg Strength", bodyArea: "Knee" },
   { name: "Single-Leg Squat to Floor Touch", group: "Leg Strength", bodyArea: "Knee" },
   { name: "Lying Side Leg Raises", group: "Leg Strength", bodyArea: "Hip" },
@@ -173,8 +171,6 @@ export const PT_EXERCISES: ExerciseDef[] = [
   { name: "Single-Leg Glute Bridge", group: "Leg Strength", bodyArea: "Hip" },
   { name: "Sumo Squat Hold with Heel Raises", group: "Leg Strength", bodyArea: "Hip" },
   { name: "Single-Leg Balance Hold", group: "Leg Strength", bodyArea: "Ankle" },
-  { name: "Kneeling to Squat Jump", group: "Leg Strength", bodyArea: "Knee" },
-  { name: "Squat to Squat Jump Combination", group: "Leg Strength", bodyArea: "Knee" },
 ];
 
 export const PT_BODY_AREAS = ["All", "Knee", "Hip", "Shoulder", "Spine", "Ankle", "Core"] as const;
