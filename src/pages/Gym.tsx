@@ -39,8 +39,9 @@ export default function Gym() {
   const [open, setOpen] = useState(false);
   const [exercises, setExercises] = useState<GymExerciseEntry[]>([]);
   const [notes, setNotes] = useState("");
-  const [picker, setPicker] = useState<{ name: string; group: string } | null>(null);
+  const [doneSets, setDoneSets] = useState<Record<string, boolean>>({});
   const [restRunning, setRestRunning] = useState(false);
+  const [restKey, setRestKey] = useState(0);
   const [prCelebrate, setPrCelebrate] = useState<{ exerciseName: string; weight: number; reps: number }[] | null>(null);
   const [chartFor, setChartFor] = useState<string | null>(null);
 
