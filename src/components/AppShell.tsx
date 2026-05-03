@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { TopNav } from "./TopNav";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
