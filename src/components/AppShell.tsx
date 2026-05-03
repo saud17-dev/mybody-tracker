@@ -2,6 +2,8 @@ import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import { BottomNav } from "./BottomNav";
+import { TopNav } from "./TopNav";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -70,20 +72,31 @@ const accentBg: Record<string, string> = {
 export function AppShell({ title, subtitle, accent = "primary", right, children }: AppShellProps) {
   return (
     <div className="min-h-full bg-background">
-      <div className="mx-auto max-w-md">
-        <header className={`safe-top ${accentBg[accent]} px-5 pb-8 pt-6 text-white`}>
+      <TopNav />
+      <div className="mx-auto max-w-md md:max-w-6xl md:px-6 md:pt-8">
+        <header
+          className={cn(
+            "safe-top px-5 pb-8 pt-6 text-white",
+            accentBg[accent],
+            "md:rounded-3xl md:px-8 md:pb-10 md:pt-8 md:shadow-[var(--shadow-elevated)]",
+          )}
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-              {subtitle && <p className="mt-1 text-sm text-white/80">{subtitle}</p>}
+              <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
+              {subtitle && <p className="mt-1 text-sm text-white/80 md:text-base">{subtitle}</p>}
             </div>
             <div className="flex items-center gap-2">
               {right}
-              <UserMenu />
+              <div className="md:hidden">
+                <UserMenu />
+              </div>
             </div>
           </div>
         </header>
-        <main className="-mt-4 rounded-t-3xl bg-background px-4 pb-28 pt-6">{children}</main>
+        <main className="-mt-4 rounded-t-3xl bg-background px-4 pb-28 pt-6 md:mt-6 md:rounded-none md:bg-transparent md:px-0 md:pb-12 md:pt-0">
+          {children}
+        </main>
       </div>
       <BottomNav />
     </div>
