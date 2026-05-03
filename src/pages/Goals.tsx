@@ -25,6 +25,7 @@ import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MetricsImportWizard } from "@/components/MetricsImportWizard";
+import { MonthlyActivityCalendar } from "@/components/MonthlyActivityCalendar";
 
 interface RingProps {
   label: string;
@@ -153,6 +154,12 @@ export default function GoalsPage() {
           <StreakCard label="PT" streak={streaks.pt} variant="pt" Icon={HeartPulse} />
           <StreakCard label="Cardio" streak={streaks.cardio} variant="cardio" Icon={Activity} />
         </div>
+      </section>
+
+      {/* Monthly activity calendar */}
+      <section className="mt-7">
+        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">This month</h2>
+        <MonthlyActivityCalendar gym={gym} pt={pt} cardio={cardio} />
       </section>
 
       {/* Weekly volume by muscle group */}
