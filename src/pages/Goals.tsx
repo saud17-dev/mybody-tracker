@@ -25,6 +25,7 @@ import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MetricsImportWizard } from "@/components/MetricsImportWizard";
+import { MonthlyActivityCalendar } from "@/components/MonthlyActivityCalendar";
 
 interface RingProps {
   label: string;
