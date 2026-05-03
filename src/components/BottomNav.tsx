@@ -20,7 +20,7 @@ const colorMap: Record<string, string> = {
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-xl safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-xl safe-bottom md:hidden">
       <ul className="mx-auto grid max-w-md grid-cols-5">
         {items.map((it) => {
           const Icon = it.icon;
