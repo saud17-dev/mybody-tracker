@@ -28,6 +28,7 @@ export function ExercisePicker({
 }: ExercisePickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [detail, setDetail] = useState<ExerciseDef | null>(null);
   const { favorites, toggle } = useFavorites(module);
   const { items: customs, add } = useCustomExercises(module);
 
