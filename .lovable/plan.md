@@ -1,29 +1,62 @@
-## Monthly activity calendar
+# Expand exercise library from JEFIT (curated)
 
-Add a full-month calendar to the home/Goals page that highlights days you logged a Gym, PT, or Cardio session — at-a-glance proof of consistency, with color coding that matches the rest of the app.
+Goal: grow the exercise picker so the user rarely needs to add a custom one, and never creates a near-duplicate of an existing name.
 
-### Where it goes
-Insert a new section on `src/pages/Goals.tsx`, just after the Streaks section (around line 156), titled "This month". Defaults to the current month with prev/next month arrows.
+## Scope
 
-### Visual design
-- Standard 7-column grid (Mon–Sun, matching weekly streak start), labeled weekday headers, leading/trailing blanks for offset.
-- Each day cell shows the day number plus up to three small dots (color-coded) indicating which modules were active:
-  - Gym → `hsl(var(--gym))`
-  - PT → `hsl(var(--pt))`
-  - Cardio → `hsl(var(--cardio))`
-- Today's cell gets a primary ring; days fully covering all three modules get a subtle glow background.
-- Empty days stay muted; future days are dimmed further.
-- Footer legend with the three colored dots + counts ("12 active days this month").
-- Tap a day → small popover/tooltip listing the sessions that occurred (e.g. "Gym · Push", "Cardio · Run 5 km").
+- Add ~100–200 commonly-used exercises pulled from JEFIT's muscle categories into `src/lib/exercises.ts`.
+- Cover both `GYM_EXERCISES` (strength/conditioning) and `PT_EXERCISES` (mobility/rehab/stability — JEFIT stretching + bodyweight pulls).
+- No exercise pages are crawled at runtime; this is a one-time static expansion of the seed list.
 
-### Data
-Reuse existing hooks/data already loaded on Goals: `gym`, `pt`, `cardio` session arrays. Build a `Map<isoDate, { gym, pt, cardio, items[] }>` for the visible month using `date-fns` (`startOfMonth`, `endOfMonth`, `eachDayOfInterval`, `format`, `isSameDay`). No DB changes, no new queries.
+## Source
 
-### New file
-`src/components/MonthlyActivityCalendar.tsx` — self-contained component receiving `gym`, `pt`, `cardio` as props plus optional `unit`. Handles month navigation locally with `useState`.
+- Landing: `https://www.jefit.com/exercises`
+- Per-muscle pages (Abs, Back, Biceps, Chest, Forearms, Glutes, Shoulders, Triceps, Upper Legs, Lower Legs) and Stretching for PT additions.
+- I'll fetch each muscle page once during planning execution, extract exercise names, then hand-curate the merged list (drop obscure machine-only variants, keep recognizable names).
 
-### Responsive
-Mobile: compact cells (~40px), dots below number. Desktop (`md:`): larger cells (~56px), dots inline beside number, slightly more padding — fits naturally inside the existing `max-w-6xl` shell.
+## Dedupe rules
 
-### Out of scope
-No backend/schema changes. No editing of past days from the calendar.
+Before adding any new entry, normalize and compare against existing names:
+
+```text
+normalize(name) = lowercase, trim, collapse spaces,
+                  strip punctuation,
+                  unify synonyms: "DB"->"Dumbbell", "BB"->"Barbell",
+                                  "KB"->"Kettlebell", "1-arm"/"single arm"->"Single-Arm"
+```
+
+Skip any candidate whose normalized form already exists in `GYM_EXERCISES` or `PT_EXERCISES`. This is a build-time check in the script that produces the new list — runtime picker behavior is unchanged.
+
+## Mapping to existing groups
+
+Map JEFIT muscles → current `group` values (no schema change):
+
+```text
+Abs            -> Core
+Back           -> Back
+Biceps, Triceps, Forearms -> Arms
+Chest          -> Chest
+Glutes, Upper Legs, Lower Legs -> Legs
+Shoulders      -> Shoulders
+Olympic lifts already present -> Olympic
+Stretching/Mobility (PT)      -> Mobility / Stretch / Stability
+```
+
+PT additions get a `bodyArea` per the existing enum (Knee, Hip, Shoulder, Spine, Ankle, Core).
+
+## Files touched
+
+- `src/lib/exercises.ts` — append new entries to `GYM_EXERCISES` and `PT_EXERCISES`. No other changes.
+
+## Out of scope
+
+- No fuzzy-match dedupe in the picker UI (user chose curated expansion only).
+- No DB migration — exercise lists are static TS arrays.
+- No JEFIT branding/attribution displayed (names are factual exercise names).
+
+## Acceptance
+
+- `GYM_EXERCISES` grows by ~80–140 entries, all unique under the normalize rule.
+- `PT_EXERCISES` grows by ~20–40 mobility/stretch entries, all unique.
+- Existing entries untouched; existing favorites/recents keep working.
+- `bun run build` passes.
