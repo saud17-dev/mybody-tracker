@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronDown, Search, Star, Clock, Plus } from "lucide-react";
+import { Check, ChevronDown, Search, Star, Clock, Plus, Info } from "lucide-react";
+import { ExerciseDetailDrawer } from "@/components/ExerciseDetailDrawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
