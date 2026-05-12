@@ -231,6 +231,7 @@ export default function Gym() {
               </div>
             </div>
             <div className="sticky bottom-0 border-t bg-card p-4 safe-bottom">
+              <ManualStopwatch />
               <Button onClick={save} className="w-full bg-gym hover:bg-gym/90" size="lg">Save workout</Button>
             </div>
           </SheetContent>
