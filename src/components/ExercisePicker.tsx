@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronDown, Search, Star, Clock, Plus } from "lucide-react";
+import { Check, ChevronDown, Search, Star, Clock, Plus, Info } from "lucide-react";
+import { ExerciseDetailDrawer } from "@/components/ExerciseDetailDrawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export function ExercisePicker({
 }: ExercisePickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [detail, setDetail] = useState<ExerciseDef | null>(null);
   const { favorites, toggle } = useFavorites(module);
   const { items: customs, add } = useCustomExercises(module);
 
@@ -121,6 +123,12 @@ export function ExercisePicker({
                       {value === ex.name && <Check className="h-4 w-4 text-primary" />}
                     </button>
                     <button type="button"
+                      onClick={(e) => { e.stopPropagation(); setDetail(ex); }}
+                      className="px-2 py-2 text-muted-foreground/40 hover:text-primary"
+                      aria-label="View exercise details">
+                      <Info className="h-4 w-4" />
+                    </button>
+                    <button type="button"
                       onClick={(e) => { e.stopPropagation(); toggle(ex.name); }}
                       className="px-2 py-2 text-muted-foreground/40 hover:text-amber-500"
                       aria-label="Toggle favorite">
@@ -133,6 +141,20 @@ export function ExercisePicker({
           })}
         </ScrollArea>
       </PopoverContent>
+      <ExerciseDetailDrawer
+        module={module}
+        exercise={detail}
+        open={!!detail}
+        onOpenChange={(o) => { if (!o) setDetail(null); }}
+        isFavorite={detail ? favorites.has(detail.name) : false}
+        onToggleFavorite={detail ? () => toggle(detail.name) : undefined}
+        onSelect={detail ? () => {
+          onChange(detail.name, detail.group, detail.bodyArea);
+          setDetail(null);
+          setOpen(false);
+          setQuery("");
+        } : undefined}
+      />
     </Popover>
   );
 }
