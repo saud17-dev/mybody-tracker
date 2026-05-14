@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Dumbbell, HeartPulse, Activity, Target, CalendarDays, LogOut, Settings as SettingsIcon } from "lucide-react";
+import { Dumbbell, HeartPulse, Activity, Target, CalendarDays, LogOut, Settings as SettingsIcon, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import {
@@ -14,6 +14,7 @@ const items = [
   { to: "/gym", label: "Gym", icon: Dumbbell, color: "text-gym" },
   { to: "/pt", label: "PT", icon: HeartPulse, color: "text-pt" },
   { to: "/cardio", label: "Cardio", icon: Activity, color: "text-cardio" },
+  { to: "/nutrition", label: "Nutrition", icon: UtensilsCrossed, color: "text-primary" },
 ];
 
 export function TopNav() {
