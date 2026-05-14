@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { format, parseISO, startOfWeek, isWithinInterval, endOfWeek } from "date-fns";
-import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap, BookOpen } from "lucide-react";
+import { MealLibrarySheet } from "@/components/MealLibrarySheet";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
