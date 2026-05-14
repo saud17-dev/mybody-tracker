@@ -457,6 +457,13 @@ export default function NutritionPage() {
         </section>
       )}
 
+      {/* ── Meal library sheet */}
+      <MealLibrarySheet
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        onPick={(m) => logMeal(m.name, m.mealType, m.proteinG, m.calories)}
+      />
+
       {/* ── Goal editor sheet */}
       <Sheet open={goalOpen} onOpenChange={setGoalOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl">
