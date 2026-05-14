@@ -1,62 +1,46 @@
-# Expand exercise library from JEFIT (curated)
+# Built-in Meal Library
 
-Goal: grow the exercise picker so the user rarely needs to add a custom one, and never creates a near-duplicate of an existing name.
+Add a searchable catalog of common meals with pre-filled protein & calorie values. Tap any item to log it instantly with its standard serving size. Doesn't replace personal presets — sits alongside them.
 
-## Scope
+## What gets added
 
-- Add ~100–200 commonly-used exercises pulled from JEFIT's muscle categories into `src/lib/exercises.ts`.
-- Cover both `GYM_EXERCISES` (strength/conditioning) and `PT_EXERCISES` (mobility/rehab/stability — JEFIT stretching + bodyweight pulls).
-- No exercise pages are crawled at runtime; this is a one-time static expansion of the seed list.
+### 1. New file: `src/lib/mealLibrary.ts`
+A static catalog of ~120 meals, each with:
+- `name` (e.g. "Chicken breast")
+- `serving` (e.g. "150g", "1 cup", "1 scoop")
+- `proteinG`, `calories`
+- `mealType` (Breakfast/Lunch/Dinner/Snack/Shake)
+- `category` (for filtering)
+- `emoji`
 
-## Source
+Categories covered:
+- **Protein sources** (~25): chicken breast, salmon, tuna, eggs, ground beef, turkey, tofu, cottage cheese, Greek yogurt, etc.
+- **Carbs & grains** (~15): white rice, brown rice, oats, sweet potato, pasta, quinoa, bread slice, bagel, etc.
+- **Composed meals** (~30): chicken & rice bowl, salmon & veg, tuna sandwich, omelette (3-egg), turkey wrap, pasta bolognese, stir fry, burrito bowl, etc.
+- **Breakfast** (~15): scrambled eggs, oatmeal, protein pancakes, yogurt bowl, avocado toast, smoothie bowl, etc.
+- **Snacks & shakes** (~20): whey shake, protein bar, almonds, peanut butter, jerky, hummus, banana, apple, etc.
+- **Restaurant/branded** (~15): Chipotle chicken bowl, Subway 6" turkey, McDonald's Big Mac, Pret chicken salad, Nando's quarter chicken, etc. (clearly approximate)
 
-- Landing: `https://www.jefit.com/exercises`
-- Per-muscle pages (Abs, Back, Biceps, Chest, Forearms, Glutes, Shoulders, Triceps, Upper Legs, Lower Legs) and Stretching for PT additions.
-- I'll fetch each muscle page once during planning execution, extract exercise names, then hand-curate the merged list (drop obscure machine-only variants, keep recognizable names).
+### 2. New component: `src/components/MealLibrarySheet.tsx`
+A bottom sheet that opens from a new "Browse library" button on the Nutrition page. Contains:
+- Search input (filter by name)
+- Category filter chips (All, Protein, Carbs, Meals, Breakfast, Snacks, Restaurant)
+- Scrollable list of cards showing emoji, name, serving size, protein, calories
+- Tap a card → logs it for today with its standard values + closes sheet + toast
 
-## Dedupe rules
+### 3. Edit `src/pages/Nutrition.tsx`
+Add a secondary button next to "Log a meal" labeled "Browse library" (with a `BookOpen` icon) that opens the new sheet. Reuses the existing `createLog` mutation.
 
-Before adding any new entry, normalize and compare against existing names:
+## What does NOT change
 
-```text
-normalize(name) = lowercase, trim, collapse spaces,
-                  strip punctuation,
-                  unify synonyms: "DB"->"Dumbbell", "BB"->"Barbell",
-                                  "KB"->"Kettlebell", "1-arm"/"single arm"->"Single-Arm"
-```
+- No DB schema changes — library is static in code
+- Personal `meal_presets` keep working exactly as before
+- Goal editor, weekly chart, history unchanged
+- Portions are fixed standard servings (no multiplier UI per your choice)
 
-Skip any candidate whose normalized form already exists in `GYM_EXERCISES` or `PT_EXERCISES`. This is a build-time check in the script that produces the new list — runtime picker behavior is unchanged.
+## Technical notes
 
-## Mapping to existing groups
-
-Map JEFIT muscles → current `group` values (no schema change):
-
-```text
-Abs            -> Core
-Back           -> Back
-Biceps, Triceps, Forearms -> Arms
-Chest          -> Chest
-Glutes, Upper Legs, Lower Legs -> Legs
-Shoulders      -> Shoulders
-Olympic lifts already present -> Olympic
-Stretching/Mobility (PT)      -> Mobility / Stretch / Stability
-```
-
-PT additions get a `bodyArea` per the existing enum (Knee, Hip, Shoulder, Spine, Ankle, Core).
-
-## Files touched
-
-- `src/lib/exercises.ts` — append new entries to `GYM_EXERCISES` and `PT_EXERCISES`. No other changes.
-
-## Out of scope
-
-- No fuzzy-match dedupe in the picker UI (user chose curated expansion only).
-- No DB migration — exercise lists are static TS arrays.
-- No JEFIT branding/attribution displayed (names are factual exercise names).
-
-## Acceptance
-
-- `GYM_EXERCISES` grows by ~80–140 entries, all unique under the normalize rule.
-- `PT_EXERCISES` grows by ~20–40 mobility/stretch entries, all unique.
-- Existing entries untouched; existing favorites/recents keep working.
-- `bun run build` passes.
+- Library is a plain `export const MEAL_LIBRARY: LibraryMeal[]` — no fetching, no caching
+- Restaurant items get a small "≈ approximate" label
+- Search is case-insensitive substring match on name
+- Sheet uses the same `Sheet` + `Card` components already in the page for visual consistency

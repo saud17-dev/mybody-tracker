@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { format, parseISO, startOfWeek, isWithinInterval, endOfWeek } from "date-fns";
-import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap, BookOpen } from "lucide-react";
+import { MealLibrarySheet } from "@/components/MealLibrarySheet";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ export default function NutritionPage() {
   const [goalOpen, setGoalOpen] = useState(false);
   const [presetOpen, setPresetOpen] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   // Log form state
   const [mealName, setMealName] = useState("");
@@ -308,11 +310,14 @@ export default function NutritionPage() {
       </section>
 
       {/* ── Log a custom meal */}
-      <section className="mt-5">
+      <section className="mt-5 grid grid-cols-2 gap-2">
+        <Button variant="outline" size="lg" onClick={() => setLibraryOpen(true)}>
+          <BookOpen className="mr-2 h-4 w-4" /> Library
+        </Button>
         <Sheet open={logOpen} onOpenChange={setLogOpen}>
           <SheetTrigger asChild>
-            <Button className="w-full" size="lg">
-              <Plus className="mr-2 h-4 w-4" /> Log a meal
+            <Button size="lg">
+              <Plus className="mr-2 h-4 w-4" /> Log meal
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="rounded-t-3xl">
@@ -451,6 +456,13 @@ export default function NutritionPage() {
           )}
         </section>
       )}
+
+      {/* ── Meal library sheet */}
+      <MealLibrarySheet
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        onPick={(m) => logMeal(m.name, m.mealType, m.proteinG, m.calories)}
+      />
 
       {/* ── Goal editor sheet */}
       <Sheet open={goalOpen} onOpenChange={setGoalOpen}>
