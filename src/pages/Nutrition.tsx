@@ -39,6 +39,7 @@ export default function NutritionPage() {
   const [goalOpen, setGoalOpen] = useState(false);
   const [presetOpen, setPresetOpen] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   // Log form state
   const [mealName, setMealName] = useState("");
