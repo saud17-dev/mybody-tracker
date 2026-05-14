@@ -310,11 +310,14 @@ export default function NutritionPage() {
       </section>
 
       {/* ── Log a custom meal */}
-      <section className="mt-5">
+      <section className="mt-5 grid grid-cols-2 gap-2">
+        <Button variant="outline" size="lg" onClick={() => setLibraryOpen(true)}>
+          <BookOpen className="mr-2 h-4 w-4" /> Library
+        </Button>
         <Sheet open={logOpen} onOpenChange={setLogOpen}>
           <SheetTrigger asChild>
-            <Button className="w-full" size="lg">
-              <Plus className="mr-2 h-4 w-4" /> Log a meal
+            <Button size="lg">
+              <Plus className="mr-2 h-4 w-4" /> Log meal
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="rounded-t-3xl">
