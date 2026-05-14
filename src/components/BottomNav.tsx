@@ -1,21 +1,21 @@
 import { NavLink } from "react-router-dom";
-import { Dumbbell, HeartPulse, Activity, Target, CalendarDays } from "lucide-react";
+import { Dumbbell, HeartPulse, Activity, Target, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", label: "Goals", icon: Target, end: true },
-  { to: "/plan", label: "Plan", icon: CalendarDays },
   { to: "/gym", label: "Gym", icon: Dumbbell },
   { to: "/pt", label: "PT", icon: HeartPulse },
   { to: "/cardio", label: "Cardio", icon: Activity },
+  { to: "/nutrition", label: "Nutrition", icon: UtensilsCrossed },
 ];
 
 const colorMap: Record<string, string> = {
   "/": "text-primary",
-  "/plan": "text-accent",
   "/gym": "text-gym",
   "/pt": "text-pt",
   "/cardio": "text-cardio",
+  "/nutrition": "text-primary",
 };
 
 export function BottomNav() {
