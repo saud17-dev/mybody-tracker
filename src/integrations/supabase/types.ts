@@ -191,6 +191,90 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_logs: {
+        Row: {
+          calories: number | null
+          created_at: string
+          date: string
+          id: string
+          meal_name: string
+          meal_type: string
+          protein_g: number
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          meal_name: string
+          meal_type?: string
+          protein_g: number
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          meal_name?: string
+          meal_type?: string
+          protein_g?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meal_presets: {
+        Row: {
+          calories: number | null
+          created_at: string
+          id: string
+          meal_type: string
+          name: string
+          protein_g: number
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          created_at?: string
+          id?: string
+          meal_type?: string
+          name: string
+          protein_g: number
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          created_at?: string
+          id?: string
+          meal_type?: string
+          name?: string
+          protein_g?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nutrition_goals: {
+        Row: {
+          daily_calories: number | null
+          daily_protein_g: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          daily_calories?: number | null
+          daily_protein_g?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          daily_calories?: number | null
+          daily_protein_g?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_schedule: {
         Row: {
           day_of_week: number
