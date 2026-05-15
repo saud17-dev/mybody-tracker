@@ -2,11 +2,11 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import {
-  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, Flame, CalendarX,
+  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, CalendarDays, ChevronRight, Coffee, Pencil,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid,
-  BarChart, Bar,
+  BarChart, Bar, Legend,
 } from "recharts";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -16,16 +16,22 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   useGymSessions, usePTSessions, useCardioSessions, useBodyMetrics, useGoals, useProfile,
+  usePlanSchedule, useWorkoutTemplates,
 } from "@/lib/cloud";
-import { useWeeklyCounts, useWeeklyMuscleVolume, useBodyTrends, useWorkoutStreaks, type MetricTrend, type ModuleStreak } from "@/lib/stats";
+import { usePlanSkips } from "@/lib/planSkips";
+import { useWeeklyCounts, useTwoWeekMuscleVolume, useLastWeekSessions, useBodyTrends, type MetricTrend } from "@/lib/stats";
 import { toDisplay, fromInput, formatWeight } from "@/lib/units";
 import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MetricsImportWizard } from "@/components/MetricsImportWizard";
 import { MonthlyActivityCalendar } from "@/components/MonthlyActivityCalendar";
+
+const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 interface RingProps {
   label: string;
