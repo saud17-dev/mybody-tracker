@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfDay } from "date-fns";
+import { startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfDay, subWeeks } from "date-fns";
 import type { GymSession, PTSession, CardioSession, BodyMetric } from "@/lib/types";
 
 // ----- Body composition trends -----
@@ -143,6 +143,89 @@ export function useWeeklyMuscleVolume(gym: GymSession[]) {
       .map(([group, v]) => ({ group, sets: v.sets, volume: Math.round(v.volume) }))
       .sort((a, b) => b.volume - a.volume);
   }, [gym]);
+}
+
+// Compare this week vs last week per muscle group
+export function useTwoWeekMuscleVolume(gym: GymSession[]) {
+  return useMemo(() => {
+    const now = new Date();
+    const thisStart = startOfWeek(now, { weekStartsOn: 1 });
+    const thisEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const lastStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+    const lastEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+    const map = new Map<string, { thisWeek: number; lastWeek: number; thisSets: number; lastSets: number }>();
+    for (const s of gym) {
+      let bucket: "this" | "last" | null = null;
+      try {
+        const d = parseISO(s.date);
+        if (isWithinInterval(d, { start: thisStart, end: thisEnd })) bucket = "this";
+        else if (isWithinInterval(d, { start: lastStart, end: lastEnd })) bucket = "last";
+      } catch { continue; }
+      if (!bucket) continue;
+      for (const ex of s.exercises) {
+        const cur = map.get(ex.muscleGroup) || { thisWeek: 0, lastWeek: 0, thisSets: 0, lastSets: 0 };
+        const vol = ex.sets.reduce((a, st) => a + st.reps * st.weight, 0);
+        if (bucket === "this") { cur.thisWeek += vol; cur.thisSets += ex.sets.length; }
+        else { cur.lastWeek += vol; cur.lastSets += ex.sets.length; }
+        map.set(ex.muscleGroup, cur);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([group, v]) => ({
+        group,
+        thisWeek: Math.round(v.thisWeek),
+        lastWeek: Math.round(v.lastWeek),
+        thisSets: v.thisSets,
+        lastSets: v.lastSets,
+      }))
+      .sort((a, b) => (b.thisWeek + b.lastWeek) - (a.thisWeek + a.lastWeek));
+  }, [gym]);
+}
+
+// Sessions logged during last calendar week (Mon–Sun)
+export function useLastWeekSessions(
+  gym: GymSession[],
+  pt: PTSession[],
+  cardio: CardioSession[],
+) {
+  return useMemo(() => {
+    const now = new Date();
+    const start = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+    const end = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+    const inRange = (d: string) => {
+      try { return isWithinInterval(parseISO(d), { start, end }); } catch { return false; }
+    };
+    type Row = {
+      id: string;
+      date: string;
+      module: "gym" | "pt" | "cardio";
+      title: string;
+      summary: string;
+    };
+    const rows: Row[] = [];
+    for (const s of gym.filter((x) => inRange(x.date))) {
+      rows.push({
+        id: s.id, date: s.date, module: "gym",
+        title: "Gym",
+        summary: s.exercises.map((e) => e.exerciseName).join(" · ") || "—",
+      });
+    }
+    for (const s of pt.filter((x) => inRange(x.date))) {
+      rows.push({
+        id: s.id, date: s.date, module: "pt",
+        title: "PT",
+        summary: s.exercises.map((e) => e.exerciseName).join(" · ") || "—",
+      });
+    }
+    for (const s of cardio.filter((x) => inRange(x.date))) {
+      rows.push({
+        id: s.id, date: s.date, module: "cardio",
+        title: "Cardio",
+        summary: `${s.activity} · ${s.durationMin} min${s.distanceKm ? ` · ${s.distanceKm} km` : ""}`,
+      });
+    }
+    return rows.sort((a, b) => a.date.localeCompare(b.date));
+  }, [gym, pt, cardio]);
 }
 
 // Personal records per exercise: best (weight*reps) score, plus best weight
