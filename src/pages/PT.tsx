@@ -1,7 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, HeartPulse, X } from "lucide-react";
+import { Plus, Trash2, HeartPulse, X, Pencil, Library, ChevronDown, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { ExerciseCountdown } from "@/components/ExerciseCountdown";
@@ -12,30 +12,66 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PT_EXERCISES, PT_BODY_AREAS } from "@/lib/exercises";
 import {
   usePTSessions, useWorkoutTemplates, useRecentPTExercises, uid,
 } from "@/lib/cloud";
-import type { PTExerciseEntry, PTSet } from "@/lib/types";
+import { saveDraft, loadDraft, clearDraft, draftAge } from "@/lib/draft";
+import { useAuth } from "@/lib/auth";
+import type { PTExerciseEntry, PTSet, PTSession } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const painColor = (n: number) =>
   n <= 3 ? "text-emerald-500" : n <= 6 ? "text-amber-500" : "text-destructive";
 
+interface DraftPayload {
+  exercises: PTExerciseEntry[];
+  overallNotes: string;
+}
+
 export default function PT() {
-  const { sessions, create, remove } = usePTSessions();
+  const { user } = useAuth();
+  const { sessions, create, update, remove, restore } = usePTSessions();
   const { templates } = useWorkoutTemplates();
   const recent = useRecentPTExercises(sessions, 8);
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [exercises, setExercises] = useState<PTExerciseEntry[]>([]);
   const [overallNotes, setOverallNotes] = useState("");
   const [picker, setPicker] = useState<{ name: string; group: string; bodyArea?: string } | null>(null);
   const [bodyAreaFilter, setBodyAreaFilter] = useState<string>("All");
+  const [pendingDelete, setPendingDelete] = useState<PTSession | null>(null);
+  const [resumePrompt, setResumePrompt] = useState<{ at: number; data: DraftPayload } | null>(null);
+  const [expandedExId, setExpandedExId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Load draft once
+  const draftLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!user || draftLoadedRef.current) return;
+    draftLoadedRef.current = true;
+    const d = loadDraft<DraftPayload>("pt", user.id);
+    if (d && d.data.exercises.length > 0) setResumePrompt(d);
+  }, [user]);
+
+  // Autosave (only for new, not edits)
+  useEffect(() => {
+    if (!user || editingId) return;
+    if (exercises.length === 0 && !overallNotes) {
+      clearDraft("pt", user.id);
+      return;
+    }
+    saveDraft<DraftPayload>("pt", user.id, { exercises, overallNotes });
+  }, [user, editingId, exercises, overallNotes]);
 
   useEffect(() => {
     const tplId = searchParams.get("template");
@@ -98,13 +134,32 @@ export default function PT() {
 
   const removeExercise = (exId: string) => setExercises((p) => p.filter((e) => e.id !== exId));
 
-  const reset = () => { setExercises([]); setOverallNotes(""); setPicker(null); };
+  const reset = () => { setExercises([]); setOverallNotes(""); setPicker(null); setEditingId(null); };
+
+  const openForEdit = (s: PTSession) => {
+    setEditingId(s.id);
+    setExercises(s.exercises.map((e) => ({ ...e, sets: e.sets.map((st) => ({ ...st })) })));
+    setOverallNotes(s.overallNotes ?? "");
+    setOpen(true);
+  };
 
   const save = async () => {
     if (exercises.length === 0) return toast.error("Add at least one exercise");
     try {
-      await create({ date: new Date().toISOString(), exercises, overallNotes: overallNotes || undefined });
-      toast.success("PT session logged");
+      if (editingId) {
+        const orig = sessions.find((s) => s.id === editingId);
+        await update({
+          id: editingId,
+          date: orig?.date ?? new Date().toISOString(),
+          exercises,
+          overallNotes: overallNotes || undefined,
+        } as PTSession);
+        toast.success("Session updated");
+      } else {
+        await create({ date: new Date().toISOString(), exercises, overallNotes: overallNotes || undefined });
+        toast.success("PT session logged");
+        if (user) clearDraft("pt", user.id);
+      }
       reset();
       setOpen(false);
     } catch (e: any) {
@@ -112,107 +167,63 @@ export default function PT() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const snap = pendingDelete;
+    setPendingDelete(null);
+    try {
+      await remove(snap.id);
+      toast("Session deleted", {
+        action: { label: "Undo", onClick: () => { restore(snap).then(() => toast.success("Restored")).catch(() => {}); } },
+        duration: 6000,
+      });
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete");
+    }
+  };
+
+  const acceptResume = () => {
+    if (!resumePrompt) return;
+    setExercises(resumePrompt.data.exercises);
+    setOverallNotes(resumePrompt.data.overallNotes);
+    setResumePrompt(null);
+    setOpen(true);
+  };
+  const dismissResume = () => {
+    if (user) clearDraft("pt", user.id);
+    setResumePrompt(null);
+  };
+
   const sorted = sessions;
 
   return (
     <AppShell title="PT Log" subtitle={`${sessions.length} sessions logged`} accent="pt"
       right={
-        <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
-          <SheetTrigger asChild>
-            <Button size="icon" className="h-11 w-11 rounded-full bg-white text-pt hover:bg-white/90">
-              <Plus className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-3xl p-0">
-            <SheetHeader className="sticky top-0 z-10 border-b bg-card px-5 pb-4 pt-5">
-              <SheetTitle>New PT Session</SheetTitle>
-            </SheetHeader>
-            <div className="space-y-4 p-5">
-              <div className="space-y-2">
-                <Label>Body area</Label>
-                <Select value={bodyAreaFilter} onValueChange={setBodyAreaFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {PT_BODY_AREAS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Add exercise</Label>
-                <div className="flex gap-2">
-                  <ExercisePicker module="pt" exercises={PT_EXERCISES} recent={recent}
-                    bodyAreaFilter={bodyAreaFilter}
-                    value={picker?.name}
-                    onChange={(name, group, bodyArea) => setPicker({ name, group, bodyArea })} />
-                  <Button onClick={addExercise} disabled={!picker} className="bg-pt hover:bg-pt/90">Add</Button>
-                </div>
-              </div>
-
-              {exercises.length === 0 && (
-                <div className="rounded-xl border border-dashed bg-muted/30 py-10 text-center text-sm text-muted-foreground">
-                  No exercises yet.
-                </div>
-              )}
-
-              {exercises.map((ex) => (
-                <Card key={ex.id} className="overflow-hidden">
-                  <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold">{ex.exerciseName}</p>
-                      <p className="text-xs text-muted-foreground">{ex.category}{ex.bodyArea ? ` · ${ex.bodyArea}` : ""}</p>
-                    </div>
-                    <ExerciseCountdown defaultSeconds={30} />
-                    <Button size="icon" variant="ghost" onClick={() => removeExercise(ex.id)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="space-y-3 p-3">
-                    <div className="grid grid-cols-[2rem_1fr_3fr_2rem] items-center gap-2 px-1 text-xs font-medium text-muted-foreground">
-                      <span>#</span><span>Reps/sec</span><span>Pain (1-10)</span><span />
-                    </div>
-                    {ex.sets.map((s, i) => (
-                      <div key={i} className="grid grid-cols-[2rem_1fr_3fr_2rem] items-center gap-2">
-                        <span className="text-sm font-semibold text-muted-foreground">{i + 1}</span>
-                        <Input type="number" inputMode="numeric" value={s.reps || ""}
-                          onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })} />
-                        <div className="flex items-center gap-2">
-                          <Slider min={1} max={10} step={1} value={[s.painScale]}
-                            onValueChange={([v]) => updateSet(ex.id, i, { painScale: v })}
-                            className="flex-1" />
-                          <span className={cn("w-6 text-right text-sm font-bold tabular-nums", painColor(s.painScale))}>
-                            {s.painScale}
-                          </span>
-                        </div>
-                        <Button size="icon" variant="ghost" className="h-8 w-8"
-                          onClick={() => removeSet(ex.id, i)} disabled={ex.sets.length === 1}>
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => addSet(ex.id)}>
-                      <Plus className="h-4 w-4" /> Add set
-                    </Button>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Notes</Label>
-                      <Textarea value={ex.notes || ""} onChange={(e) => updateNotes(ex.id, e.target.value)}
-                        placeholder="Form cues, sensations..." rows={2} />
-                    </div>
-                  </div>
-                </Card>
-              ))}
-
-              <div className="space-y-2">
-                <Label>Overall notes</Label>
-                <Textarea value={overallNotes} onChange={(e) => setOverallNotes(e.target.value)} rows={3} />
-              </div>
-            </div>
-            <div className="sticky bottom-0 border-t bg-card p-4 safe-bottom">
-              <Button onClick={save} className="w-full bg-pt hover:bg-pt/90" size="lg">Save session</Button>
-            </div>
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-2">
+          <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-white hover:bg-white/15" aria-label="Exercise library">
+            <Link to="/exercises"><Library className="h-5 w-5" /></Link>
+          </Button>
+          <Button onClick={() => { reset(); setOpen(true); }}
+            className="h-11 rounded-full bg-white px-4 text-pt hover:bg-white/90 font-semibold shadow-lg">
+            <Plus className="h-5 w-5" /> Log session
+          </Button>
+        </div>
       }
     >
+      {resumePrompt && !open && (
+        <Card className="mb-4 flex items-center gap-3 border-pt/40 bg-pt/5 p-3">
+          <RotateCcw className="h-5 w-5 shrink-0 text-pt" />
+          <div className="min-w-0 flex-1 text-sm">
+            <p className="font-semibold">Resume in-progress session</p>
+            <p className="text-xs text-muted-foreground">
+              {resumePrompt.data.exercises.length} exercises · started {draftAge(resumePrompt.at)}
+            </p>
+          </div>
+          <Button size="sm" variant="ghost" onClick={dismissResume}>Discard</Button>
+          <Button size="sm" className="bg-pt hover:bg-pt/90" onClick={acceptResume}>Resume</Button>
+        </Card>
+      )}
+
       <Tabs defaultValue="history">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="history">History</TabsTrigger>
@@ -223,6 +234,9 @@ export default function PT() {
             <div className="rounded-xl border border-dashed py-16 text-center">
               <HeartPulse className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">No PT sessions yet.</p>
+              <Button onClick={() => { reset(); setOpen(true); }} className="mt-4 bg-pt hover:bg-pt/90">
+                <Plus className="h-4 w-4" /> Start your first session
+              </Button>
             </div>
           )}
           {sorted.map((s) => {
@@ -232,42 +246,63 @@ export default function PT() {
               : 0;
             return (
               <Card key={s.id} className="p-4 shadow-[var(--shadow-card)]">
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-muted-foreground">
                       {format(parseISO(s.date), "EEE, MMM d • HH:mm")}
                     </p>
                     <p className="mt-1 font-semibold">{s.exercises.length} exercises</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Avg pain</p>
-                    <p className={cn("text-xl font-bold", painColor(avgPain))}>{avgPain.toFixed(1)}</p>
+                  <div className="flex items-center gap-1">
+                    <div className="text-right pr-1">
+                      <p className="text-[10px] text-muted-foreground">Avg pain</p>
+                      <p className={cn("text-base font-bold", painColor(avgPain))}>{avgPain.toFixed(1)}</p>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openForEdit(s)} aria-label="Edit">
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8"
+                      onClick={() => setPendingDelete(s)} aria-label="Delete">
+                      <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                    </Button>
                   </div>
                 </div>
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 space-y-1.5">
                   {s.exercises.map((e) => {
                     const exAvg = e.sets.length ? e.sets.reduce((a, x) => a + x.painScale, 0) / e.sets.length : 0;
+                    const expanded = expandedExId === `${s.id}:${e.id}`;
                     return (
-                      <div key={e.id} className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{e.exerciseName}</span>
-                          <span className={cn("text-xs font-bold", painColor(exAvg))}>Pain {exAvg.toFixed(1)}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {e.sets.length} sets · {e.sets.map((s) => s.reps).join(", ")} reps
-                        </p>
-                        {e.notes && <p className="mt-1 text-xs italic text-muted-foreground">"{e.notes}"</p>}
-                      </div>
+                      <Collapsible key={e.id} open={expanded}
+                        onOpenChange={(o) => setExpandedExId(o ? `${s.id}:${e.id}` : null)}>
+                        <CollapsibleTrigger asChild>
+                          <button className="flex w-full items-center justify-between rounded-lg bg-pt/5 px-3 py-2 text-left text-sm hover:bg-pt/10">
+                            <span className="min-w-0 truncate font-medium">{e.exerciseName}</span>
+                            <span className="flex items-center gap-2 text-xs">
+                              <span className={cn("font-bold", painColor(exAvg))}>Pain {exAvg.toFixed(1)}</span>
+                              <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", expanded && "rotate-180")} />
+                            </span>
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="ml-3 mt-1 space-y-0.5 border-l-2 border-pt/20 pl-3 text-xs text-muted-foreground">
+                            {e.sets.map((st, i) => (
+                              <div key={i} className="flex items-center gap-2 tabular-nums">
+                                <span className="w-5 text-right">{i + 1}.</span>
+                                <span className="font-semibold text-foreground">{st.reps}</span>
+                                <span>reps · pain</span>
+                                <span className={cn("font-semibold", painColor(st.painScale))}>{st.painScale}</span>
+                              </div>
+                            ))}
+                            {e.notes && <p className="italic">"{e.notes}"</p>}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
                     );
                   })}
                 </div>
                 {s.overallNotes && (
                   <p className="mt-3 border-t pt-3 text-sm text-muted-foreground">"{s.overallNotes}"</p>
                 )}
-                <button onClick={() => { remove(s.id); toast("Session deleted"); }}
-                  className="mt-3 flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
-                  <Trash2 className="h-3 w-3" /> Delete
-                </button>
               </Card>
             );
           })}
@@ -290,6 +325,121 @@ export default function PT() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+        <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-3xl p-0">
+          <SheetHeader className="sticky top-0 z-10 border-b bg-card px-5 pb-4 pt-5">
+            <SheetTitle>{editingId ? "Edit PT Session" : "New PT Session"}</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 p-5">
+            <div className="space-y-2">
+              <Label>Body area</Label>
+              <Select value={bodyAreaFilter} onValueChange={setBodyAreaFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PT_BODY_AREAS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Add exercise</Label>
+                <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs">
+                  <Link to="/exercises"><Library className="h-3.5 w-3.5" /> Browse library</Link>
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <ExercisePicker module="pt" exercises={PT_EXERCISES} recent={recent}
+                  bodyAreaFilter={bodyAreaFilter}
+                  value={picker?.name}
+                  onChange={(name, group, bodyArea) => setPicker({ name, group, bodyArea })} />
+                <Button onClick={addExercise} disabled={!picker} className="bg-pt hover:bg-pt/90">Add</Button>
+              </div>
+            </div>
+
+            {exercises.length === 0 && (
+              <div className="rounded-xl border border-dashed bg-muted/30 py-10 text-center text-sm text-muted-foreground">
+                No exercises yet.
+              </div>
+            )}
+
+            {exercises.map((ex) => (
+              <Card key={ex.id} className="overflow-hidden">
+                <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">{ex.exerciseName}</p>
+                    <p className="text-xs text-muted-foreground">{ex.category}{ex.bodyArea ? ` · ${ex.bodyArea}` : ""}</p>
+                  </div>
+                  <ExerciseCountdown defaultSeconds={30} />
+                  <Button size="icon" variant="ghost" onClick={() => removeExercise(ex.id)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-3 p-3">
+                  <div className="grid grid-cols-[2rem_1fr_3fr_2rem] items-center gap-2 px-1 text-xs font-medium text-muted-foreground">
+                    <span>#</span><span>Reps/sec</span><span>Pain (1-10)</span><span />
+                  </div>
+                  {ex.sets.map((s, i) => (
+                    <div key={i} className="grid grid-cols-[2rem_1fr_3fr_2rem] items-center gap-2">
+                      <span className="text-sm font-semibold text-muted-foreground">{i + 1}</span>
+                      <Input type="number" inputMode="numeric" value={s.reps || ""}
+                        onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })} />
+                      <div className="flex items-center gap-2">
+                        <Slider min={1} max={10} step={1} value={[s.painScale]}
+                          onValueChange={([v]) => updateSet(ex.id, i, { painScale: v })}
+                          className="flex-1" />
+                        <span className={cn("w-6 text-right text-sm font-bold tabular-nums", painColor(s.painScale))}>
+                          {s.painScale}
+                        </span>
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-8 w-8"
+                        onClick={() => removeSet(ex.id, i)} disabled={ex.sets.length === 1}>
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => addSet(ex.id)}>
+                    <Plus className="h-4 w-4" /> Add set
+                  </Button>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Notes</Label>
+                    <Textarea value={ex.notes || ""} onChange={(e) => updateNotes(ex.id, e.target.value)}
+                      placeholder="Form cues, sensations..." rows={2} />
+                  </div>
+                </div>
+              </Card>
+            ))}
+
+            <div className="space-y-2">
+              <Label>Overall notes</Label>
+              <Textarea value={overallNotes} onChange={(e) => setOverallNotes(e.target.value)} rows={3} />
+            </div>
+          </div>
+          <div className="sticky bottom-0 border-t bg-card p-4 safe-bottom">
+            <Button onClick={save} className="w-full bg-pt hover:bg-pt/90" size="lg">
+              {editingId ? "Save changes" : "Save session"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this session?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete && format(parseISO(pendingDelete.date), "EEE, MMM d • HH:mm")} —{" "}
+              {pendingDelete?.exercises.length} exercises will be removed. You can undo for a few seconds.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
