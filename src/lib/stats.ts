@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfDay } from "date-fns";
+import { startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfDay, subWeeks } from "date-fns";
 import type { GymSession, PTSession, CardioSession, BodyMetric } from "@/lib/types";
 
 // ----- Body composition trends -----
