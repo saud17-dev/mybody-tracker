@@ -148,22 +148,61 @@ export default function GoalsPage() {
         <GoalEditor goals={goals} unit={unit} onSave={async (g) => { await saveGoals(g); toast.success("Goals updated"); }} />
       </div>
 
-      {/* Streaks */}
+      {/* This week's plan */}
       <section className="mt-7">
         <div className="mb-3 flex items-center justify-between px-1">
           <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <Flame className="h-3.5 w-3.5" /> Streaks
+            <CalendarDays className="h-3.5 w-3.5" /> This week's plan
           </h2>
-          {streaks.any.current > 0 && (
-            <span className="text-[11px] font-semibold text-primary">
-              🔥 {streaks.any.current}-day overall
-            </span>
-          )}
+          <Button size="sm" variant="ghost" className="h-7 gap-1 text-primary text-xs"
+            onClick={() => navigate("/plan")}>
+            Manage <ChevronRight className="h-3 w-3" />
+          </Button>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <StreakCard label="Gym" streak={streaks.gym} variant="gym" Icon={Dumbbell} />
-          <StreakCard label="PT" streak={streaks.pt} variant="pt" Icon={HeartPulse} />
-          <StreakCard label="Cardio" streak={streaks.cardio} variant="cardio" Icon={Activity} />
+        <div className="space-y-2">
+          {DOW_ORDER.map((dow) => {
+            const plan = planByDow.get(dow);
+            const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
+            const isToday = dow === new Date().getDay();
+            const isSkipped = skipped.has(dow);
+            const mod = (isSkipped ? "rest" : plan?.module ?? "rest");
+            const Icon = mod === "gym" ? Dumbbell : mod === "pt" ? HeartPulse : mod === "cardio" ? Activity : Coffee;
+            const style = mod === "rest"
+              ? { bg: "bg-muted", text: "text-muted-foreground" }
+              : variantStyles[mod as "gym" | "pt" | "cardio"];
+            return (
+              <PlanDayEditor
+                key={dow}
+                dow={dow}
+                plan={plan}
+                templates={templates}
+                onSave={async (m, tplId, label) => {
+                  await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
+                  toast.success(`${DAYS_SHORT[dow]} updated`);
+                }}
+              >
+                <Card className={cn(
+                  "flex items-center gap-3 p-3 cursor-pointer transition hover:border-primary/40",
+                  isToday && "ring-1 ring-primary/40",
+                  isSkipped && "opacity-60",
+                )}>
+                  <div className="w-10 text-xs font-bold uppercase text-muted-foreground">{DAYS_SHORT[dow]}</div>
+                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", style.bg)}>
+                    {tpl?.emoji ? <span className="text-lg">{tpl.emoji}</span> : <Icon className={cn("h-4 w-4", style.text)} />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      {mod}{isSkipped && " · skipped"}
+                    </p>
+                    <p className={cn("truncate text-sm font-medium", isSkipped && "line-through")}>
+                      {tpl?.name || plan?.label || (mod === "rest" ? "Rest day" : "Tap to schedule")}
+                    </p>
+                  </div>
+                  <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </Card>
+              </PlanDayEditor>
+            );
+          })}
         </div>
       </section>
 
@@ -173,32 +212,64 @@ export default function GoalsPage() {
         <MonthlyActivityCalendar gym={gym} pt={pt} cardio={cardio} />
       </section>
 
-      {/* Weekly volume by muscle group */}
-      {muscleVolume.length > 0 && (
+      {/* Last week's workouts recap */}
+      <section className="mt-7">
+        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Sparkles className="h-3.5 w-3.5" /> Last week's workouts
+        </h2>
+        {lastWeekSessions.length === 0 ? (
+          <Card className="p-6 text-center text-sm text-muted-foreground">No workouts logged last week.</Card>
+        ) : (
+          <div className="space-y-2">
+            {lastWeekSessions.map((s) => {
+              const Icon = s.module === "gym" ? Dumbbell : s.module === "pt" ? HeartPulse : Activity;
+              const style = variantStyles[s.module];
+              return (
+                <Card key={s.id} className="flex items-start gap-3 p-3">
+                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", style.bg)}>
+                    <Icon className={cn("h-4 w-4", style.text)} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      {format(parseISO(s.date), "EEE, MMM d")} · {s.title}
+                    </p>
+                    <p className="text-sm font-medium leading-snug">{s.summary}</p>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Volume by muscle: 2 weeks */}
+      {muscleVolume2w.length > 0 && (
         <section className="mt-7">
           <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <BarChart3 className="h-3.5 w-3.5" /> Volume by muscle (this week)
+            <BarChart3 className="h-3.5 w-3.5" /> Volume by muscle (last 2 weeks)
           </h2>
           <Card className="p-3">
-            <div className="h-56 w-full">
+            <div className="h-64 w-full">
               <ResponsiveContainer>
-                <BarChart data={muscleVolume.map((v) => ({
+                <BarChart data={muscleVolume2w.map((v) => ({
                   group: v.group,
-                  volume: Math.round(toDisplay(v.volume, unit) ?? 0),
-                  sets: v.sets,
+                  "Last week": Math.round(toDisplay(v.lastWeek, unit) ?? 0),
+                  "This week": Math.round(toDisplay(v.thisWeek, unit) ?? 0),
                 }))} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="group" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                    formatter={(v: any, name: string) => [name === "volume" ? `${v} ${unit}` : `${v} sets`, ""]}
+                    formatter={(v: any) => [`${v} ${unit}`, ""]}
                   />
-                  <Bar dataKey="volume" fill="hsl(var(--gym))" radius={[6, 6, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="Last week" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="This week" fill="hsl(var(--gym))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <p className="mt-1 text-center text-[10px] text-muted-foreground">Total weekly tonnage by muscle</p>
+            <p className="mt-1 text-center text-[10px] text-muted-foreground">Total tonnage by muscle group</p>
           </Card>
         </section>
       )}
