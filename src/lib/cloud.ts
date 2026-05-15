@@ -138,6 +138,17 @@ export function useGymSessions() {
     onError: onSaveError,
   });
 
+  const update = useMutation({
+    mutationFn: async (s: GymSession) => {
+      const { error } = await supabase.from("gym_sessions").update({
+        date: s.date, exercises: s.exercises as any, notes: s.notes ?? null,
+      }).eq("id", s.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gym", user?.id] }),
+    onError: onSaveError,
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("gym_sessions").delete().eq("id", id);
@@ -147,7 +158,23 @@ export function useGymSessions() {
     onError: onSaveError,
   });
 
-  return { sessions: q.data ?? [], loading: q.isLoading, create: create.mutateAsync, remove: remove.mutateAsync };
+  // Restore a previously-deleted session keeping its id (for undo).
+  const restore = useMutation({
+    mutationFn: async (s: GymSession) => {
+      const { error } = await supabase.from("gym_sessions").insert({
+        id: s.id, user_id: user!.id, date: s.date, exercises: s.exercises as any, notes: s.notes ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gym", user?.id] }),
+    onError: onSaveError,
+  });
+
+  return {
+    sessions: q.data ?? [], loading: q.isLoading,
+    create: create.mutateAsync, update: update.mutateAsync,
+    remove: remove.mutateAsync, restore: restore.mutateAsync,
+  };
 }
 
 // ---------- PT sessions ----------
