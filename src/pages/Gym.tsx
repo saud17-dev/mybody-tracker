@@ -179,12 +179,13 @@ export default function Gym() {
 
     try {
       if (editingId) {
-        await update({ id: editingId, date: new Date().toISOString(), exercises: finalExercises, notes: notes || undefined } as GymSession);
-        // Preserve original date on edit
         const orig = sessions.find((s) => s.id === editingId);
-        if (orig) {
-          await update({ id: editingId, date: orig.date, exercises: finalExercises, notes: notes || undefined } as GymSession);
-        }
+        await update({
+          id: editingId,
+          date: orig?.date ?? new Date().toISOString(),
+          exercises: finalExercises,
+          notes: notes || undefined,
+        } as GymSession);
         toast.success("Workout updated");
       } else {
         const newPRs = detectNewPRs(finalExercises, historicalPRs);
