@@ -638,52 +638,71 @@ function TrendInsightCard({
 }
 
 
-function StreakCard({
-  label, streak, variant, Icon,
+function PlanDayEditor({
+  dow, plan, templates, onSave, children,
 }: {
-  label: string;
-  streak: ModuleStreak;
-  variant: "gym" | "pt" | "cardio";
-  Icon: React.ComponentType<{ className?: string }>;
+  dow: number;
+  plan?: { module: "gym" | "pt" | "cardio" | "rest"; template_id?: string | null; label?: string | null };
+  templates: { id: string; name: string; module: string }[];
+  onSave: (m: "gym" | "pt" | "cardio" | "rest", tplId?: string | null, label?: string | null) => Promise<void>;
+  children: React.ReactNode;
 }) {
-  const variantStyle = {
-    gym: { bg: "bg-gym/10", text: "text-gym" },
-    pt: { bg: "bg-pt/10", text: "text-pt" },
-    cardio: { bg: "bg-cardio/10", text: "text-cardio" },
-  }[variant];
-  const hasData = streak.totalActiveDays > 0;
+  const [open, setOpen] = useState(false);
+  const [mod, setMod] = useState<"gym" | "pt" | "cardio" | "rest">((plan?.module as any) || "rest");
+  const [tplId, setTplId] = useState<string>(plan?.template_id || "");
+  const [label, setLabel] = useState(plan?.label || "");
+  const filtered = templates.filter((t) => t.module === mod);
+
   return (
-    <Card className="flex flex-col items-center gap-1.5 p-3 text-center">
-      <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", variantStyle.bg)}>
-        <Icon className={cn("h-4 w-4", variantStyle.text)} />
-      </div>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-bold leading-none">{streak.current}</span>
-        <span className="text-[10px] text-muted-foreground">day{streak.current === 1 ? "" : "s"}</span>
-      </div>
-      {hasData ? (
-        <div className="mt-1 w-full space-y-0.5 text-[10px] text-muted-foreground">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1"><Flame className="h-2.5 w-2.5" /> Best</span>
-            <span className="font-semibold text-foreground">{streak.best}d</span>
+    <Sheet open={open} onOpenChange={(o) => {
+      setOpen(o);
+      if (o) {
+        setMod((plan?.module as any) || "rest");
+        setTplId(plan?.template_id || "");
+        setLabel(plan?.label || "");
+      }
+    }}>
+      <SheetTrigger asChild><div>{children}</div></SheetTrigger>
+      <SheetContent side="bottom" className="rounded-t-3xl">
+        <SheetHeader><SheetTitle>Schedule {DAYS_SHORT[dow]}</SheetTitle></SheetHeader>
+        <div className="mt-4 space-y-4">
+          <div className="space-y-2">
+            <Label>Type</Label>
+            <Select value={mod} onValueChange={(v) => { setMod(v as any); setTplId(""); }}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gym">Gym</SelectItem>
+                <SelectItem value="pt">PT</SelectItem>
+                <SelectItem value="cardio">Cardio</SelectItem>
+                <SelectItem value="rest">Rest</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1"><CalendarX className="h-2.5 w-2.5" /> Longest off</span>
-            <span className="font-semibold text-foreground">{streak.longestGap}d</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Last</span>
-            <span className="font-semibold text-foreground">
-              {streak.lastSessionDaysAgo === 0 ? "Today" :
-               streak.lastSessionDaysAgo === 1 ? "1d ago" :
-               `${streak.lastSessionDaysAgo}d ago`}
-            </span>
-          </div>
+          {mod !== "rest" && (
+            <>
+              <div className="space-y-2">
+                <Label>Workout</Label>
+                <Select value={tplId || "__none__"} onValueChange={(v) => setTplId(v === "__none__" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="No template" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">No template</SelectItem>
+                    {filtered.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Label (optional)</Label>
+                <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Push day" />
+              </div>
+            </>
+          )}
+          <Button className="w-full" size="lg"
+            onClick={async () => { await onSave(mod, tplId || null, label || null); setOpen(false); }}>
+            Save
+          </Button>
         </div>
-      ) : (
-        <p className="mt-1 text-[10px] italic text-muted-foreground">No sessions yet</p>
-      )}
-    </Card>
+      </SheetContent>
+    </Sheet>
   );
 }
+
