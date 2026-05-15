@@ -78,8 +78,13 @@ export default function GoalsPage() {
   const unit = profile?.unit ?? "kg";
 
   const weekly = useWeeklyCounts(gym, pt, cardio);
-  const muscleVolume = useWeeklyMuscleVolume(gym);
-  const streaks = useWorkoutStreaks(gym, pt, cardio);
+  const muscleVolume2w = useTwoWeekMuscleVolume(gym);
+  const lastWeekSessions = useLastWeekSessions(gym, pt, cardio);
+
+  const { days: planDays, upsertDay } = usePlanSchedule();
+  const { templates } = useWorkoutTemplates();
+  const { skipped } = usePlanSkips();
+  const planByDow = useMemo(() => new Map(planDays.map((d) => [d.day_of_week, d])), [planDays]);
 
   const trends = useBodyTrends(metrics, goals);
 
