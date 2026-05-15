@@ -16,6 +16,7 @@ import Plan from "./pages/Plan";
 import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import Nutrition from "./pages/Nutrition";
+import ExerciseLibrary from "./pages/ExerciseLibrary";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient({
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/pt" element={<Shell><PT /></Shell>} />
             <Route path="/cardio" element={<Shell><Cardio /></Shell>} />
             <Route path="/nutrition" element={<Shell><Nutrition /></Shell>} />
+            <Route path="/exercises" element={<Shell><ExerciseLibrary /></Shell>} />
             <Route path="/settings" element={<Shell><Settings /></Shell>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
