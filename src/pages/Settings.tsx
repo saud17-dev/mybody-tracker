@@ -14,6 +14,8 @@ import {
 } from "@/lib/cloud";
 import { metricsToCsv } from "@/lib/csvMetrics";
 import { isHealthAvailable, requestHealthPermissions, fetchHealthMetrics, fetchHealthWorkouts } from "@/lib/health";
+import { ShareAccessCard } from "@/components/ShareAccessCard";
+import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Settings() {
