@@ -212,6 +212,13 @@ npx cap run ios`}</pre>
       </section>
 
       <section className="mt-7">
+        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <KeyRound className="h-3.5 w-3.5" /> Claude / external access
+        </h2>
+        <ShareAccessCard />
+      </section>
+
+      <section className="mt-7">
         <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account</h2>
         <Card className="p-4">
           <Button variant="outline" className="w-full text-destructive hover:text-destructive"
