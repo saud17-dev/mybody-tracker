@@ -14,6 +14,8 @@ import {
 } from "@/lib/cloud";
 import { metricsToCsv } from "@/lib/csvMetrics";
 import { isHealthAvailable, requestHealthPermissions, fetchHealthMetrics, fetchHealthWorkouts } from "@/lib/health";
+import { ShareAccessCard } from "@/components/ShareAccessCard";
+import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Settings() {
@@ -207,6 +209,13 @@ npx cap run ios`}</pre>
             </div>
           )}
         </Card>
+      </section>
+
+      <section className="mt-7">
+        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <KeyRound className="h-3.5 w-3.5" /> Claude / external access
+        </h2>
+        <ShareAccessCard />
       </section>
 
       <section className="mt-7">
