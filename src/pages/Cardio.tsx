@@ -136,6 +136,7 @@ export default function Cardio() {
           )}
           {sorted.map((s) => {
             const distDisp = distanceToDisplay(s.distanceKm, unit);
+            const times = formatSessionTimes(s.startedAt, s.endedAt);
             return (
               <Card key={s.id} className="flex items-center gap-4 p-4 shadow-[var(--shadow-card)]">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cardio/10 text-cardio">
@@ -144,6 +145,7 @@ export default function Cardio() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{s.activity}</p>
                   <p className="text-xs text-muted-foreground">{format(parseISO(s.date), "EEE, MMM d • HH:mm")}</p>
+                  {times && <p className="text-xs text-muted-foreground">{times}</p>}
                   {s.notes && <p className="mt-1 text-xs italic text-muted-foreground truncate">"{s.notes}"</p>}
                 </div>
                 <div className="text-right">
