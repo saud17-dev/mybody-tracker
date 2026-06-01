@@ -63,6 +63,7 @@ export default function Gym() {
   const [pendingDelete, setPendingDelete] = useState<GymSession | null>(null);
   const [resumePrompt, setResumePrompt] = useState<{ at: number; data: DraftPayload } | null>(null);
   const [expandedExId, setExpandedExId] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<string | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const historicalPRs = useMemo(() => computePRs(sessions), [sessions]);
@@ -151,6 +152,7 @@ export default function Gym() {
   const reset = () => {
     setExercises([]); setNotes(""); setDoneSets({});
     setWeightDrafts({}); setRestRunning(false); setEditingId(null);
+    setStartedAt(null);
   };
 
   const openForEdit = (s: GymSession) => {
@@ -159,6 +161,7 @@ export default function Gym() {
     setNotes(s.notes ?? "");
     setDoneSets({});
     setWeightDrafts({});
+    setStartedAt(s.startedAt ?? null);
     setOpen(true);
   };
 
@@ -178,6 +181,7 @@ export default function Gym() {
     }));
 
     try {
+      const endedAt = new Date().toISOString();
       if (editingId) {
         const orig = sessions.find((s) => s.id === editingId);
         await update({
@@ -185,11 +189,16 @@ export default function Gym() {
           date: orig?.date ?? new Date().toISOString(),
           exercises: finalExercises,
           notes: notes || undefined,
+          startedAt: startedAt ?? orig?.startedAt,
+          endedAt: orig?.endedAt ?? endedAt,
         } as GymSession);
         toast.success("Workout updated");
       } else {
         const newPRs = detectNewPRs(finalExercises, historicalPRs);
-        await create({ date: new Date().toISOString(), exercises: finalExercises, notes: notes || undefined });
+        await create({
+          date: new Date().toISOString(), exercises: finalExercises, notes: notes || undefined,
+          startedAt: startedAt ?? endedAt, endedAt,
+        });
         toast.success("Workout logged");
         if (newPRs.length) setPrCelebrate(newPRs);
         if (user) clearDraft("gym", user.id);
