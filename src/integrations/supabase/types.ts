@@ -51,8 +51,10 @@ export type Database = {
           date: string
           distance_km: number | null
           duration_min: number
+          ended_at: string | null
           id: string
           notes: string | null
+          started_at: string | null
           user_id: string
         }
         Insert: {
@@ -61,8 +63,10 @@ export type Database = {
           date?: string
           distance_km?: number | null
           duration_min: number
+          ended_at?: string | null
           id?: string
           notes?: string | null
+          started_at?: string | null
           user_id: string
         }
         Update: {
@@ -71,8 +75,10 @@ export type Database = {
           date?: string
           distance_km?: number | null
           duration_min?: number
+          ended_at?: string | null
           id?: string
           notes?: string | null
+          started_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -168,25 +174,31 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          ended_at: string | null
           exercises: Json
           id: string
           notes: string | null
+          started_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           date?: string
+          ended_at?: string | null
           exercises?: Json
           id?: string
           notes?: string | null
+          started_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           date?: string
+          ended_at?: string | null
           exercises?: Json
           id?: string
           notes?: string | null
+          started_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -357,25 +369,31 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          ended_at: string | null
           exercises: Json
           id: string
           overall_notes: string | null
+          started_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           date?: string
+          ended_at?: string | null
           exercises?: Json
           id?: string
           overall_notes?: string | null
+          started_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           date?: string
+          ended_at?: string | null
           exercises?: Json
           id?: string
           overall_notes?: string | null
+          started_at?: string | null
           user_id?: string
         }
         Relationships: []
