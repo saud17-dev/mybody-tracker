@@ -30,6 +30,7 @@ import {
 import { computePRs, detectNewPRs, exerciseSeries } from "@/lib/stats";
 import { fromInput, toDisplay, formatWeight } from "@/lib/units";
 import { saveDraft, loadDraft, clearDraft, draftAge } from "@/lib/draft";
+import { formatSessionTimes } from "@/lib/duration";
 import { useAuth } from "@/lib/auth";
 import type { GymExerciseEntry, GymSet, GymSession } from "@/lib/types";
 import { toast } from "sonner";
@@ -76,6 +77,13 @@ export default function Gym() {
     const d = loadDraft<DraftPayload>("gym", user.id);
     if (d && d.data.exercises.length > 0) setResumePrompt(d);
   }, [user]);
+
+  // Track when a new workout was started
+  useEffect(() => {
+    if (open && !editingId && !startedAt) {
+      setStartedAt(new Date().toISOString());
+    }
+  }, [open, editingId, startedAt]);
 
   // Autosave draft (only for NEW workouts, not edits)
   useEffect(() => {
