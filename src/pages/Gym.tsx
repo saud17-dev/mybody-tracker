@@ -318,6 +318,7 @@ export default function Gym() {
             const totalSets = s.exercises.reduce((a, e) => a + e.sets.length, 0);
             const totalVolKg = s.exercises.reduce(
               (a, e) => a + e.sets.reduce((b, st) => b + st.reps * st.weight, 0), 0);
+            const times = formatSessionTimes(s.startedAt, s.endedAt);
             return (
               <Card key={s.id} className="p-4 shadow-[var(--shadow-card)]">
                 <div className="flex items-start justify-between gap-2">
@@ -325,6 +326,7 @@ export default function Gym() {
                     <p className="text-sm font-medium text-muted-foreground">
                       {format(parseISO(s.date), "EEE, MMM d • HH:mm")}
                     </p>
+                    {times && <p className="text-xs text-muted-foreground">{times}</p>}
                     <p className="mt-1 font-semibold">{s.exercises.length} exercises · {totalSets} sets</p>
                   </div>
                   <div className="flex items-center gap-1">
