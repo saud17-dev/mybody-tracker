@@ -18,6 +18,8 @@ export interface GymSession {
   date: string;
   exercises: GymExerciseEntry[];
   notes?: string;
+  startedAt?: string;
+  endedAt?: string;
 }
 
 export interface PTSet {
@@ -40,6 +42,8 @@ export interface PTSession {
   date: string;
   exercises: PTExerciseEntry[];
   overallNotes?: string;
+  startedAt?: string;
+  endedAt?: string;
 }
 
 export interface CardioSession {
@@ -49,6 +53,8 @@ export interface CardioSession {
   durationMin: number;
   distanceKm?: number;
   notes?: string;
+  startedAt?: string;
+  endedAt?: string;
 }
 
 export interface BodyMetric {

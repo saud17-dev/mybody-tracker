@@ -18,6 +18,7 @@ import {
 import { CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { useCardioSessions, useProfile, useWorkoutTemplates } from "@/lib/cloud";
 import { distanceLabel, distanceToDisplay, distanceFromInput } from "@/lib/units";
+import { formatSessionTimes } from "@/lib/duration";
 import type { CardioSession } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -34,7 +35,12 @@ export default function Cardio() {
   const [distance, setDistance] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [pendingDelete, setPendingDelete] = useState<CardioSession | null>(null);
+  const [startedAt, setStartedAt] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (open && !startedAt) setStartedAt(new Date().toISOString());
+  }, [open, startedAt]);
 
   useEffect(() => {
     const tplId = searchParams.get("template");
@@ -55,6 +61,7 @@ export default function Cardio() {
 
   const reset = () => {
     setActivity(CARDIO_ACTIVITIES[0]); setDuration("30"); setDistance(""); setNotes("");
+    setStartedAt(null);
   };
 
   const save = async () => {
@@ -63,9 +70,11 @@ export default function Cardio() {
     const dist = distance.trim() === "" ? undefined : parseFloat(distance);
     const distKm = dist == null || isNaN(dist) ? undefined : distanceFromInput(dist, unit);
     try {
+      const endedAt = new Date().toISOString();
       await create({
         date: new Date().toISOString(), activity, durationMin: dur,
         distanceKm: distKm, notes: notes || undefined,
+        startedAt: startedAt ?? endedAt, endedAt,
       });
       toast.success("Cardio logged");
       reset();
@@ -127,6 +136,7 @@ export default function Cardio() {
           )}
           {sorted.map((s) => {
             const distDisp = distanceToDisplay(s.distanceKm, unit);
+            const times = formatSessionTimes(s.startedAt, s.endedAt);
             return (
               <Card key={s.id} className="flex items-center gap-4 p-4 shadow-[var(--shadow-card)]">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cardio/10 text-cardio">
@@ -135,6 +145,7 @@ export default function Cardio() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{s.activity}</p>
                   <p className="text-xs text-muted-foreground">{format(parseISO(s.date), "EEE, MMM d • HH:mm")}</p>
+                  {times && <p className="text-xs text-muted-foreground">{times}</p>}
                   {s.notes && <p className="mt-1 text-xs italic text-muted-foreground truncate">"{s.notes}"</p>}
                 </div>
                 <div className="text-right">

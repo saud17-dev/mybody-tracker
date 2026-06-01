@@ -30,6 +30,7 @@ import {
 import { computePRs, detectNewPRs, exerciseSeries } from "@/lib/stats";
 import { fromInput, toDisplay, formatWeight } from "@/lib/units";
 import { saveDraft, loadDraft, clearDraft, draftAge } from "@/lib/draft";
+import { formatSessionTimes } from "@/lib/duration";
 import { useAuth } from "@/lib/auth";
 import type { GymExerciseEntry, GymSet, GymSession } from "@/lib/types";
 import { toast } from "sonner";
@@ -63,6 +64,7 @@ export default function Gym() {
   const [pendingDelete, setPendingDelete] = useState<GymSession | null>(null);
   const [resumePrompt, setResumePrompt] = useState<{ at: number; data: DraftPayload } | null>(null);
   const [expandedExId, setExpandedExId] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<string | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const historicalPRs = useMemo(() => computePRs(sessions), [sessions]);
@@ -75,6 +77,13 @@ export default function Gym() {
     const d = loadDraft<DraftPayload>("gym", user.id);
     if (d && d.data.exercises.length > 0) setResumePrompt(d);
   }, [user]);
+
+  // Track when a new workout was started
+  useEffect(() => {
+    if (open && !editingId && !startedAt) {
+      setStartedAt(new Date().toISOString());
+    }
+  }, [open, editingId, startedAt]);
 
   // Autosave draft (only for NEW workouts, not edits)
   useEffect(() => {
@@ -151,6 +160,7 @@ export default function Gym() {
   const reset = () => {
     setExercises([]); setNotes(""); setDoneSets({});
     setWeightDrafts({}); setRestRunning(false); setEditingId(null);
+    setStartedAt(null);
   };
 
   const openForEdit = (s: GymSession) => {
@@ -159,6 +169,7 @@ export default function Gym() {
     setNotes(s.notes ?? "");
     setDoneSets({});
     setWeightDrafts({});
+    setStartedAt(s.startedAt ?? null);
     setOpen(true);
   };
 
@@ -178,6 +189,7 @@ export default function Gym() {
     }));
 
     try {
+      const endedAt = new Date().toISOString();
       if (editingId) {
         const orig = sessions.find((s) => s.id === editingId);
         await update({
@@ -185,11 +197,16 @@ export default function Gym() {
           date: orig?.date ?? new Date().toISOString(),
           exercises: finalExercises,
           notes: notes || undefined,
+          startedAt: startedAt ?? orig?.startedAt,
+          endedAt: orig?.endedAt ?? endedAt,
         } as GymSession);
         toast.success("Workout updated");
       } else {
         const newPRs = detectNewPRs(finalExercises, historicalPRs);
-        await create({ date: new Date().toISOString(), exercises: finalExercises, notes: notes || undefined });
+        await create({
+          date: new Date().toISOString(), exercises: finalExercises, notes: notes || undefined,
+          startedAt: startedAt ?? endedAt, endedAt,
+        });
         toast.success("Workout logged");
         if (newPRs.length) setPrCelebrate(newPRs);
         if (user) clearDraft("gym", user.id);
@@ -301,6 +318,7 @@ export default function Gym() {
             const totalSets = s.exercises.reduce((a, e) => a + e.sets.length, 0);
             const totalVolKg = s.exercises.reduce(
               (a, e) => a + e.sets.reduce((b, st) => b + st.reps * st.weight, 0), 0);
+            const times = formatSessionTimes(s.startedAt, s.endedAt);
             return (
               <Card key={s.id} className="p-4 shadow-[var(--shadow-card)]">
                 <div className="flex items-start justify-between gap-2">
@@ -308,6 +326,7 @@ export default function Gym() {
                     <p className="text-sm font-medium text-muted-foreground">
                       {format(parseISO(s.date), "EEE, MMM d • HH:mm")}
                     </p>
+                    {times && <p className="text-xs text-muted-foreground">{times}</p>}
                     <p className="mt-1 font-semibold">{s.exercises.length} exercises · {totalSets} sets</p>
                   </div>
                   <div className="flex items-center gap-1">

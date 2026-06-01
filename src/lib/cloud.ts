@@ -109,7 +109,10 @@ export function useGoals() {
 
 // ---------- Gym sessions ----------
 function rowToGym(r: any): GymSession {
-  return { id: r.id, date: r.date, exercises: r.exercises ?? [], notes: r.notes ?? undefined };
+  return {
+    id: r.id, date: r.date, exercises: r.exercises ?? [], notes: r.notes ?? undefined,
+    startedAt: r.started_at ?? undefined, endedAt: r.ended_at ?? undefined,
+  };
 }
 
 export function useGymSessions() {
@@ -130,6 +133,7 @@ export function useGymSessions() {
     mutationFn: async (s: Omit<GymSession, "id">) => {
       const { data, error } = await supabase.from("gym_sessions").insert({
         user_id: user!.id, date: s.date, exercises: s.exercises as any, notes: s.notes ?? null,
+        started_at: s.startedAt ?? null, ended_at: s.endedAt ?? null,
       }).select().single();
       if (error) throw error;
       return rowToGym(data);
@@ -142,6 +146,7 @@ export function useGymSessions() {
     mutationFn: async (s: GymSession) => {
       const { error } = await supabase.from("gym_sessions").update({
         date: s.date, exercises: s.exercises as any, notes: s.notes ?? null,
+        started_at: s.startedAt ?? null, ended_at: s.endedAt ?? null,
       }).eq("id", s.id);
       if (error) throw error;
     },
@@ -163,6 +168,7 @@ export function useGymSessions() {
     mutationFn: async (s: GymSession) => {
       const { error } = await supabase.from("gym_sessions").insert({
         id: s.id, user_id: user!.id, date: s.date, exercises: s.exercises as any, notes: s.notes ?? null,
+        started_at: s.startedAt ?? null, ended_at: s.endedAt ?? null,
       });
       if (error) throw error;
     },
@@ -179,7 +185,10 @@ export function useGymSessions() {
 
 // ---------- PT sessions ----------
 function rowToPT(r: any): PTSession {
-  return { id: r.id, date: r.date, exercises: r.exercises ?? [], overallNotes: r.overall_notes ?? undefined };
+  return {
+    id: r.id, date: r.date, exercises: r.exercises ?? [], overallNotes: r.overall_notes ?? undefined,
+    startedAt: r.started_at ?? undefined, endedAt: r.ended_at ?? undefined,
+  };
 }
 
 export function usePTSessions() {
@@ -198,6 +207,7 @@ export function usePTSessions() {
     mutationFn: async (s: Omit<PTSession, "id">) => {
       const { error } = await supabase.from("pt_sessions").insert({
         user_id: user!.id, date: s.date, exercises: s.exercises as any, overall_notes: s.overallNotes ?? null,
+        started_at: s.startedAt ?? null, ended_at: s.endedAt ?? null,
       });
       if (error) throw error;
     },
@@ -208,6 +218,7 @@ export function usePTSessions() {
     mutationFn: async (s: PTSession) => {
       const { error } = await supabase.from("pt_sessions").update({
         date: s.date, exercises: s.exercises as any, overall_notes: s.overallNotes ?? null,
+        started_at: s.startedAt ?? null, ended_at: s.endedAt ?? null,
       }).eq("id", s.id);
       if (error) throw error;
     },
@@ -226,6 +237,7 @@ export function usePTSessions() {
     mutationFn: async (s: PTSession) => {
       const { error } = await supabase.from("pt_sessions").insert({
         id: s.id, user_id: user!.id, date: s.date, exercises: s.exercises as any, overall_notes: s.overallNotes ?? null,
+        started_at: s.startedAt ?? null, ended_at: s.endedAt ?? null,
       });
       if (error) throw error;
     },
@@ -245,6 +257,7 @@ function rowToCardio(r: any): CardioSession {
     id: r.id, date: r.date, activity: r.activity, durationMin: Number(r.duration_min),
     distanceKm: r.distance_km == null ? undefined : Number(r.distance_km),
     notes: r.notes ?? undefined,
+    startedAt: r.started_at ?? undefined, endedAt: r.ended_at ?? undefined,
   };
 }
 
@@ -265,6 +278,7 @@ export function useCardioSessions() {
       const { error } = await supabase.from("cardio_sessions").insert({
         user_id: user!.id, date: s.date, activity: s.activity,
         duration_min: s.durationMin, distance_km: s.distanceKm ?? null, notes: s.notes ?? null,
+        started_at: s.startedAt ?? null, ended_at: s.endedAt ?? null,
       });
       if (error) throw error;
     },
@@ -284,6 +298,7 @@ export function useCardioSessions() {
       const { error } = await supabase.from("cardio_sessions").insert({
         id: s.id, user_id: user!.id, date: s.date, activity: s.activity,
         duration_min: s.durationMin, distance_km: s.distanceKm ?? null, notes: s.notes ?? null,
+        started_at: s.startedAt ?? null, ended_at: s.endedAt ?? null,
       });
       if (error) throw error;
     },
