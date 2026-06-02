@@ -313,11 +313,22 @@ export function useCardioSessions() {
 
 // ---------- Body metrics ----------
 function rowToBody(r: any): BodyMetric {
+  const n = (v: any) => (v == null ? undefined : Number(v));
   return {
     id: r.id, date: r.date,
-    weightKg: r.weight == null ? undefined : Number(r.weight),
-    muscleMassPct: r.muscle_mass_pct == null ? undefined : Number(r.muscle_mass_pct),
-    bodyFatPct: r.body_fat_pct == null ? undefined : Number(r.body_fat_pct),
+    weightKg: n(r.weight),
+    muscleMassPct: n(r.muscle_mass_pct),
+    bodyFatPct: n(r.body_fat_pct),
+    bmi: n(r.bmi),
+    fatFreeMassKg: n(r.fat_free_mass_kg),
+    subcutaneousFatPct: n(r.subcutaneous_fat_pct),
+    visceralFat: n(r.visceral_fat),
+    bodyWaterPct: n(r.body_water_pct),
+    muscleMassKg: n(r.muscle_mass_kg),
+    boneMassKg: n(r.bone_mass_kg),
+    proteinPct: n(r.protein_pct),
+    bmrKcal: n(r.bmr_kcal),
+    metabolicAge: n(r.metabolic_age),
   };
 }
 export function useBodyMetrics() {
@@ -336,7 +347,19 @@ export function useBodyMetrics() {
     mutationFn: async (m: Omit<BodyMetric, "id">) => {
       const { error } = await supabase.from("body_metrics").insert({
         user_id: user!.id, date: m.date,
-        weight: m.weightKg ?? null, muscle_mass_pct: m.muscleMassPct ?? null, body_fat_pct: m.bodyFatPct ?? null,
+        weight: m.weightKg ?? null,
+        muscle_mass_pct: m.muscleMassPct ?? null,
+        body_fat_pct: m.bodyFatPct ?? null,
+        bmi: m.bmi ?? null,
+        fat_free_mass_kg: m.fatFreeMassKg ?? null,
+        subcutaneous_fat_pct: m.subcutaneousFatPct ?? null,
+        visceral_fat: m.visceralFat ?? null,
+        body_water_pct: m.bodyWaterPct ?? null,
+        muscle_mass_kg: m.muscleMassKg ?? null,
+        bone_mass_kg: m.boneMassKg ?? null,
+        protein_pct: m.proteinPct ?? null,
+        bmr_kcal: m.bmrKcal ?? null,
+        metabolic_age: m.metabolicAge ?? null,
       });
       if (error) throw error;
     },
