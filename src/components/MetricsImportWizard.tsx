@@ -237,8 +237,12 @@ export function MetricsImportWizard({ onConfirm, templateUrl, templateFilename }
                       {" · "}
                       {[
                         r.weightKg != null && `${r.weightKg.toFixed(1)} kg`,
-                        r.muscleMassPct != null && `${r.muscleMassPct.toFixed(1)}% muscle`,
+                        r.bmi != null && `BMI ${r.bmi.toFixed(1)}`,
                         r.bodyFatPct != null && `${r.bodyFatPct.toFixed(1)}% fat`,
+                        r.muscleMassPct != null && `${r.muscleMassPct.toFixed(1)}% muscle`,
+                        r.muscleMassKg != null && `${r.muscleMassKg.toFixed(1)} kg muscle`,
+                        r.bodyWaterPct != null && `${r.bodyWaterPct.toFixed(1)}% water`,
+                        r.visceralFat != null && `visceral ${r.visceralFat}`,
                       ].filter(Boolean).join(" · ") || "—"}
                     </p>
                   ))}
