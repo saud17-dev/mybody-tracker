@@ -384,16 +384,34 @@ export default function GoalsPage() {
           <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent measurements</h2>
           <div className="space-y-2">
             {[...metrics].slice(0, 6).map((m) => (
-              <Card key={m.id} className="flex items-center justify-between px-4 py-3">
-                <div>
+              <Card key={m.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{format(parseISO(m.date), "MMM d, yyyy")}</p>
                   <p className="text-xs text-muted-foreground">
                     {[
                       m.weightKg != null && formatWeight(m.weightKg, unit, 1),
-                      m.muscleMassPct != null && `${m.muscleMassPct}% muscle`,
+                      m.bmi != null && `BMI ${m.bmi.toFixed(1)}`,
                       m.bodyFatPct != null && `${m.bodyFatPct}% fat`,
+                      m.muscleMassPct != null && `${m.muscleMassPct}% muscle`,
                     ].filter(Boolean).join(" · ")}
                   </p>
+                  {(m.muscleMassKg != null || m.fatFreeMassKg != null || m.boneMassKg != null ||
+                    m.bodyWaterPct != null || m.subcutaneousFatPct != null || m.visceralFat != null ||
+                    m.proteinPct != null || m.bmrKcal != null || m.metabolicAge != null) && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {[
+                        m.muscleMassKg != null && `muscle ${m.muscleMassKg.toFixed(1)} kg`,
+                        m.fatFreeMassKg != null && `lean ${m.fatFreeMassKg.toFixed(1)} kg`,
+                        m.boneMassKg != null && `bone ${m.boneMassKg.toFixed(2)} kg`,
+                        m.bodyWaterPct != null && `water ${m.bodyWaterPct}%`,
+                        m.subcutaneousFatPct != null && `sub-fat ${m.subcutaneousFatPct}%`,
+                        m.visceralFat != null && `visceral ${m.visceralFat}`,
+                        m.proteinPct != null && `protein ${m.proteinPct}%`,
+                        m.bmrKcal != null && `BMR ${m.bmrKcal} kcal`,
+                        m.metabolicAge != null && `meta-age ${m.metabolicAge}`,
+                      ].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
                 </div>
                 <button onClick={() => removeMetric(m.id)} className="text-muted-foreground hover:text-destructive">
                   <Trash2 className="h-4 w-4" />
@@ -420,6 +438,16 @@ export default function GoalsPage() {
                 weightKg: r.weightKg,
                 muscleMassPct: r.muscleMassPct,
                 bodyFatPct: r.bodyFatPct,
+                bmi: r.bmi,
+                fatFreeMassKg: r.fatFreeMassKg,
+                subcutaneousFatPct: r.subcutaneousFatPct,
+                visceralFat: r.visceralFat,
+                bodyWaterPct: r.bodyWaterPct,
+                muscleMassKg: r.muscleMassKg,
+                boneMassKg: r.boneMassKg,
+                proteinPct: r.proteinPct,
+                bmrKcal: r.bmrKcal,
+                metabolicAge: r.metabolicAge,
               });
             }
           }}
