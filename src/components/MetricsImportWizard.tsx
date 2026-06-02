@@ -21,7 +21,17 @@ const FIELD_LABELS: Record<MetricField, string> = {
   date: "Date",
   weight: "Weight",
   bodyFat: "Body fat %",
-  muscle: "Muscle mass %",
+  muscle: "Skeletal muscle %",
+  bmi: "BMI",
+  fatFreeMass: "Fat-free mass (kg)",
+  subFat: "Subcutaneous fat %",
+  visceralFat: "Visceral fat",
+  bodyWater: "Body water %",
+  muscleMassKg: "Muscle mass (kg)",
+  boneMass: "Bone mass (kg)",
+  protein: "Protein %",
+  bmr: "BMR (kcal)",
+  metabolicAge: "Metabolic age",
   ignore: "Ignore",
 };
 
@@ -227,8 +237,12 @@ export function MetricsImportWizard({ onConfirm, templateUrl, templateFilename }
                       {" · "}
                       {[
                         r.weightKg != null && `${r.weightKg.toFixed(1)} kg`,
-                        r.muscleMassPct != null && `${r.muscleMassPct.toFixed(1)}% muscle`,
+                        r.bmi != null && `BMI ${r.bmi.toFixed(1)}`,
                         r.bodyFatPct != null && `${r.bodyFatPct.toFixed(1)}% fat`,
+                        r.muscleMassPct != null && `${r.muscleMassPct.toFixed(1)}% muscle`,
+                        r.muscleMassKg != null && `${r.muscleMassKg.toFixed(1)} kg muscle`,
+                        r.bodyWaterPct != null && `${r.bodyWaterPct.toFixed(1)}% water`,
+                        r.visceralFat != null && `visceral ${r.visceralFat}`,
                       ].filter(Boolean).join(" · ") || "—"}
                     </p>
                   ))}

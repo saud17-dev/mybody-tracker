@@ -63,6 +63,16 @@ export interface BodyMetric {
   weightKg?: number;
   muscleMassPct?: number;
   bodyFatPct?: number;
+  bmi?: number;
+  fatFreeMassKg?: number;
+  subcutaneousFatPct?: number;
+  visceralFat?: number;
+  bodyWaterPct?: number;
+  muscleMassKg?: number;
+  boneMassKg?: number;
+  proteinPct?: number;
+  bmrKcal?: number;
+  metabolicAge?: number;
 }
 
 export interface Goals {

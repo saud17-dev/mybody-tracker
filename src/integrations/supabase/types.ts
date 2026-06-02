@@ -16,30 +16,63 @@ export type Database = {
     Tables: {
       body_metrics: {
         Row: {
+          bmi: number | null
+          bmr_kcal: number | null
           body_fat_pct: number | null
+          body_water_pct: number | null
+          bone_mass_kg: number | null
           created_at: string
           date: string
+          fat_free_mass_kg: number | null
           id: string
+          metabolic_age: number | null
+          muscle_mass_kg: number | null
           muscle_mass_pct: number | null
+          protein_pct: number | null
+          skeletal_muscle_pct: number | null
+          subcutaneous_fat_pct: number | null
           user_id: string
+          visceral_fat: number | null
           weight: number | null
         }
         Insert: {
+          bmi?: number | null
+          bmr_kcal?: number | null
           body_fat_pct?: number | null
+          body_water_pct?: number | null
+          bone_mass_kg?: number | null
           created_at?: string
           date?: string
+          fat_free_mass_kg?: number | null
           id?: string
+          metabolic_age?: number | null
+          muscle_mass_kg?: number | null
           muscle_mass_pct?: number | null
+          protein_pct?: number | null
+          skeletal_muscle_pct?: number | null
+          subcutaneous_fat_pct?: number | null
           user_id: string
+          visceral_fat?: number | null
           weight?: number | null
         }
         Update: {
+          bmi?: number | null
+          bmr_kcal?: number | null
           body_fat_pct?: number | null
+          body_water_pct?: number | null
+          bone_mass_kg?: number | null
           created_at?: string
           date?: string
+          fat_free_mass_kg?: number | null
           id?: string
+          metabolic_age?: number | null
+          muscle_mass_kg?: number | null
           muscle_mass_pct?: number | null
+          protein_pct?: number | null
+          skeletal_muscle_pct?: number | null
+          subcutaneous_fat_pct?: number | null
           user_id?: string
+          visceral_fat?: number | null
           weight?: number | null
         }
         Relationships: []

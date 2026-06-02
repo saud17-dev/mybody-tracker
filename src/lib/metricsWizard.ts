@@ -1,6 +1,22 @@
 import Papa from "papaparse";
 
-export type MetricField = "date" | "weight" | "bodyFat" | "muscle" | "ignore";
+export type MetricField =
+  | "date"
+  | "weight"
+  | "bodyFat"
+  | "muscle"
+  | "bmi"
+  | "fatFreeMass"
+  | "subFat"
+  | "visceralFat"
+  | "bodyWater"
+  | "muscleMassKg"
+  | "boneMass"
+  | "protein"
+  | "bmr"
+  | "metabolicAge"
+  | "ignore";
+
 export type WeightUnit = "kg" | "lbs";
 export type PctScale = "percent" | "fraction"; // 0.182 vs 18.2
 
@@ -23,6 +39,16 @@ export type NormalizedRow = {
   weightKg?: number;
   bodyFatPct?: number;
   muscleMassPct?: number;
+  bmi?: number;
+  fatFreeMassKg?: number;
+  subcutaneousFatPct?: number;
+  visceralFat?: number;
+  bodyWaterPct?: number;
+  muscleMassKg?: number;
+  boneMassKg?: number;
+  proteinPct?: number;
+  bmrKcal?: number;
+  metabolicAge?: number;
   raw: WizardRow;
 };
 
@@ -37,10 +63,7 @@ export type WizardResult = {
 /* ------------------------------------------------------------------ */
 
 export function parseAny(text: string): WizardData {
-  // Strip BOM
   const clean = text.replace(/^\uFEFF/, "");
-  // Skip leading metadata lines until we find a row that looks like headers
-  // (e.g. some apps prepend "Exported on …")
   const lines = clean.split(/\r?\n/);
   let startIdx = 0;
   for (let i = 0; i < Math.min(lines.length, 10); i++) {
@@ -72,18 +95,28 @@ export function parseAny(text: string): WizardData {
 /* Auto-detect column mapping                                          */
 /* ------------------------------------------------------------------ */
 
+// Order matters: more specific patterns first so they win the scoring.
 const FIELD_KEYWORDS: Record<Exclude<MetricField, "ignore">, RegExp[]> = {
-  date: [/^date$/i, /date/i, /time/i, /day/i, /when/i, /timestamp/i],
-  weight: [/^weight/i, /^wt$/i, /mass/i, /\bkg\b/i, /\blbs?\b/i, /pound/i, /poids/i, /gewicht/i],
-  bodyFat: [/body.?fat/i, /^fat/i, /bf\b/i, /%\s*fat/i, /fat\s*%/i, /fat\s*mass/i],
-  muscle: [/muscle/i, /lean/i, /smm/i, /\bmm\b/i, /skeletal/i],
+  date: [/^date$/i, /\bdate\b/i, /\bday\b/i, /timestamp/i, /when/i],
+  bmi: [/\bbmi\b/i, /body.?mass.?index/i],
+  bodyFat: [/body.?fat/i, /^fat\s*\(?%/i, /\bbf\b/i, /%\s*fat/i, /fat\s*%/i, /fat\s*mass\s*\(?%/i],
+  subFat: [/subcutaneous/i, /sub.?fat/i],
+  visceralFat: [/visceral/i],
+  bodyWater: [/body.?water/i, /\bwater\b/i, /hydration/i],
+  muscle: [/skeletal.?muscle.*%/i, /muscle.*%/i, /\bsmm\b.*%/i, /lean.*%/i],
+  muscleMassKg: [/muscle.?mass.*\(?kg/i, /muscle.?mass.*\(?lb/i, /^muscle\s*\(?kg/i, /lean.*\(?kg/i],
+  fatFreeMass: [/fat.?free.?mass/i, /\bffm\b/i, /lean.?body.?mass/i, /\blbm\b/i],
+  boneMass: [/bone.?mass/i, /\bbone\b/i],
+  protein: [/protein/i],
+  bmr: [/\bbmr\b/i, /basal.?metabolic/i, /metabolism.*\(?kcal/i, /\bkcal\b/i],
+  metabolicAge: [/metabolic.?age/i, /body.?age/i],
+  weight: [/^weight/i, /^wt$/i, /\bkg\b/i, /\blbs?\b/i, /pound/i, /poids/i, /gewicht/i, /\bmass\s*\(?kg/i],
 };
 
 export function autoDetect(data: WizardData): Mapping {
   const columns: Record<string, MetricField> = {};
   const used = new Set<MetricField>();
 
-  // Score each header against each field, take best non-conflicting match
   const candidates: { header: string; field: MetricField; score: number }[] = [];
   for (const h of data.headers) {
     for (const [field, regs] of Object.entries(FIELD_KEYWORDS) as [Exclude<MetricField, "ignore">, RegExp[]][]) {
@@ -101,7 +134,6 @@ export function autoDetect(data: WizardData): Mapping {
   }
   for (const h of data.headers) if (!columns[h]) columns[h] = "ignore";
 
-  // Detect weight unit: if header contains "lb" or sample values are >= 130 → lbs
   const weightHeader = Object.entries(columns).find(([, f]) => f === "weight")?.[0];
   let weightUnit: WeightUnit = "kg";
   if (weightHeader) {
@@ -112,7 +144,6 @@ export function autoDetect(data: WizardData): Mapping {
     }
   }
 
-  // Detect body-fat / muscle scale (percent vs fraction)
   const bfHeader = Object.entries(columns).find(([, f]) => f === "bodyFat")?.[0];
   const mmHeader = Object.entries(columns).find(([, f]) => f === "muscle")?.[0];
   const detectScale = (header?: string): PctScale => {
@@ -131,8 +162,10 @@ export function autoDetect(data: WizardData): Mapping {
 }
 
 /* ------------------------------------------------------------------ */
-/* Normalize using a (possibly user-edited) mapping                    */
+/* Normalize                                                           */
 /* ------------------------------------------------------------------ */
+
+const KG_PER_LB = 0.45359237;
 
 export function normalize(data: WizardData, mapping: Mapping): WizardResult {
   const out: WizardResult = { rows: [], errors: [], skipped: 0 };
@@ -141,14 +174,18 @@ export function normalize(data: WizardData, mapping: Mapping): WizardResult {
     Object.entries(mapping.columns).find(([, f]) => f === field)?.[0];
 
   const dateCol = findCol("date");
-  const weightCol = findCol("weight");
-  const bfCol = findCol("bodyFat");
-  const mmCol = findCol("muscle");
-
   if (!dateCol) {
     out.errors.push("No date column selected — pick which column contains the measurement date.");
     return out;
   }
+
+  const cols: Partial<Record<MetricField, string>> = {};
+  (
+    ["weight", "bodyFat", "muscle", "bmi", "fatFreeMass", "subFat", "visceralFat",
+      "bodyWater", "muscleMassKg", "boneMass", "protein", "bmr", "metabolicAge"] as MetricField[]
+  ).forEach((f) => { const c = findCol(f); if (c) cols[f] = c; });
+
+  const get = (row: WizardRow, f: MetricField) => (cols[f] ? parseNumber(row[cols[f]!]) : undefined);
 
   data.rows.forEach((row, i) => {
     const lineNum = i + 2;
@@ -157,26 +194,39 @@ export function normalize(data: WizardData, mapping: Mapping): WizardResult {
     const iso = parseDate(rawDate);
     if (!iso) { out.errors.push(`Row ${lineNum}: cannot parse date "${rawDate}"`); return; }
 
-    const w = weightCol ? parseNumber(row[weightCol]) : undefined;
-    const bf = bfCol ? parseNumber(row[bfCol]) : undefined;
-    const mm = mmCol ? parseNumber(row[mmCol]) : undefined;
+    const w = get(row, "weight");
+    const bf = get(row, "bodyFat");
+    const mm = get(row, "muscle");
+    const ffm = get(row, "fatFreeMass");
+    const mmKg = get(row, "muscleMassKg");
+    const bone = get(row, "boneMass");
 
-    const weightKg = w != null
-      ? (mapping.weightUnit === "lbs" ? +(w * 0.45359237).toFixed(2) : w)
-      : undefined;
-    const bodyFatPct = bf != null
-      ? (mapping.bodyFatScale === "fraction" ? +(bf * 100).toFixed(2) : bf)
-      : undefined;
-    const muscleMassPct = mm != null
-      ? (mapping.muscleScale === "fraction" ? +(mm * 100).toFixed(2) : mm)
-      : undefined;
+    const toKg = (v?: number) => v != null ? (mapping.weightUnit === "lbs" ? +(v * KG_PER_LB).toFixed(2) : v) : undefined;
+    const scalePct = (v: number | undefined, scale: PctScale) =>
+      v != null ? (scale === "fraction" ? +(v * 100).toFixed(2) : v) : undefined;
 
-    if (weightKg == null && bodyFatPct == null && muscleMassPct == null) {
-      out.skipped++;
-      return;
-    }
+    const norm: NormalizedRow = {
+      date: iso,
+      weightKg: toKg(w),
+      bodyFatPct: scalePct(bf, mapping.bodyFatScale),
+      muscleMassPct: scalePct(mm, mapping.muscleScale),
+      fatFreeMassKg: toKg(ffm),
+      muscleMassKg: toKg(mmKg),
+      boneMassKg: toKg(bone),
+      bmi: get(row, "bmi"),
+      subcutaneousFatPct: get(row, "subFat"),
+      visceralFat: get(row, "visceralFat"),
+      bodyWaterPct: get(row, "bodyWater"),
+      proteinPct: get(row, "protein"),
+      bmrKcal: get(row, "bmr"),
+      metabolicAge: get(row, "metabolicAge"),
+      raw: row,
+    };
 
-    out.rows.push({ date: iso, weightKg, bodyFatPct, muscleMassPct, raw: row });
+    const hasAny = Object.entries(norm).some(([k, v]) => k !== "date" && k !== "raw" && v != null);
+    if (!hasAny) { out.skipped++; return; }
+
+    out.rows.push(norm);
   });
 
   return out;
@@ -190,38 +240,35 @@ function parseNumber(v: unknown): number | undefined {
   if (v == null) return undefined;
   let s = String(v).trim();
   if (!s) return undefined;
-  // Strip units like "kg", "lbs", "%"
+  // Treat common "empty" placeholders from exports (Renpho uses "--")
+  if (/^-+$/.test(s) || s === "—" || s.toLowerCase() === "n/a" || s.toLowerCase() === "na") return undefined;
   s = s.replace(/[a-zA-Z%]+/g, "").trim();
-  // Handle European decimal comma if no dot present
   if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
-  // Remove thousands separators
   s = s.replace(/\s/g, "");
+  if (!s || s === "-" || s === ".") return undefined;
   const n = Number(s);
   return isNaN(n) ? undefined : n;
 }
 
 function parseDate(s: string): string | null {
   const trimmed = s.trim();
-  // ISO-ish: 2026-04-01 or 2026-04-01T...
   if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
     const d = new Date(trimmed);
     return isNaN(d.getTime()) ? null : d.toISOString();
   }
-  // Numeric serial (Excel) — best effort
   if (/^\d{5}(\.\d+)?$/.test(trimmed)) {
     const epoch = new Date(Date.UTC(1899, 11, 30)).getTime();
     const ms = epoch + Number(trimmed) * 86400000;
     return new Date(ms).toISOString();
   }
-  // dd/mm/yyyy or dd-mm-yyyy or mm/dd/yyyy — disambiguate
   const m = trimmed.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(.*)$/);
   if (m) {
     let [, a, b, y, rest] = m;
     let day: number, month: number;
     const ai = +a, bi = +b;
     if (ai > 12) { day = ai; month = bi; }
-    else if (bi > 12) { day = bi; month = ai; } // mm/dd/yyyy
-    else { day = ai; month = bi; } // default to dd/mm
+    else if (bi > 12) { day = bi; month = ai; }
+    else { day = ai; month = bi; }
     let year = +y;
     if (year < 100) year += 2000;
     const time = rest.trim();
@@ -229,7 +276,6 @@ function parseDate(s: string): string | null {
     const d = new Date(iso);
     return isNaN(d.getTime()) ? null : d.toISOString();
   }
-  // Fallback to Date parser
   const d = new Date(trimmed);
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
