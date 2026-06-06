@@ -194,6 +194,11 @@ export default function Cardio() {
           </SheetHeader>
           <div className="space-y-4 p-5">
             <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={sessionDate} max={todayInputDate()}
+                onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
+            </div>
+            <div className="space-y-2">
               <Label>Activity</Label>
               <Select value={activity} onValueChange={setActivity}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
