@@ -27,3 +27,23 @@ export function formatSessionTimes(startedAt?: string, endedAt?: string): string
   const end = format(parseISO(endedAt!), "HH:mm");
   return `${start} → ${end} · ${formatDuration(ms)}`;
 }
+
+/** Returns today's date as yyyy-MM-dd for <input type="date"> defaults. */
+export function todayInputDate(): string {
+  return format(new Date(), "yyyy-MM-dd");
+}
+
+/** ISO yyyy-MM-dd → ISO string that uses the given (or current) time-of-day.
+ *  Lets users backdate a log while keeping a sensible timestamp. */
+export function dateWithCurrentTime(yyyymmdd: string, base: Date = new Date()): string {
+  const [y, m, d] = yyyymmdd.split("-").map(Number);
+  if (!y || !m || !d) return base.toISOString();
+  const dt = new Date(y, m - 1, d, base.getHours(), base.getMinutes(), base.getSeconds());
+  return dt.toISOString();
+}
+
+/** Extract yyyy-MM-dd from an ISO string for <input type="date">. */
+export function isoToInputDate(iso: string): string {
+  try { return format(parseISO(iso), "yyyy-MM-dd"); }
+  catch { return todayInputDate(); }
+}
