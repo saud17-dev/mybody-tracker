@@ -24,7 +24,7 @@ import {
   usePTSessions, useWorkoutTemplates, useRecentPTExercises, uid,
 } from "@/lib/cloud";
 import { saveDraft, loadDraft, clearDraft, draftAge } from "@/lib/draft";
-import { formatSessionTimes } from "@/lib/duration";
+import { formatSessionTimes, todayInputDate, dateWithCurrentTime, isoToInputDate } from "@/lib/duration";
 import { useAuth } from "@/lib/auth";
 import type { PTExerciseEntry, PTSet, PTSession } from "@/lib/types";
 import { toast } from "sonner";
@@ -54,6 +54,7 @@ export default function PT() {
   const [resumePrompt, setResumePrompt] = useState<{ at: number; data: DraftPayload } | null>(null);
   const [expandedExId, setExpandedExId] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Load draft once
@@ -143,13 +144,14 @@ export default function PT() {
 
   const removeExercise = (exId: string) => setExercises((p) => p.filter((e) => e.id !== exId));
 
-  const reset = () => { setExercises([]); setOverallNotes(""); setPicker(null); setEditingId(null); setStartedAt(null); };
+  const reset = () => { setExercises([]); setOverallNotes(""); setPicker(null); setEditingId(null); setStartedAt(null); setSessionDate(todayInputDate()); };
 
   const openForEdit = (s: PTSession) => {
     setEditingId(s.id);
     setExercises(s.exercises.map((e) => ({ ...e, sets: e.sets.map((st) => ({ ...st })) })));
     setOverallNotes(s.overallNotes ?? "");
     setStartedAt(s.startedAt ?? null);
+    setSessionDate(isoToInputDate(s.date));
     setOpen(true);
   };
 
@@ -161,7 +163,7 @@ export default function PT() {
         const orig = sessions.find((s) => s.id === editingId);
         await update({
           id: editingId,
-          date: orig?.date ?? new Date().toISOString(),
+          date: dateWithCurrentTime(sessionDate, orig?.date ? new Date(orig.date) : new Date()),
           exercises,
           overallNotes: overallNotes || undefined,
           startedAt: startedAt ?? orig?.startedAt,
@@ -170,7 +172,7 @@ export default function PT() {
         toast.success("Session updated");
       } else {
         await create({
-          date: new Date().toISOString(), exercises, overallNotes: overallNotes || undefined,
+          date: dateWithCurrentTime(sessionDate), exercises, overallNotes: overallNotes || undefined,
           startedAt: startedAt ?? endedAt, endedAt,
         });
         toast.success("PT session logged");
@@ -350,6 +352,11 @@ export default function PT() {
             <SheetTitle>{editingId ? "Edit PT Session" : "New PT Session"}</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 p-5">
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={sessionDate} max={todayInputDate()}
+                onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
+            </div>
             <div className="space-y-2">
               <Label>Body area</Label>
               <Select value={bodyAreaFilter} onValueChange={setBodyAreaFilter}>

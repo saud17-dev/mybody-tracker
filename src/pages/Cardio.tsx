@@ -18,7 +18,7 @@ import {
 import { CARDIO_ACTIVITIES } from "@/lib/exercises";
 import { useCardioSessions, useProfile, useWorkoutTemplates } from "@/lib/cloud";
 import { distanceLabel, distanceToDisplay, distanceFromInput } from "@/lib/units";
-import { formatSessionTimes } from "@/lib/duration";
+import { formatSessionTimes, todayInputDate, dateWithCurrentTime } from "@/lib/duration";
 import type { CardioSession } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -34,6 +34,7 @@ export default function Cardio() {
   const [duration, setDuration] = useState<string>("30");
   const [distance, setDistance] = useState<string>("");
   const [notes, setNotes] = useState("");
+  const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
   const [pendingDelete, setPendingDelete] = useState<CardioSession | null>(null);
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,7 +62,7 @@ export default function Cardio() {
 
   const reset = () => {
     setActivity(CARDIO_ACTIVITIES[0]); setDuration("30"); setDistance(""); setNotes("");
-    setStartedAt(null);
+    setStartedAt(null); setSessionDate(todayInputDate());
   };
 
   const save = async () => {
@@ -72,7 +73,7 @@ export default function Cardio() {
     try {
       const endedAt = new Date().toISOString();
       await create({
-        date: new Date().toISOString(), activity, durationMin: dur,
+        date: dateWithCurrentTime(sessionDate), activity, durationMin: dur,
         distanceKm: distKm, notes: notes || undefined,
         startedAt: startedAt ?? endedAt, endedAt,
       });
@@ -192,6 +193,11 @@ export default function Cardio() {
             <SheetTitle>New Cardio Session</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 p-5">
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={sessionDate} max={todayInputDate()}
+                onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
+            </div>
             <div className="space-y-2">
               <Label>Activity</Label>
               <Select value={activity} onValueChange={setActivity}>

@@ -30,7 +30,7 @@ import {
 import { computePRs, detectNewPRs, exerciseSeries } from "@/lib/stats";
 import { fromInput, toDisplay, formatWeight } from "@/lib/units";
 import { saveDraft, loadDraft, clearDraft, draftAge } from "@/lib/draft";
-import { formatSessionTimes } from "@/lib/duration";
+import { formatSessionTimes, todayInputDate, dateWithCurrentTime, isoToInputDate } from "@/lib/duration";
 import { useAuth } from "@/lib/auth";
 import type { GymExerciseEntry, GymSet, GymSession } from "@/lib/types";
 import { toast } from "sonner";
@@ -65,6 +65,7 @@ export default function Gym() {
   const [resumePrompt, setResumePrompt] = useState<{ at: number; data: DraftPayload } | null>(null);
   const [expandedExId, setExpandedExId] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
 
   const [searchParams, setSearchParams] = useSearchParams();
   const historicalPRs = useMemo(() => computePRs(sessions), [sessions]);
@@ -160,7 +161,7 @@ export default function Gym() {
   const reset = () => {
     setExercises([]); setNotes(""); setDoneSets({});
     setWeightDrafts({}); setRestRunning(false); setEditingId(null);
-    setStartedAt(null);
+    setStartedAt(null); setSessionDate(todayInputDate());
   };
 
   const openForEdit = (s: GymSession) => {
@@ -170,6 +171,7 @@ export default function Gym() {
     setDoneSets({});
     setWeightDrafts({});
     setStartedAt(s.startedAt ?? null);
+    setSessionDate(isoToInputDate(s.date));
     setOpen(true);
   };
 
@@ -194,7 +196,7 @@ export default function Gym() {
         const orig = sessions.find((s) => s.id === editingId);
         await update({
           id: editingId,
-          date: orig?.date ?? new Date().toISOString(),
+          date: dateWithCurrentTime(sessionDate, orig?.date ? new Date(orig.date) : new Date()),
           exercises: finalExercises,
           notes: notes || undefined,
           startedAt: startedAt ?? orig?.startedAt,
@@ -204,7 +206,7 @@ export default function Gym() {
       } else {
         const newPRs = detectNewPRs(finalExercises, historicalPRs);
         await create({
-          date: new Date().toISOString(), exercises: finalExercises, notes: notes || undefined,
+          date: dateWithCurrentTime(sessionDate), exercises: finalExercises, notes: notes || undefined,
           startedAt: startedAt ?? endedAt, endedAt,
         });
         toast.success("Workout logged");
@@ -448,6 +450,11 @@ export default function Gym() {
             <SheetTitle>{editingId ? "Edit Workout" : "New Workout"}</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 p-5">
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={sessionDate} max={todayInputDate()}
+                onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
+            </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Add exercise</Label>
