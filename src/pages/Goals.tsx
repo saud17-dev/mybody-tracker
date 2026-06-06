@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MetricsImportWizard } from "@/components/MetricsImportWizard";
 import { MonthlyActivityCalendar } from "@/components/MonthlyActivityCalendar";
+import { todayInputDate, dateWithCurrentTime } from "@/lib/duration";
 
 const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -92,17 +93,18 @@ export default function GoalsPage() {
   const [weight, setWeight] = useState<number | "">("");
   const [muscle, setMuscle] = useState<number | "">("");
   const [bodyFat, setBodyFat] = useState<number | "">("");
+  const [metricDate, setMetricDate] = useState<string>(todayInputDate());
 
   const addMetric = async () => {
     if (weight === "" && muscle === "" && bodyFat === "") return toast.error("Enter at least one value");
     try {
       await createMetric({
-        date: new Date().toISOString(),
+        date: dateWithCurrentTime(metricDate),
         weightKg: weight === "" ? undefined : fromInput(Number(weight), unit),
         muscleMassPct: muscle === "" ? undefined : Number(muscle),
         bodyFatPct: bodyFat === "" ? undefined : Number(bodyFat),
       });
-      setWeight(""); setMuscle(""); setBodyFat("");
+      setWeight(""); setMuscle(""); setBodyFat(""); setMetricDate(todayInputDate());
       setMetricOpen(false);
       toast.success("Measurement added");
     } catch (e: any) { toast.error(e.message); }
@@ -286,6 +288,11 @@ export default function GoalsPage() {
             <SheetContent side="bottom" className="rounded-t-3xl">
               <SheetHeader><SheetTitle>Add measurement</SheetTitle></SheetHeader>
               <div className="mt-5 space-y-4">
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input type="date" value={metricDate} max={todayInputDate()}
+                    onChange={(e) => setMetricDate(e.target.value || todayInputDate())} />
+                </div>
                 <div className="space-y-2">
                   <Label>Weight ({unit})</Label>
                   <Input type="number" inputMode="decimal" step="0.1" value={weight}
