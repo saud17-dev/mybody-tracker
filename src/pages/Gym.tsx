@@ -451,6 +451,11 @@ export default function Gym() {
           </SheetHeader>
           <div className="space-y-4 p-5">
             <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={sessionDate} max={todayInputDate()}
+                onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
+            </div>
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Add exercise</Label>
                 <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs">
