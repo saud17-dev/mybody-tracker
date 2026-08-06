@@ -4,6 +4,8 @@ export type Unit = "kg" | "lbs";
 export interface GymSet {
   reps: number;
   weight: number; // always stored in kg
+  durationSec?: number;
+  distanceKm?: number;
 }
 
 export interface GymExerciseEntry {
@@ -11,6 +13,15 @@ export interface GymExerciseEntry {
   exerciseName: string;
   muscleGroup: string;
   sets: GymSet[];
+  exerciseId?: string;
+  equipment?: string;
+  exerciseType?:
+    | "weight_reps"
+    | "bodyweight_reps"
+    | "weighted_bodyweight"
+    | "assisted_bodyweight"
+    | "duration"
+    | "distance_duration";
 }
 
 export interface GymSession {

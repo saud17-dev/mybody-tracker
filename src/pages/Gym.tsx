@@ -7,7 +7,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 import { AppShell } from "@/components/AppShell";
-import { ExercisePicker } from "@/components/ExercisePicker";
+import { AddExerciseSheet } from "@/components/AddExerciseSheet";
 import { RestTimer } from "@/components/RestTimer";
 import { ManualStopwatch } from "@/components/ManualStopwatch";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { GYM_EXERCISES } from "@/lib/exercises";
+import type { CatalogExercise } from "@/lib/exerciseDb";
 import {
-  useGymSessions, useProfile, useWorkoutTemplates, useRecentGymExercises, uid,
+  useGymSessions, useProfile, useWorkoutTemplates, uid,
 } from "@/lib/cloud";
 import { computePRs, detectNewPRs, exerciseSeries } from "@/lib/stats";
 import { fromInput, toDisplay, formatWeight } from "@/lib/units";
@@ -48,7 +48,7 @@ export default function Gym() {
   const unit = profile?.unit ?? "kg";
   const restDefault = profile?.restTimerSeconds ?? 90;
   const { templates } = useWorkoutTemplates();
-  const recent = useRecentGymExercises(sessions, 8);
+  
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,9 +66,41 @@ export default function Gym() {
   const [expandedExId, setExpandedExId] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
+  const [addOpen, setAddOpen] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const historicalPRs = useMemo(() => computePRs(sessions), [sessions]);
+
+  // last logged sets per exercise name (for the PREVIOUS column)
+  const previousByExercise = useMemo(() => {
+    const m = new Map<string, GymSet[]>();
+    const ordered = [...sessions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+    for (const s of ordered) {
+      if (editingId && s.id === editingId) continue;
+      for (const e of s.exercises) {
+        const key = e.exerciseName.toLowerCase();
+        if (!m.has(key)) m.set(key, e.sets);
+      }
+    }
+    return m;
+  }, [sessions, editingId]);
+
+  const previousLabel = (exerciseName: string, idx: number, type?: string): string => {
+    const sets = previousByExercise.get(exerciseName.toLowerCase());
+    const s = sets?.[idx];
+    if (!s) return "—";
+    if (type === "duration") return s.durationSec ? `${s.durationSec}s` : "—";
+    if (type === "distance_duration") {
+      const d = s.distanceKm != null ? `${s.distanceKm} km` : "";
+      const t = s.durationSec ? `${s.durationSec}s` : "";
+      return [d, t].filter(Boolean).join(" · ") || "—";
+    }
+    if (type === "bodyweight_reps") return `${s.reps} reps`;
+    return `${formatWeight(s.weight, unit, 1)} × ${s.reps}`;
+  };
+
 
   // Load draft on mount (only when starting a new workout, not editing)
   const draftLoadedRef = useRef(false);
@@ -119,10 +151,18 @@ export default function Gym() {
   }, [templates.length]);
 
   // ---------- mutators ----------
-  const addExercise = (name: string, group: string) => {
+  const addExercise = (e: CatalogExercise) => {
     setExercises((p) => [
       ...p,
-      { id: uid(), exerciseName: name, muscleGroup: group, sets: [{ reps: 8, weight: 0 }] },
+      {
+        id: uid(),
+        exerciseName: e.name,
+        muscleGroup: e.muscleGroup,
+        exerciseId: e.id,
+        equipment: e.equipment,
+        exerciseType: e.exerciseType,
+        sets: [{ reps: e.exerciseType === "duration" || e.exerciseType === "distance_duration" ? 0 : 8, weight: 0 }],
+      },
     ]);
   };
 
@@ -457,13 +497,15 @@ export default function Gym() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Add exercise</Label>
+                <Label>Exercises</Label>
                 <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs">
                   <Link to="/exercises"><Library className="h-3.5 w-3.5" /> Browse library</Link>
                 </Button>
               </div>
-              <ExercisePicker module="gym" exercises={GYM_EXERCISES} recent={recent}
-                onChange={(name, group) => addExercise(name, group)} />
+              <Button variant="outline" className="w-full justify-center font-semibold text-gym"
+                onClick={() => setAddOpen(true)}>
+                <Plus className="h-4 w-4" /> Add exercise
+              </Button>
             </div>
 
             {exercises.length === 0 && (
@@ -472,50 +514,81 @@ export default function Gym() {
               </div>
             )}
 
-            {exercises.map((ex) => (
+            {exercises.map((ex) => {
+              const type = ex.exerciseType ?? "weight_reps";
+              const fields: { key: "weight" | "reps" | "duration" | "distance"; label: string }[] =
+                type === "bodyweight_reps" ? [{ key: "reps", label: "Reps" }]
+                : type === "weighted_bodyweight" ? [{ key: "weight", label: `+${unit}` }, { key: "reps", label: "Reps" }]
+                : type === "assisted_bodyweight" ? [{ key: "weight", label: `-${unit}` }, { key: "reps", label: "Reps" }]
+                : type === "duration" ? [{ key: "duration", label: "Time (s)" }]
+                : type === "distance_duration" ? [{ key: "distance", label: "Dist (km)" }, { key: "duration", label: "Time (s)" }]
+                : [{ key: "weight", label: `Weight (${unit})` }, { key: "reps", label: "Reps" }];
+              const cols = `2rem 4.5rem ${fields.map(() => "1fr").join(" ")} 2.5rem 2rem`;
+              return (
               <Card key={ex.id} className="overflow-hidden">
                 <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
                   <div>
                     <p className="font-semibold">{ex.exerciseName}</p>
-                    <p className="text-xs text-muted-foreground">{ex.muscleGroup}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {ex.muscleGroup}{ex.equipment ? ` · ${ex.equipment}` : ""}
+                    </p>
                   </div>
                   <Button size="icon" variant="ghost" onClick={() => removeExercise(ex.id)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="space-y-2 p-3">
-                  <div className="grid grid-cols-[2rem_1fr_1fr_2.5rem_2rem] items-center gap-2 px-1 text-xs font-medium text-muted-foreground">
-                    <span>#</span><span>Reps</span><span>Weight ({unit})</span><span>Done</span><span />
+                  <div className="grid items-center gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+                    style={{ gridTemplateColumns: cols }}>
+                    <span>#</span>
+                    <span>Previous</span>
+                    {fields.map((f) => <span key={f.key}>{f.label}</span>)}
+                    <span>Done</span><span />
                   </div>
                   {ex.sets.map((s, i) => {
                     const isDone = !!doneSets[`${ex.id}:${i}`];
+                    const doneCls = cn(isDone && "line-through text-muted-foreground opacity-70");
                     return (
                       <div key={i} className={cn(
-                        "grid grid-cols-[2rem_1fr_1fr_2.5rem_2rem] items-center gap-2 rounded-md transition-colors",
+                        "grid items-center gap-2 rounded-md transition-colors",
                         isDone && "bg-emerald-500/10",
-                      )}>
+                      )} style={{ gridTemplateColumns: cols }}>
                         <span className={cn(
                           "text-sm font-semibold tabular-nums",
                           isDone ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
                         )}>{i + 1}</span>
-                        <Input type="number" inputMode="numeric" value={s.reps || ""}
-                          onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })}
-                          className={cn(isDone && "line-through text-muted-foreground opacity-70")} />
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          pattern="[0-9]*\.?[0-9]*"
-                          value={displayWeight(ex.id, i, s.weight)}
-                          onChange={(e) => {
-                            const v = e.target.value.replace(",", ".");
-                            // allow only digits + single dot
-                            if (v === "" || /^\d+(\.\d{0,3})?$/.test(v) || /^\d+\.$/.test(v)) {
-                              setWeightDraft(ex.id, i, v);
-                            }
-                          }}
-                          placeholder="0"
-                          className={cn(isDone && "line-through text-muted-foreground opacity-70")}
-                        />
+                        <span className="truncate text-xs tabular-nums text-muted-foreground">
+                          {previousLabel(ex.exerciseName, i, type)}
+                        </span>
+                        {fields.map((f) => {
+                          if (f.key === "reps") return (
+                            <Input key="reps" type="number" inputMode="numeric" value={s.reps || ""}
+                              onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })}
+                              className={doneCls} />
+                          );
+                          if (f.key === "weight") return (
+                            <Input key="weight" type="text" inputMode="decimal" pattern="[0-9]*\.?[0-9]*"
+                              value={displayWeight(ex.id, i, s.weight)}
+                              onChange={(e) => {
+                                const v = e.target.value.replace(",", ".");
+                                if (v === "" || /^\d+(\.\d{0,3})?$/.test(v) || /^\d+\.$/.test(v)) {
+                                  setWeightDraft(ex.id, i, v);
+                                }
+                              }}
+                              placeholder="0" className={doneCls} />
+                          );
+                          if (f.key === "duration") return (
+                            <Input key="duration" type="number" inputMode="numeric" value={s.durationSec || ""}
+                              onChange={(e) => updateSet(ex.id, i, { durationSec: Number(e.target.value) || 0 })}
+                              placeholder="0" className={doneCls} />
+                          );
+                          return (
+                            <Input key="distance" type="number" inputMode="decimal" step="0.01"
+                              value={s.distanceKm ?? ""}
+                              onChange={(e) => updateSet(ex.id, i, { distanceKm: Number(e.target.value) || 0 })}
+                              placeholder="0" className={doneCls} />
+                          );
+                        })}
                         <button
                           type="button"
                           onClick={() => toggleSetDone(ex.id, i)}
@@ -542,7 +615,8 @@ export default function Gym() {
                   </Button>
                 </div>
               </Card>
-            ))}
+              );
+            })}
 
             <div className="space-y-2">
               <Label>Notes</Label>
@@ -558,6 +632,8 @@ export default function Gym() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <AddExerciseSheet open={addOpen} onOpenChange={setAddOpen} onSelect={addExercise} />
 
       {restRunning && (
         <RestTimer key={restKey} initialSeconds={restDefault} onClose={() => setRestRunning(false)} />
