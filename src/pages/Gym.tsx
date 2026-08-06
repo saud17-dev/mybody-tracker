@@ -23,7 +23,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { GYM_EXERCISES } from "@/lib/exercises";
+import type { CatalogExercise } from "@/lib/exerciseDb";
 import {
   useGymSessions, useProfile, useWorkoutTemplates, useRecentGymExercises, uid,
 } from "@/lib/cloud";
@@ -119,10 +119,18 @@ export default function Gym() {
   }, [templates.length]);
 
   // ---------- mutators ----------
-  const addExercise = (name: string, group: string) => {
+  const addExercise = (e: CatalogExercise) => {
     setExercises((p) => [
       ...p,
-      { id: uid(), exerciseName: name, muscleGroup: group, sets: [{ reps: 8, weight: 0 }] },
+      {
+        id: uid(),
+        exerciseName: e.name,
+        muscleGroup: e.muscleGroup,
+        exerciseId: e.id,
+        equipment: e.equipment,
+        exerciseType: e.exerciseType,
+        sets: [{ reps: e.exerciseType === "duration" || e.exerciseType === "distance_duration" ? 0 : 8, weight: 0 }],
+      },
     ]);
   };
 
