@@ -465,13 +465,15 @@ export default function Gym() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Add exercise</Label>
+                <Label>Exercises</Label>
                 <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs">
                   <Link to="/exercises"><Library className="h-3.5 w-3.5" /> Browse library</Link>
                 </Button>
               </div>
-              <ExercisePicker module="gym" exercises={GYM_EXERCISES} recent={recent}
-                onChange={(name, group) => addExercise(name, group)} />
+              <Button variant="outline" className="w-full justify-center font-semibold text-gym"
+                onClick={() => setAddOpen(true)}>
+                <Plus className="h-4 w-4" /> Add exercise
+              </Button>
             </div>
 
             {exercises.length === 0 && (
