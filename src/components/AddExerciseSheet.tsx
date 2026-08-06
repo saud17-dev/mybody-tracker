@@ -44,8 +44,10 @@ export function AddExerciseSheet({ open, onOpenChange, onSelect }: Props) {
   }, [exercises, query, equipment, muscle]);
 
   const popular = useMemo(() => {
-    const set = new Set(POPULAR_EXERCISES.map((n) => n.toLowerCase()));
-    return filtered.filter((e) => set.has(e.name.toLowerCase()));
+    const order = new Map(POPULAR_EXERCISES.map((n, i) => [n.toLowerCase(), i]));
+    return filtered
+      .filter((e) => order.has(e.name.toLowerCase()))
+      .sort((a, b) => order.get(a.name.toLowerCase())! - order.get(b.name.toLowerCase())!);
   }, [filtered]);
 
   const all = useMemo(
