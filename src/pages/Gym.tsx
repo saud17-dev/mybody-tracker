@@ -48,7 +48,7 @@ export default function Gym() {
   const unit = profile?.unit ?? "kg";
   const restDefault = profile?.restTimerSeconds ?? 90;
   const { templates } = useWorkoutTemplates();
-  const recent = useRecentGymExercises(sessions, 8);
+  
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -632,6 +632,8 @@ export default function Gym() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <AddExerciseSheet open={addOpen} onOpenChange={setAddOpen} onSelect={addExercise} />
 
       {restRunning && (
         <RestTimer key={restKey} initialSeconds={restDefault} onClose={() => setRestRunning(false)} />
