@@ -43,7 +43,7 @@ const moduleStyle = {
 const moduleHero = {
   gym: {
     surface: "bg-[image:var(--gradient-gym)] text-module-foreground",
-    chip: "bg-white/20 text-module-foreground",
+    chip: "bg-module-foreground/20 text-module-foreground",
     border: "border-gym",
     accent: "text-gym",
     soft: "bg-gym/10",
@@ -51,7 +51,7 @@ const moduleHero = {
   },
   pt: {
     surface: "bg-[image:var(--gradient-pt)] text-module-foreground",
-    chip: "bg-white/20 text-module-foreground",
+    chip: "bg-module-foreground/20 text-module-foreground",
     border: "border-pt",
     accent: "text-pt",
     soft: "bg-pt/10",
@@ -59,7 +59,7 @@ const moduleHero = {
   },
   cardio: {
     surface: "bg-[image:var(--gradient-cardio)] text-module-foreground",
-    chip: "bg-white/20 text-module-foreground",
+    chip: "bg-module-foreground/20 text-module-foreground",
     border: "border-cardio",
     accent: "text-cardio",
     soft: "bg-cardio/10",
