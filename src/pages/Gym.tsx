@@ -25,7 +25,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { CatalogExercise } from "@/lib/exerciseDb";
 import {
-  useGymSessions, useProfile, useWorkoutTemplates, useRecentGymExercises, uid,
+  useGymSessions, useProfile, useWorkoutTemplates, uid,
 } from "@/lib/cloud";
 import { computePRs, detectNewPRs, exerciseSeries } from "@/lib/stats";
 import { fromInput, toDisplay, formatWeight } from "@/lib/units";
