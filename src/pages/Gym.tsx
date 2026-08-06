@@ -66,9 +66,41 @@ export default function Gym() {
   const [expandedExId, setExpandedExId] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
+  const [addOpen, setAddOpen] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const historicalPRs = useMemo(() => computePRs(sessions), [sessions]);
+
+  // last logged sets per exercise name (for the PREVIOUS column)
+  const previousByExercise = useMemo(() => {
+    const m = new Map<string, GymSet[]>();
+    const ordered = [...sessions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+    for (const s of ordered) {
+      if (editingId && s.id === editingId) continue;
+      for (const e of s.exercises) {
+        const key = e.exerciseName.toLowerCase();
+        if (!m.has(key)) m.set(key, e.sets);
+      }
+    }
+    return m;
+  }, [sessions, editingId]);
+
+  const previousLabel = (exerciseName: string, idx: number, type?: string): string => {
+    const sets = previousByExercise.get(exerciseName.toLowerCase());
+    const s = sets?.[idx];
+    if (!s) return "—";
+    if (type === "duration") return s.durationSec ? `${s.durationSec}s` : "—";
+    if (type === "distance_duration") {
+      const d = s.distanceKm != null ? `${s.distanceKm} km` : "";
+      const t = s.durationSec ? `${s.durationSec}s` : "";
+      return [d, t].filter(Boolean).join(" · ") || "—";
+    }
+    if (type === "bodyweight_reps") return `${s.reps} reps`;
+    return `${formatWeight(s.weight, unit, 1)} × ${s.reps}`;
+  };
+
 
   // Load draft on mount (only when starting a new workout, not editing)
   const draftLoadedRef = useRef(false);
