@@ -1,39 +1,74 @@
-## Changes to `src/pages/Goals.tsx`
+# Hevy-style exercise selection on the Gym page
 
-### 1. Remove the Streaks section
-Delete the entire `<section>` block that renders the "Streaks" header + 3 `StreakCard`s (and drop the now-unused `useWorkoutStreaks` import / `streaks` variable / `StreakCard` component / `Flame` icon).
+## Schema changes (review before I apply)
 
-### 2. Add "This week's plan" section (right under the 3 weekly goal rings)
-A compact 7-day grid (Mon→Sun, today highlighted) reusing the existing schedule data:
-- `usePlanSchedule()` for the saved day → module/template mapping
-- `useWorkoutTemplates()` for template names + emojis
-- `usePlanSkips()` so skipped days render as Rest
+Nothing is removed or renamed. Two additive changes:
 
-Each day cell shows: weekday label, emoji/icon, template name (e.g. "Push", "Pull", "Kettlebell"), and a small **Edit** affordance opening a `Sheet` with a `Select` for module (gym/pt/cardio/rest) + `Select` for template — saves via `upsertDay`. This is the same pattern as `SortableDayRow` in `Plan.tsx`, simplified (no drag, no carousel).
+1. **`exercises` table** — no structural change needed; it already has everything
+   (`name`, `muscle_group`, `secondary_muscles`, `equipment`, `exercise_type`,
+   `instructions`, `is_custom`, `created_by`). I will only add:
+   - `GRANT`/policy check so signed-in users can read all rows and insert their own
+     custom rows (already covered by the existing read-all + insert-own policies).
+   - An index on `lower(name)` for fast case-insensitive search.
 
-A "Manage full plan →" link at the bottom navigates to `/plan` for advanced editing (templates CRUD, CSV import, swap days). This keeps Goals focused while preserving the richer Plan page.
+2. **Linking existing workout data** — gym workouts are stored as a `jsonb`
+   `exercises` array inside `gym_sessions` (not as separate rows), so there is no
+   column to hang a real foreign key on without restructuring the table. Instead:
+   - Each entry in the jsonb array gains an optional `exerciseId` field going forward.
+   - A one-off data backfill matches existing entries to `exercises.id` by
+     case-insensitive name and writes `exerciseId` into the jsonb. Entries with no
+     match keep their plain `exerciseName` and stay fully functional.
+   - `exerciseName` stays in the payload as the source of truth for display, so no
+     existing session can break.
 
-### 3. Volume by muscle: this week + last week
-Extend `src/lib/stats.ts`:
-- New `useTwoWeekMuscleVolume(gym)` returning `{ group, thisWeek, lastWeek, thisSets, lastSets }[]` (compute last week using `subWeeks(start, 1)` / `subWeeks(end, 1)` from `date-fns`).
+   If you would rather have a true FK column, that requires splitting
+   `gym_sessions.exercises` into a child table — say the word and I will plan that
+   separately instead.
 
-Update the muscle-volume `BarChart` in Goals to render two bars per group (`Bar dataKey="lastWeek" fill="hsl(var(--muted-foreground))"` and `dataKey="thisWeek" fill="hsl(var(--gym))"`), with a small legend ("Last week" / "This week"). Header becomes "Volume by muscle (last 2 weeks)".
+No other tables are touched.
 
-### 4. New "Last week's workouts" section
-Above or alongside the volume chart, a list grouped by day showing what was actually done last week so the user can vary this week:
+## App changes
 
-```
-Mon · Push      Bench Press · Shoulder Press · Tricep Pushdown
-Wed · Pull      Pull-Up · Barbell Row · Hammer Curl
-Thu · Cardio    Football · 60 min
-```
+### Add Exercise screen (full-screen sheet)
+- Sticky header: `Cancel` / title "Add Exercise" / `Create`.
+- Search input with magnifier, case-insensitive substring match on name.
+- Two filter chips: "All Equipment" and "All Muscles"; each opens a bottom sheet
+  with the distinct values from the table. Selecting one relabels the chip and
+  filters. Filters combine with search.
 
-Built from `gym`, `pt`, `cardio` filtered to `[startOfWeek(subWeeks(now,1)), endOfWeek(subWeeks(now,1))]`. Each row shows day, module chip, and a one-line summary of exercise names (gym/pt) or activity + duration (cardio). Empty state: "No workouts logged last week."
+### Exercise list
+- "Popular Exercises" section (hardcoded set: Bench Press (Barbell), Squat (Barbell),
+  Deadlift (Barbell), Pull-Up, Lat Pulldown (Cable), Bent Over Row (Barbell),
+  Overhead Press (Barbell), Bicep Curl (Dumbbell), Leg Press (Machine), Plank).
+- "All Exercises" alphabetically below it.
+- Row: circular thumbnail placeholder with initials, semibold name, gray
+  `muscle_group` subtitle, and an ⓘ button opening a detail sheet with equipment,
+  secondary muscles and instructions.
 
-## Files touched
-- `src/pages/Goals.tsx` — remove Streaks, add WeekPlan section + LastWeek recap, swap muscle chart to 2-week.
-- `src/lib/stats.ts` — add `useTwoWeekMuscleVolume` and a `useLastWeekSessions` helper.
+### Create custom exercise
+- `Create` in the header opens a form (name, muscle group, equipment, type) and
+  inserts into `exercises` with `is_custom = true`, `created_by = auth.uid()`.
+  New row appears in the list immediately and is selectable.
 
-## Out of scope
-- Template CRUD, drag-to-reorder, CSV import — stays on `/plan`.
-- Changing how "this week" is computed elsewhere.
+### Logging behavior by `exercise_type`
+| type | columns |
+| --- | --- |
+| weight_reps | kg + reps |
+| bodyweight_reps | reps |
+| weighted_bodyweight | +kg (added) + reps |
+| assisted_bodyweight | -kg (assistance) + reps |
+| duration | time |
+| distance_duration | distance + time |
+
+Every set row keeps a PREVIOUS column (last session's value for that exercise) and
+the existing green completion checkmark.
+
+## Technical notes
+- New `src/lib/exerciseDb.ts`: typed hooks `useExerciseCatalog()` and
+  `useCreateExercise()` reading from the `exercises` table via React Query.
+- New `src/components/AddExerciseSheet.tsx` replaces `ExercisePicker` on `/gym`
+  (PT keeps its current picker).
+- `GymExerciseEntry` gains optional `exerciseId`, `equipment`, `exerciseType`.
+- Set-row rendering in `Gym.tsx` becomes type-driven; kg/reps stay the default so
+  existing sessions render exactly as today.
+- Weights continue to be stored in kg and converted at the UI boundary.
