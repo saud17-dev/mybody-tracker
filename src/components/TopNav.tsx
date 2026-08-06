@@ -34,7 +34,7 @@ export function TopNav() {
     <nav className="sticky top-0 z-40 hidden border-b bg-card/95 backdrop-blur-xl md:block">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-6">
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] text-primary-foreground">
             <Dumbbell className="h-5 w-5" />
           </div>
           <span className="text-lg font-bold tracking-tight">MyBody</span>

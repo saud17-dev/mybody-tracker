@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const painColor = (n: number) =>
-  n <= 3 ? "text-emerald-500" : n <= 6 ? "text-amber-500" : "text-destructive";
+  n <= 3 ? "text-success" : n <= 6 ? "text-warning" : "text-destructive";
 
 interface DraftPayload {
   exercises: PTExerciseEntry[];
@@ -218,11 +218,11 @@ export default function PT() {
     <AppShell title="PT Log" subtitle={`${sessions.length} sessions logged`} accent="pt"
       right={
         <div className="flex items-center gap-2">
-          <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-white hover:bg-white/15" aria-label="Exercise library">
+          <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-module-foreground hover:bg-module-foreground/15" aria-label="Exercise library">
             <Link to="/exercises"><Library className="h-5 w-5" /></Link>
           </Button>
           <Button onClick={() => { reset(); setOpen(true); }}
-            className="h-11 rounded-full bg-white px-4 text-pt hover:bg-white/90 font-semibold shadow-lg">
+            className="h-11 rounded-full bg-background px-4 text-pt hover:bg-background/90 font-semibold shadow-lg">
             <Plus className="h-5 w-5" /> Log session
           </Button>
         </div>

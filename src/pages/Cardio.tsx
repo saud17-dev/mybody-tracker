@@ -110,11 +110,11 @@ export default function Cardio() {
     <AppShell title="Cardio Log" subtitle={`${sessions.length} sessions · ${totalMin} min`} accent="cardio"
       right={
         <div className="flex items-center gap-2">
-          <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-white hover:bg-white/15" aria-label="Exercise library">
+          <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-module-foreground hover:bg-module-foreground/15" aria-label="Exercise library">
             <Link to="/exercises"><Library className="h-5 w-5" /></Link>
           </Button>
           <Button onClick={() => { reset(); setOpen(true); }}
-            className="h-11 rounded-full bg-white px-4 text-cardio hover:bg-white/90 font-semibold shadow-lg">
+            className="h-11 rounded-full bg-background px-4 text-cardio hover:bg-background/90 font-semibold shadow-lg">
             <Plus className="h-5 w-5" /> Log cardio
           </Button>
         </div>

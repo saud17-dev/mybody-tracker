@@ -51,7 +51,7 @@ export function ManualStopwatch() {
       <div
         className={cn(
           "pointer-events-auto flex items-center gap-1 rounded-full border-2 bg-card/95 p-1 shadow-lg backdrop-blur transition-colors",
-          running ? "border-gym" : active ? "border-emerald-500" : "border-border",
+          running ? "border-gym" : active ? "border-success" : "border-border",
         )}
       >
         <Button
@@ -60,7 +60,7 @@ export function ManualStopwatch() {
           size="sm"
           className={cn(
             "h-10 gap-2 rounded-full px-4 font-bold tabular-nums",
-            running ? "bg-gym text-white hover:bg-gym/90" : "bg-foreground text-background hover:bg-foreground/90",
+            running ? "bg-gym text-module-foreground hover:bg-gym/90" : "bg-foreground text-background hover:bg-foreground/90",
           )}
           title={running ? "Pause rest timer" : "Start rest timer"}
         >

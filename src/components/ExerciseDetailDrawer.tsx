@@ -45,7 +45,7 @@ export function ExerciseDetailDrawer({
                 aria-label="Toggle favorite"
                 className="shrink-0"
               >
-                <Star className={cn("h-5 w-5", isFavorite && "fill-amber-500 text-amber-500")} />
+                <Star className={cn("h-5 w-5", isFavorite && "fill-warning text-warning")} />
               </Button>
             )}
           </div>

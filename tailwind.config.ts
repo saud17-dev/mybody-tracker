@@ -48,6 +48,9 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         gym: "hsl(var(--gym))",
+        module: { foreground: "hsl(var(--module-foreground))" },
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
         pt: "hsl(var(--pt))",
         cardio: "hsl(var(--cardio))",
         sidebar: {

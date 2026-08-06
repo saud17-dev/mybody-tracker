@@ -81,7 +81,7 @@ export function ExerciseCountdown({ defaultSeconds = 30, className }: ExerciseCo
   return (
     <div className={cn(
       "flex items-center gap-1 rounded-lg border px-2 py-1.5",
-      done ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30" : running ? "border-pt bg-pt/5" : "border-border bg-muted/30",
+      done ? "border-success bg-success/10" : running ? "border-pt bg-pt/5" : "border-border bg-muted/30",
       className,
     )}>
       <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => adjust(-15)}>
@@ -89,7 +89,7 @@ export function ExerciseCountdown({ defaultSeconds = 30, className }: ExerciseCo
       </Button>
       <span className={cn(
         "min-w-[3.2rem] text-center font-bold tabular-nums text-sm",
-        done && "text-emerald-600",
+        done && "text-success",
         running && "text-pt",
       )}>
         {fmt(Math.max(0, remaining))}

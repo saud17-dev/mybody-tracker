@@ -53,7 +53,7 @@ export function MealLibrarySheet({ open, onOpenChange, onPick }: Props) {
                 onClick={() => setCat(c.id)}
                 className={cn(
                   "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                  cat === c.id ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                  cat === c.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                 )}
               >
                 {c.label}

@@ -113,7 +113,7 @@ export default function Settings() {
   return (
     <AppShell title="Settings" subtitle={user?.email || ""} accent="primary"
       right={
-        <Button size="icon" variant="ghost" className="h-11 w-11 rounded-full bg-white/15 text-white hover:bg-white/25"
+        <Button size="icon" variant="ghost" className="h-11 w-11 rounded-full bg-module-foreground/15 text-module-foreground hover:bg-module-foreground/25"
           onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
