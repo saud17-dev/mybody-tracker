@@ -146,6 +146,45 @@ export type Database = {
         }
         Relationships: []
       }
+      exercises: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          equipment: string
+          exercise_type: string
+          id: string
+          instructions: string | null
+          is_custom: boolean
+          muscle_group: string
+          name: string
+          secondary_muscles: string[]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          equipment: string
+          exercise_type?: string
+          id?: string
+          instructions?: string | null
+          is_custom?: boolean
+          muscle_group: string
+          name: string
+          secondary_muscles?: string[]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          equipment?: string
+          exercise_type?: string
+          id?: string
+          instructions?: string | null
+          is_custom?: boolean
+          muscle_group?: string
+          name?: string
+          secondary_muscles?: string[]
+        }
+        Relationships: []
+      }
       favorite_exercises: {
         Row: {
           created_at: string
