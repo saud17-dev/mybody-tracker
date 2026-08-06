@@ -7,7 +7,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 import { AppShell } from "@/components/AppShell";
-import { ExercisePicker } from "@/components/ExercisePicker";
+import { AddExerciseSheet } from "@/components/AddExerciseSheet";
 import { RestTimer } from "@/components/RestTimer";
 import { ManualStopwatch } from "@/components/ManualStopwatch";
 import { Button } from "@/components/ui/button";
