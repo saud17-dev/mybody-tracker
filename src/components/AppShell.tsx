@@ -36,7 +36,7 @@ function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           aria-label="Account menu"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white hover:bg-white/25 transition"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-module-foreground/15 text-sm font-semibold text-module-foreground hover:bg-module-foreground/25 transition"
         >
           {initials}
         </button>
@@ -76,7 +76,7 @@ export function AppShell({ title, subtitle, accent = "primary", right, children 
       <div className="mx-auto max-w-md md:max-w-6xl md:px-6 md:pt-8">
         <header
           className={cn(
-            "safe-top px-5 pb-8 pt-6 text-white",
+            "safe-top px-5 pb-8 pt-6 text-module-foreground",
             accentBg[accent],
             "md:rounded-3xl md:px-8 md:pb-10 md:pt-8 md:shadow-[var(--shadow-elevated)]",
           )}
@@ -84,7 +84,7 @@ export function AppShell({ title, subtitle, accent = "primary", right, children 
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
-              {subtitle && <p className="mt-1 text-sm text-white/80 md:text-base">{subtitle}</p>}
+              {subtitle && <p className="mt-1 text-sm text-module-foreground/75 md:text-base">{subtitle}</p>}
             </div>
             <div className="flex items-center gap-2">
               {right}

@@ -144,7 +144,7 @@ function Row({ ex, isFav, onToggleFav, onOpen }: {
       </button>
       <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={onToggleFav}
         aria-label={isFav ? "Remove favorite" : "Add favorite"}>
-        <Star className={cn("h-4 w-4", isFav && "fill-amber-500 text-amber-500")} />
+        <Star className={cn("h-4 w-4", isFav && "fill-warning text-warning")} />
       </Button>
     </Card>
   );

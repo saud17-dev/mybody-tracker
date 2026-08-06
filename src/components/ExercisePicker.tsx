@@ -130,9 +130,9 @@ export function ExercisePicker({
                     </button>
                     <button type="button"
                       onClick={(e) => { e.stopPropagation(); toggle(ex.name); }}
-                      className="px-2 py-2 text-muted-foreground/40 hover:text-amber-500"
+                      className="px-2 py-2 text-muted-foreground/40 hover:text-warning"
                       aria-label="Toggle favorite">
-                      <Star className={cn("h-4 w-4", favorites.has(ex.name) && "fill-amber-500 text-amber-500")} />
+                      <Star className={cn("h-4 w-4", favorites.has(ex.name) && "fill-warning text-warning")} />
                     </button>
                   </div>
                 ))}

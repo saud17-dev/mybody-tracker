@@ -314,11 +314,11 @@ export default function Gym() {
     <AppShell title="Gym Log" subtitle={`${sessions.length} workouts logged`} accent="gym"
       right={
         <div className="flex items-center gap-2">
-          <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-white hover:bg-white/15" aria-label="Exercise library">
+          <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-module-foreground hover:bg-module-foreground/15" aria-label="Exercise library">
             <Link to="/exercises"><Library className="h-5 w-5" /></Link>
           </Button>
           <Button onClick={() => { reset(); setOpen(true); }}
-            className="h-11 rounded-full bg-white px-4 text-gym hover:bg-white/90 font-semibold shadow-lg">
+            className="h-11 rounded-full bg-background px-4 text-gym hover:bg-background/90 font-semibold shadow-lg">
             <Plus className="h-5 w-5" /> Log workout
           </Button>
         </div>
@@ -551,11 +551,11 @@ export default function Gym() {
                     return (
                       <div key={i} className={cn(
                         "grid items-center gap-2 rounded-md transition-colors",
-                        isDone && "bg-emerald-500/10",
+                        isDone && "bg-success/10",
                       )} style={{ gridTemplateColumns: cols }}>
                         <span className={cn(
                           "text-sm font-semibold tabular-nums",
-                          isDone ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+                          isDone ? "text-success" : "text-muted-foreground",
                         )}>{i + 1}</span>
                         <span className="truncate text-xs tabular-nums text-muted-foreground">
                           {previousLabel(ex.exerciseName, i, type)}
@@ -595,7 +595,7 @@ export default function Gym() {
                           className={cn(
                             "flex h-9 w-9 items-center justify-center rounded-md border-2 transition-all active:scale-90",
                             isDone
-                              ? "border-emerald-500 bg-emerald-500 text-white"
+                              ? "border-success bg-success text-module-foreground"
                               : "border-muted-foreground/30 bg-background hover:border-gym hover:bg-gym/10",
                           )}
                           title={isDone ? "Mark not done" : "Mark set done & start rest"}
@@ -664,7 +664,7 @@ export default function Gym() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-500" /> New Personal Record!
+              <Trophy className="h-5 w-5 text-warning" /> New Personal Record!
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2">

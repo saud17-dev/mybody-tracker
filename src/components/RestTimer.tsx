@@ -73,11 +73,11 @@ export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProp
       <div className="mx-auto max-w-md pointer-events-auto">
         <Card className={cn(
           "overflow-hidden shadow-lg border-2",
-          done ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950" : "border-gym",
+          done ? "border-success bg-success/10" : "border-gym",
         )}>
           <div className="relative">
             <div
-              className={cn("absolute left-0 top-0 h-full transition-[width] duration-300 ease-linear", done ? "bg-emerald-500/20" : "bg-gym/20")}
+              className={cn("absolute left-0 top-0 h-full transition-[width] duration-300 ease-linear", done ? "bg-success/25" : "bg-gym/20")}
               style={{ width: `${pct}%` }}
             />
             <div className="relative flex items-center gap-3 px-4 py-3">
@@ -85,7 +85,7 @@ export function RestTimer({ initialSeconds, onComplete, onClose }: RestTimerProp
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {done ? "Rest complete" : "Rest"}
                 </span>
-                <span className={cn("text-3xl font-bold tabular-nums", done && "text-emerald-600")}>
+                <span className={cn("text-3xl font-bold tabular-nums", done && "text-success")}>
                   {fmt(Math.max(0, remaining))}
                 </span>
               </div>

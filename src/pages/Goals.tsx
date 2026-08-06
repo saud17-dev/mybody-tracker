@@ -130,7 +130,7 @@ export default function GoalsPage() {
     <AppShell title="Your Goals" subtitle={format(new Date(), "EEEE, MMM d")} accent="primary"
       right={
         <div className="flex gap-2">
-          <Button size="icon" className="h-11 w-11 rounded-full bg-white/15 text-white hover:bg-white/25"
+          <Button size="icon" className="h-11 w-11 rounded-full bg-module-foreground/15 text-module-foreground hover:bg-module-foreground/25"
             onClick={() => navigate("/settings")} aria-label="Settings">
             <SettingsIcon className="h-5 w-5" />
           </Button>
@@ -480,7 +480,7 @@ function BodyStat({
         <p className="mt-0.5 text-[10px] text-muted-foreground">
           Goal: {targetDisp.toFixed(1).replace(/\.0$/, "")}{unit}
           {diff != null && (
-            <span className={cn("ml-1 font-semibold", Math.abs(diff) < 0.5 ? "text-primary" : diff > 0 ? "text-destructive" : "text-emerald-500")}>
+            <span className={cn("ml-1 font-semibold", Math.abs(diff) < 0.5 ? "text-primary" : diff > 0 ? "text-destructive" : "text-success")}>
               {diff > 0 ? "+" : ""}{diff.toFixed(1)}
             </span>
           )}
@@ -606,7 +606,7 @@ function TrendInsightCard({
     const isFlat = Math.abs(change) < 0.05;
     const ArrowIcon = isFlat ? Minus : change > 0 ? TrendingUp : TrendingDown;
     const good = lowerIsBetter ? change < 0 : change > 0;
-    const cls = isFlat ? "text-muted-foreground" : good ? "text-emerald-500" : "text-destructive";
+    const cls = isFlat ? "text-muted-foreground" : good ? "text-success" : "text-destructive";
     const dispChange = displayValue(Math.abs(change));
     return (
       <span className={cn("inline-flex items-center gap-0.5 font-semibold tabular-nums", cls)}>
@@ -637,7 +637,7 @@ function TrendInsightCard({
           <span className={cn(
             "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
             atTarget ? "bg-primary/15 text-primary" :
-            trend.onTrack ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/10 text-destructive",
+            trend.onTrack ? "bg-success/15 text-success" : "bg-destructive/10 text-destructive",
           )}>
             {atTarget ? "At target" : trend.onTrack ? "On track" : "Off track"}
           </span>

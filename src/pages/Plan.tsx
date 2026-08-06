@@ -42,24 +42,24 @@ const moduleStyle = {
 // Bold, full-color treatments for the hero day cards (ADHD-friendly visual identity)
 const moduleHero = {
   gym: {
-    surface: "bg-[image:var(--gradient-gym)] text-white",
-    chip: "bg-white/20 text-white",
+    surface: "bg-[image:var(--gradient-gym)] text-module-foreground",
+    chip: "bg-white/20 text-module-foreground",
     border: "border-gym",
     accent: "text-gym",
     soft: "bg-gym/10",
     label: "Gym",
   },
   pt: {
-    surface: "bg-[image:var(--gradient-pt)] text-white",
-    chip: "bg-white/20 text-white",
+    surface: "bg-[image:var(--gradient-pt)] text-module-foreground",
+    chip: "bg-white/20 text-module-foreground",
     border: "border-pt",
     accent: "text-pt",
     soft: "bg-pt/10",
     label: "PT",
   },
   cardio: {
-    surface: "bg-[image:var(--gradient-cardio)] text-white",
-    chip: "bg-white/20 text-white",
+    surface: "bg-[image:var(--gradient-cardio)] text-module-foreground",
+    chip: "bg-white/20 text-module-foreground",
     border: "border-cardio",
     accent: "text-cardio",
     soft: "bg-cardio/10",
@@ -206,7 +206,7 @@ export default function Plan() {
                   )}
                 >
                   {isToday && (
-                    <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-foreground shadow-sm">
+                    <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-foreground shadow-sm">
                       <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                       Today
                     </span>
@@ -244,7 +244,7 @@ export default function Plan() {
                         const url = `${moduleStyle[effectivePlan!.module].route}${effectivePlan!.template_id ? `?template=${effectivePlan!.template_id}` : ""}`;
                         navigate(url);
                       }}
-                      className="mt-3 h-11 w-full gap-1.5 rounded-xl bg-white text-sm font-bold text-foreground hover:bg-white/90"
+                      className="mt-3 h-11 w-full gap-1.5 rounded-xl bg-background text-sm font-bold text-foreground hover:bg-background/90"
                     >
                       <Play className="h-4 w-4 fill-current" /> Start workout
                     </Button>

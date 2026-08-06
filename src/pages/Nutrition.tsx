@@ -159,7 +159,7 @@ export default function NutritionPage() {
       right={
         <Button
           size="icon"
-          className="h-11 w-11 rounded-full bg-white/15 text-white hover:bg-white/25"
+          className="h-11 w-11 rounded-full bg-module-foreground/15 text-module-foreground hover:bg-module-foreground/25"
           onClick={() => { setDraftProtein(goal.dailyProteinG); setDraftCalories(goal.dailyCalories); setGoalOpen(true); }}
           aria-label="Edit goal"
         >
@@ -254,7 +254,7 @@ export default function NutritionPage() {
                         onClick={() => setPresetType(t)}
                         className={cn(
                           "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                          presetType === t ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                          presetType === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                         )}
                       >
                         {MEAL_ICONS[t]} {t}
@@ -335,7 +335,7 @@ export default function NutritionPage() {
                       onClick={() => setMealType(t)}
                       className={cn(
                         "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                        mealType === t ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                        mealType === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                       )}
                     >
                       {MEAL_ICONS[t]} {t}

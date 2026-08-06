@@ -89,7 +89,7 @@ export default function Auth() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-gym/5 flex items-center justify-center p-5">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] text-white shadow-lg">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] text-primary-foreground shadow-lg">
             <Dumbbell className="h-7 w-7" />
           </div>
           <h1 className="text-2xl font-bold">Fitness Tracker</h1>
@@ -166,7 +166,7 @@ function PasswordHints({ value }: { value: string }) {
   return (
     <ul className="text-[10px] text-muted-foreground space-y-0.5 mt-1">
       {checks.map((c) => (
-        <li key={c.label} className={c.ok ? "text-emerald-600" : ""}>
+        <li key={c.label} className={c.ok ? "text-success" : ""}>
           {c.ok ? "✓" : "•"} {c.label}
         </li>
       ))}
