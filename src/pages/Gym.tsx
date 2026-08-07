@@ -109,6 +109,36 @@ export default function Gym() {
     return `${formatWeight(s.weight, unit, 1)} × ${s.reps}`;
   };
 
+  // Live session clock
+  useEffect(() => {
+    if (!open || editingId) return;
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [open, editingId]);
+
+  const elapsedSec = startedAt
+    ? Math.max(0, Math.floor((nowTick - new Date(startedAt).getTime()) / 1000))
+    : 0;
+  const elapsedLabel =
+    elapsedSec < 60
+      ? `${elapsedSec}s`
+      : `${Math.floor(elapsedSec / 60)}min ${elapsedSec % 60}s`;
+
+  const sessionVolumeKg = useMemo(
+    () => exercises.reduce((a, e) => a + e.sets.reduce((b, s) => b + s.reps * s.weight, 0), 0),
+    [exercises],
+  );
+  const completedSetCount = useMemo(
+    () => Object.values(doneSets).filter(Boolean).length,
+    [doneSets],
+  );
+
+  const startRest = (seconds: number) => {
+    setRestSecondsState(seconds);
+    setRestKey((k) => k + 1);
+    setRestRunning(true);
+  };
+
 
   // Load draft on mount (only when starting a new workout, not editing)
   const draftLoadedRef = useRef(false);
