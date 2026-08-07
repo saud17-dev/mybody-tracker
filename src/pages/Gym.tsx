@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, Dumbbell, X, Trophy, TrendingUp, Timer, Check, Pencil, Library, ChevronDown, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Dumbbell, X, Trophy, TrendingUp, Timer, Check, Pencil, Library, ChevronDown, RotateCcw, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
