@@ -22,7 +22,10 @@ export interface GymExerciseEntry {
     | "assisted_bodyweight"
     | "duration"
     | "distance_duration";
+  notes?: string;
+  restSeconds?: number;
 }
+
 
 export interface GymSession {
   id: string;
