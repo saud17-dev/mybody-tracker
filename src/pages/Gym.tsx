@@ -802,3 +802,12 @@ function Chart({ data, key1, unit }: { data: any[]; key1: string; unit: string }
     </div>
   );
 }
+
+function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div>
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={cn("text-base font-bold tabular-nums", accent && "text-gym")}>{value}</p>
+    </div>
+  );
+}
