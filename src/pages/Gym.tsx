@@ -8,8 +8,10 @@ import {
 } from "recharts";
 import { AppShell } from "@/components/AppShell";
 import { AddExerciseSheet } from "@/components/AddExerciseSheet";
-import { RestTimer } from "@/components/RestTimer";
-import { ManualStopwatch } from "@/components/ManualStopwatch";
+import { ClockSheet, RestBar } from "@/components/ClockSheet";
+import { PlateCalculatorSheet } from "@/components/PlateCalculatorSheet";
+import { WorkoutExerciseCard } from "@/components/WorkoutExerciseCard";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
