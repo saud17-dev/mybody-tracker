@@ -491,161 +491,134 @@ export default function Gym() {
         </TabsContent>
       </Tabs>
 
-      {/* New / Edit workout sheet */}
-      <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
-        <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-3xl p-0">
-          <SheetHeader className="sticky top-0 z-10 border-b bg-card px-5 pb-4 pt-5">
-            <SheetTitle>{editingId ? "Edit Workout" : "New Workout"}</SheetTitle>
-          </SheetHeader>
-          <div className="space-y-4 p-5">
-            <div className="space-y-2">
-              <Label>Date</Label>
-              <Input type="date" value={sessionDate} max={todayInputDate()}
-                onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Exercises</Label>
-                <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs">
-                  <Link to="/exercises"><Library className="h-3.5 w-3.5" /> Browse library</Link>
-                </Button>
-              </div>
-              <Button variant="outline" className="w-full justify-center font-semibold text-gym"
-                onClick={() => setAddOpen(true)}>
-                <Plus className="h-4 w-4" /> Add exercise
+      {/* Active workout session sheet */}
+      <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (!o) setRestRunning(false); }}>
+        <SheetContent side="bottom" className="flex h-[100dvh] flex-col gap-0 rounded-none p-0">
+          {/* Header */}
+          <SheetHeader className="shrink-0 border-b bg-card px-3 pb-3 pt-4 safe-top">
+            <SheetTitle className="sr-only">{editingId ? "Edit workout" : "Active workout"}</SheetTitle>
+            <div className="flex items-center gap-2">
+              <Button size="icon" variant="ghost" className="h-10 w-10 rounded-full border"
+                aria-label="Minimise workout" onClick={() => setOpen(false)}>
+                <ChevronDown className="h-5 w-5" />
+              </Button>
+              <p className="flex-1 text-base font-semibold text-gym">
+                {editingId ? "Edit Workout" : elapsedLabel}
+              </p>
+              <Button size="icon" variant="ghost" className="h-10 w-10 rounded-full border"
+                aria-label="Clock" onClick={() => setClockOpen(true)}>
+                <Clock className="h-5 w-5" />
+              </Button>
+              <Button onClick={save} className="h-10 rounded-full bg-gym px-5 font-semibold text-module-foreground hover:bg-gym/90">
+                Finish
               </Button>
             </div>
+          </SheetHeader>
 
+          {/* Stats strip */}
+          <div className="shrink-0 border-b bg-card px-4 py-3">
+            <div className="grid grid-cols-3 gap-2">
+              <Stat label="Duration" value={editingId ? "—" : elapsedLabel} accent />
+              <Stat label="Volume" value={formatWeight(sessionVolumeKg, unit, 0)} />
+              <Stat label="Sets" value={String(completedSetCount)} />
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground">Date</Label>
+              <Input type="date" value={sessionDate} max={todayInputDate()} className="h-8 w-auto text-xs"
+                onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 space-y-3 overflow-y-auto p-3">
             {exercises.length === 0 && (
-              <div className="rounded-xl border border-dashed bg-muted/30 py-10 text-center text-sm text-muted-foreground">
-                No exercises yet. Pick one above.
+              <div className="py-16 text-center">
+                <Dumbbell className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
+                <p className="text-lg font-semibold text-muted-foreground">Get started</p>
+                <p className="mt-1 text-sm text-muted-foreground">Add an exercise to begin your workout.</p>
               </div>
             )}
 
-            {exercises.map((ex) => {
-              const type = ex.exerciseType ?? "weight_reps";
-              const fields: { key: "weight" | "reps" | "duration" | "distance"; label: string }[] =
-                type === "bodyweight_reps" ? [{ key: "reps", label: "Reps" }]
-                : type === "weighted_bodyweight" ? [{ key: "weight", label: `+${unit}` }, { key: "reps", label: "Reps" }]
-                : type === "assisted_bodyweight" ? [{ key: "weight", label: `-${unit}` }, { key: "reps", label: "Reps" }]
-                : type === "duration" ? [{ key: "duration", label: "Time (s)" }]
-                : type === "distance_duration" ? [{ key: "distance", label: "Dist (km)" }, { key: "duration", label: "Time (s)" }]
-                : [{ key: "weight", label: `Weight (${unit})` }, { key: "reps", label: "Reps" }];
-              const cols = `2rem 4.5rem ${fields.map(() => "1fr").join(" ")} 2.5rem 2rem`;
-              return (
-              <Card key={ex.id} className="overflow-hidden">
-                <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
-                  <div>
-                    <p className="font-semibold">{ex.exerciseName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {ex.muscleGroup}{ex.equipment ? ` · ${ex.equipment}` : ""}
-                    </p>
-                  </div>
-                  <Button size="icon" variant="ghost" onClick={() => removeExercise(ex.id)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="space-y-2 p-3">
-                  <div className="grid items-center gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-                    style={{ gridTemplateColumns: cols }}>
-                    <span>#</span>
-                    <span>Previous</span>
-                    {fields.map((f) => <span key={f.key}>{f.label}</span>)}
-                    <span>Done</span><span />
-                  </div>
-                  {ex.sets.map((s, i) => {
-                    const isDone = !!doneSets[`${ex.id}:${i}`];
-                    const doneCls = cn(isDone && "line-through text-muted-foreground opacity-70");
-                    return (
-                      <div key={i} className={cn(
-                        "grid items-center gap-2 rounded-md transition-colors",
-                        isDone && "bg-success/10",
-                      )} style={{ gridTemplateColumns: cols }}>
-                        <span className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          isDone ? "text-success" : "text-muted-foreground",
-                        )}>{i + 1}</span>
-                        <span className="truncate text-xs tabular-nums text-muted-foreground">
-                          {previousLabel(ex.exerciseName, i, type)}
-                        </span>
-                        {fields.map((f) => {
-                          if (f.key === "reps") return (
-                            <Input key="reps" type="number" inputMode="numeric" value={s.reps || ""}
-                              onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })}
-                              className={doneCls} />
-                          );
-                          if (f.key === "weight") return (
-                            <Input key="weight" type="text" inputMode="decimal" pattern="[0-9]*\.?[0-9]*"
-                              value={displayWeight(ex.id, i, s.weight)}
-                              onChange={(e) => {
-                                const v = e.target.value.replace(",", ".");
-                                if (v === "" || /^\d+(\.\d{0,3})?$/.test(v) || /^\d+\.$/.test(v)) {
-                                  setWeightDraft(ex.id, i, v);
-                                }
-                              }}
-                              placeholder="0" className={doneCls} />
-                          );
-                          if (f.key === "duration") return (
-                            <Input key="duration" type="number" inputMode="numeric" value={s.durationSec || ""}
-                              onChange={(e) => updateSet(ex.id, i, { durationSec: Number(e.target.value) || 0 })}
-                              placeholder="0" className={doneCls} />
-                          );
-                          return (
-                            <Input key="distance" type="number" inputMode="decimal" step="0.01"
-                              value={s.distanceKm ?? ""}
-                              onChange={(e) => updateSet(ex.id, i, { distanceKm: Number(e.target.value) || 0 })}
-                              placeholder="0" className={doneCls} />
-                          );
-                        })}
-                        <button
-                          type="button"
-                          onClick={() => toggleSetDone(ex.id, i)}
-                          className={cn(
-                            "flex h-9 w-9 items-center justify-center rounded-md border-2 transition-all active:scale-90",
-                            isDone
-                              ? "border-success bg-success text-module-foreground"
-                              : "border-muted-foreground/30 bg-background hover:border-gym hover:bg-gym/10",
-                          )}
-                          title={isDone ? "Mark not done" : "Mark set done & start rest"}
-                          aria-pressed={isDone}
-                        >
-                          {isDone ? <Check className="h-5 w-5" /> : <Timer className="h-4 w-4 text-gym" />}
-                        </button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8"
-                          onClick={() => removeSet(ex.id, i)} disabled={ex.sets.length === 1}>
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => addSet(ex.id)}>
-                    <Plus className="h-4 w-4" /> Add set
-                  </Button>
-                </div>
-              </Card>
-              );
-            })}
+            {exercises.map((ex) => (
+              <WorkoutExerciseCard
+                key={ex.id}
+                ex={ex}
+                unit={unit}
+                defaultRest={restDefault}
+                doneSets={doneSets}
+                previousLabel={previousLabel}
+                displayWeight={displayWeight}
+                setWeightDraft={setWeightDraft}
+                onUpdateSet={updateSet}
+                onToggleDone={toggleSetDone}
+                onAddSet={addSet}
+                onRemoveSet={removeSet}
+                onRemoveExercise={removeExercise}
+                onPatchExercise={patchExercise}
+                onPlateCalc={(kg) => setPlateTarget(kg)}
+              />
+            ))}
 
-            <div className="space-y-2">
-              <Label>Notes</Label>
+            <Button size="lg" className="w-full bg-gym font-semibold text-module-foreground hover:bg-gym/90"
+              onClick={() => setAddOpen(true)}>
+              <Plus className="h-5 w-5" /> Add Exercise
+            </Button>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" size="lg" asChild>
+                <Link to="/exercises"><Library className="h-4 w-4" /> Library</Link>
+              </Button>
+              <Button variant="secondary" size="lg" className="text-destructive"
+                onClick={() => setConfirmDiscard(true)}>
+                Discard Workout
+              </Button>
+            </div>
+
+            <div className="space-y-2 pb-8">
+              <Label>Workout notes</Label>
               <Textarea value={notes} onChange={(e) => setNotes(e.target.value)}
                 placeholder="How did the session feel?" rows={3} />
             </div>
           </div>
-          <div className="sticky bottom-0 border-t bg-card p-4 safe-bottom">
-            <ManualStopwatch />
-            <Button onClick={save} className="w-full bg-gym hover:bg-gym/90" size="lg">
-              {editingId ? "Save changes" : "Save workout"}
-            </Button>
-          </div>
+
+          {restRunning && (
+            <RestBar key={restKey} seconds={restSeconds} onSkip={() => setRestRunning(false)} />
+          )}
         </SheetContent>
       </Sheet>
 
       <AddExerciseSheet open={addOpen} onOpenChange={setAddOpen} onSelect={addExercise} />
 
-      {restRunning && (
-        <RestTimer key={restKey} initialSeconds={restDefault} onClose={() => setRestRunning(false)} />
-      )}
+      <ClockSheet open={clockOpen} onOpenChange={setClockOpen} defaultSeconds={restDefault}
+        onStartRest={(s) => startRest(s)} />
+
+      <PlateCalculatorSheet open={plateTarget !== null} targetKg={plateTarget ?? 0}
+        onOpenChange={(o) => { if (!o) setPlateTarget(null); }} />
+
+      {/* Discard confirm */}
+      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this workout?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Everything logged in this session will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep going</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90"
+              onClick={() => {
+                setConfirmDiscard(false);
+                if (user) clearDraft("gym", user.id);
+                reset();
+                setOpen(false);
+              }}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <ExerciseChartDialog name={chartFor} sessions={sessions} unit={unit} onClose={() => setChartFor(null)} />
 
