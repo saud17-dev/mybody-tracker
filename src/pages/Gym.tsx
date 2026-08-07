@@ -224,17 +224,21 @@ export default function Gym() {
 
   const removeExercise = (id: string) => setExercises((p) => p.filter((e) => e.id !== id));
 
+  const patchExercise = (id: string, patch: Partial<GymExerciseEntry>) =>
+    setExercises((p) => p.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+
   const toggleSetDone = (exId: string, idx: number) => {
     const key = `${exId}:${idx}`;
     setDoneSets((d) => {
       const next = { ...d, [key]: !d[key] };
       if (next[key]) {
-        setRestKey((k) => k + 1);
-        setRestRunning(true);
+        const ex = exercises.find((e) => e.id === exId);
+        startRest(ex?.restSeconds ?? restDefault);
       }
       return next;
     });
   };
+
 
   const reset = () => {
     setExercises([]); setNotes(""); setDoneSets({});
