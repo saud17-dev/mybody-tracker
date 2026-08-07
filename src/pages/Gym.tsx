@@ -58,7 +58,13 @@ export default function Gym() {
   // string-state per set so users can type "70.", "70.25" without losing the dot
   const [weightDrafts, setWeightDrafts] = useState<Record<string, string>>({});
   const [restRunning, setRestRunning] = useState(false);
+  const [restSeconds, setRestSecondsState] = useState(90);
   const [restKey, setRestKey] = useState(0);
+  const [clockOpen, setClockOpen] = useState(false);
+  const [plateTarget, setPlateTarget] = useState<number | null>(null);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [nowTick, setNowTick] = useState(Date.now());
+
   const [prCelebrate, setPrCelebrate] = useState<{ exerciseName: string; weight: number; reps: number }[] | null>(null);
   const [chartFor, setChartFor] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<GymSession | null>(null);
