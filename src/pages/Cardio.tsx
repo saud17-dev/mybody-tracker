@@ -16,6 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CARDIO_ACTIVITIES, isHeatActivity } from "@/lib/exercises";
+import { cn } from "@/lib/utils";
 import { useCardioSessions, useProfile, useWorkoutTemplates } from "@/lib/cloud";
 import { distanceLabel, distanceToDisplay, distanceFromInput } from "@/lib/units";
 import { formatSessionTimes, todayInputDate, dateWithCurrentTime } from "@/lib/duration";
