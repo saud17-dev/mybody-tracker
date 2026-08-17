@@ -63,7 +63,7 @@ export default function Gym() {
   const [restSeconds, setRestSecondsState] = useState(90);
   const [restKey, setRestKey] = useState(0);
   const [clockOpen, setClockOpen] = useState(false);
-  const [plateTarget, setPlateTarget] = useState<number | null>(null);
+  const [plateTarget, setPlateTarget] = useState<{ exId: string; idx: number; kg: number } | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
 
@@ -589,7 +589,7 @@ export default function Gym() {
                 onRemoveSet={removeSet}
                 onRemoveExercise={removeExercise}
                 onPatchExercise={patchExercise}
-                onPlateCalc={(kg) => setPlateTarget(kg)}
+                onPlateCalc={(exId, idx, kg) => setPlateTarget({ exId, idx, kg })}
               />
             ))}
 
@@ -626,7 +626,14 @@ export default function Gym() {
       <ClockSheet open={clockOpen} onOpenChange={setClockOpen} defaultSeconds={restDefault}
         onStartRest={(s) => startRest(s)} />
 
-      <PlateCalculatorSheet open={plateTarget !== null} targetKg={plateTarget ?? 0}
+      <PlateCalculatorSheet
+        open={plateTarget !== null}
+        targetKg={plateTarget ? Number((toDisplay(plateTarget.kg, "kg") ?? 0).toFixed(2)) : 0}
+        onApply={(kg) => {
+          if (!plateTarget) return;
+          const shown = toDisplay(kg, unit) ?? kg;
+          setWeightDraft(plateTarget.exId, plateTarget.idx, String(Number(shown.toFixed(2))));
+        }}
         onOpenChange={(o) => { if (!o) setPlateTarget(null); }} />
 
       {/* Discard confirm */}
