@@ -22,7 +22,8 @@ import {
   usePlanSchedule, useWorkoutTemplates,
 } from "@/lib/cloud";
 import { usePlanSkips } from "@/lib/planSkips";
-import { useWeeklyCounts, useTwoWeekMuscleVolume, useLastWeekSessions, useBodyTrends, type MetricTrend } from "@/lib/stats";
+import { useWeeklyCounts, useTwoWeekMuscleVolume, useLastWeekSessions, useBodyTrends, useWellnessCounts, type MetricTrend } from "@/lib/stats";
+import { Waves, Flame } from "lucide-react";
 import { toDisplay, fromInput, formatWeight } from "@/lib/units";
 import type { Goals } from "@/lib/types";
 import { toast } from "sonner";
@@ -80,6 +81,7 @@ export default function GoalsPage() {
 
   const weekly = useWeeklyCounts(gym, pt, cardio);
   const muscleVolume2w = useTwoWeekMuscleVolume(gym);
+  const wellness = useWellnessCounts(cardio);
   const lastWeekSessions = useLastWeekSessions(gym, pt, cardio);
 
   const { days: planDays, upsertDay } = usePlanSchedule();
@@ -205,6 +207,19 @@ export default function GoalsPage() {
               </PlanDayEditor>
             );
           })}
+        </div>
+      </section>
+
+      {/* Recovery & swimming */}
+      <section className="mt-7">
+        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Swim &amp; heat therapy</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <WellnessCard
+            label="Swimming" icon={<Waves className="h-4 w-4" />}
+            tint="swim" stats={wellness.swim} />
+          <WellnessCard
+            label="Heat therapy" icon={<Flame className="h-4 w-4" />}
+            tint="heat" stats={wellness.heat} />
         </div>
       </section>
 
@@ -741,3 +756,36 @@ function PlanDayEditor({
   );
 }
 
+
+function WellnessCard({
+  label, icon, tint, stats,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  tint: "swim" | "heat";
+  stats: { weekDays: number; monthDays: number; totalDays: number; lastDate?: string };
+}) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <span className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-full",
+          tint === "swim" ? "bg-swim/15 text-swim" : "bg-heat/15 text-heat",
+        )}>{icon}</span>
+        <p className="text-sm font-semibold">{label}</p>
+      </div>
+      <p className={cn(
+        "mt-3 text-3xl font-bold tabular-nums",
+        tint === "swim" ? "text-swim" : "text-heat",
+      )}>{stats.monthDays}</p>
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">days this month</p>
+      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+        <span>This week <span className="font-semibold text-foreground tabular-nums">{stats.weekDays}</span></span>
+        <span>All time <span className="font-semibold text-foreground tabular-nums">{stats.totalDays}</span></span>
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        {stats.lastDate ? `Last: ${format(parseISO(stats.lastDate), "MMM d")}` : "No sessions yet"}
+      </p>
+    </Card>
+  );
+}
