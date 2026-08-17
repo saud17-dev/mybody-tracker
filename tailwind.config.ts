@@ -53,6 +53,8 @@ export default {
         warning: "hsl(var(--warning))",
         pt: "hsl(var(--pt))",
         cardio: "hsl(var(--cardio))",
+        swim: "hsl(var(--swim))",
+        heat: "hsl(var(--heat))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

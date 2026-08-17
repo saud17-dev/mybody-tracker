@@ -358,4 +358,11 @@ export const PT_BODY_AREAS = ["All", "Knee", "Hip", "Shoulder", "Spine", "Ankle"
 export const CARDIO_ACTIVITIES = [
   "Running", "Treadmill", "Cycling", "Stationary Bike", "Rowing", "Swimming",
   "Elliptical", "Stair Climber", "Walking", "Hiking", "Jump Rope", "HIIT", "Boxing", "Football",
+  "Sauna", "Steam Room",
 ];
+
+export const HEAT_ACTIVITIES = ["Sauna", "Steam Room"];
+export const SWIM_ACTIVITIES = ["Swimming"];
+export const isHeatActivity = (a: string) => HEAT_ACTIVITIES.includes(a);
+export const isSwimActivity = (a: string) => SWIM_ACTIVITIES.includes(a);
+export const NO_DISTANCE_ACTIVITIES = [...HEAT_ACTIVITIES];
