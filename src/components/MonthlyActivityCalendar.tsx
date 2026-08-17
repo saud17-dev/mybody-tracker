@@ -3,12 +3,13 @@ import {
   startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay,
   isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, parseISO, isAfter,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Dumbbell, HeartPulse, Activity } from "lucide-react";
+import { ChevronLeft, ChevronRight, Dumbbell, HeartPulse, Activity, Waves, Flame } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { GymSession, PTSession, CardioSession } from "@/lib/types";
+import { isSwimActivity, isHeatActivity } from "@/lib/exercises";
 
 interface Props {
   gym: GymSession[];
@@ -16,11 +17,15 @@ interface Props {
   cardio: CardioSession[];
 }
 
+type Mod = "gym" | "pt" | "cardio" | "swim" | "heat";
+
 interface DayInfo {
   gym: number;
   pt: number;
   cardio: number;
-  items: { module: "gym" | "pt" | "cardio"; label: string }[];
+  swim: number;
+  heat: number;
+  items: { module: Mod; label: string }[];
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -39,7 +44,7 @@ export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
     const map = new Map<string, DayInfo>();
     const ensure = (key: string) => {
       let d = map.get(key);
-      if (!d) { d = { gym: 0, pt: 0, cardio: 0, items: [] }; map.set(key, d); }
+      if (!d) { d = { gym: 0, pt: 0, cardio: 0, swim: 0, heat: 0, items: [] }; map.set(key, d); }
       return d;
     };
     const safeKey = (iso: string) => {
@@ -58,8 +63,10 @@ export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
     }
     for (const s of cardio) {
       const k = safeKey(s.date); if (!k) continue;
-      const info = ensure(k); info.cardio += 1;
-      info.items.push({ module: "cardio", label: `${s.activity} · ${s.durationMin}m${s.distanceKm ? ` · ${s.distanceKm}km` : ""}` });
+      const info = ensure(k);
+      const mod: Mod = isSwimActivity(s.activity) ? "swim" : isHeatActivity(s.activity) ? "heat" : "cardio";
+      info[mod] += 1;
+      info.items.push({ module: mod, label: `${s.activity} · ${s.durationMin}m${s.distanceKm ? ` · ${s.distanceKm}km` : ""}` });
     }
     return map;
   }, [gym, pt, cardio]);
@@ -69,7 +76,7 @@ export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
     for (const d of days) {
       if (!isSameMonth(d, cursor)) continue;
       const info = dayMap.get(format(d, "yyyy-MM-dd"));
-      if (info && (info.gym + info.pt + info.cardio) > 0) n += 1;
+      if (info && (info.gym + info.pt + info.cardio + info.swim + info.heat) > 0) n += 1;
     }
     return n;
   }, [days, dayMap, cursor]);
@@ -99,7 +106,7 @@ export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
           const inMonth = isSameMonth(d, cursor);
           const isToday = isSameDay(d, today);
           const isFuture = isAfter(d, today) && !isToday;
-          const total = (info?.gym ?? 0) + (info?.pt ?? 0) + (info?.cardio ?? 0);
+          const total = (info?.gym ?? 0) + (info?.pt ?? 0) + (info?.cardio ?? 0) + (info?.swim ?? 0) + (info?.heat ?? 0);
           const allThree = info && info.gym > 0 && info.pt > 0 && info.cardio > 0;
 
           const cell = (
@@ -122,6 +129,8 @@ export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
                   {info!.gym > 0 && <span className="h-1.5 w-1.5 rounded-full bg-gym md:h-2 md:w-2" />}
                   {info!.pt > 0 && <span className="h-1.5 w-1.5 rounded-full bg-pt md:h-2 md:w-2" />}
                   {info!.cardio > 0 && <span className="h-1.5 w-1.5 rounded-full bg-cardio md:h-2 md:w-2" />}
+                  {info!.swim > 0 && <span className="h-1.5 w-1.5 rounded-full bg-swim md:h-2 md:w-2" />}
+                  {info!.heat > 0 && <span className="h-1.5 w-1.5 rounded-full bg-heat md:h-2 md:w-2" />}
                 </div>
               )}
             </button>
@@ -141,10 +150,14 @@ export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
                         it.module === "gym" && "bg-gym/15 text-gym",
                         it.module === "pt" && "bg-pt/15 text-pt",
                         it.module === "cardio" && "bg-cardio/15 text-cardio",
+                        it.module === "swim" && "bg-swim/15 text-swim",
+                        it.module === "heat" && "bg-heat/15 text-heat",
                       )}>
                         {it.module === "gym" && <Dumbbell className="h-3 w-3" />}
                         {it.module === "pt" && <HeartPulse className="h-3 w-3" />}
                         {it.module === "cardio" && <Activity className="h-3 w-3" />}
+                        {it.module === "swim" && <Waves className="h-3 w-3" />}
+                        {it.module === "heat" && <Flame className="h-3 w-3" />}
                       </span>
                       <span className="truncate">{it.label}</span>
                     </li>
@@ -160,6 +173,8 @@ export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-gym" /> Gym</span>
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-pt" /> PT</span>
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-cardio" /> Cardio</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-swim" /> Swim</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-heat" /> Heat</span>
       </div>
     </Card>
   );

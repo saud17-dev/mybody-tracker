@@ -28,7 +28,7 @@ interface Props {
   onRemoveSet: (exId: string, i: number) => void;
   onRemoveExercise: (exId: string) => void;
   onPatchExercise: (exId: string, patch: Partial<GymExerciseEntry>) => void;
-  onPlateCalc: (targetKg: number) => void;
+  onPlateCalc: (exId: string, i: number, targetKg: number) => void;
 }
 
 export function WorkoutExerciseCard({
@@ -143,7 +143,7 @@ export function WorkoutExerciseCard({
                       }}
                       placeholder="0"
                       className="h-9 border-0 bg-muted/40 pr-7 text-center font-semibold" />
-                    <button type="button" onClick={() => onPlateCalc(s.weight)}
+                    <button type="button" onClick={() => onPlateCalc(ex.id, i, s.weight)}
                       aria-label="Plate calculator"
                       className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-gym">
                       <Calculator className="h-3.5 w-3.5" />

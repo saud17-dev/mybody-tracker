@@ -15,7 +15,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { CARDIO_ACTIVITIES } from "@/lib/exercises";
+import { CARDIO_ACTIVITIES, isHeatActivity } from "@/lib/exercises";
+import { cn } from "@/lib/utils";
 import { useCardioSessions, useProfile, useWorkoutTemplates } from "@/lib/cloud";
 import { distanceLabel, distanceToDisplay, distanceFromInput } from "@/lib/units";
 import { formatSessionTimes, todayInputDate, dateWithCurrentTime } from "@/lib/duration";
@@ -213,7 +214,7 @@ export default function Cardio() {
                 <Input type="text" inputMode="decimal" pattern="[0-9]*\.?[0-9]*" value={duration}
                   onChange={(e) => { const v = e.target.value.replace(",", "."); if (allowDecimal(v)) setDuration(v); }} />
               </div>
-              <div className="space-y-2">
+              <div className={cn("space-y-2", isHeatActivity(activity) && "hidden")}>
                 <Label>Distance ({distLbl})</Label>
                 <Input type="text" inputMode="decimal" pattern="[0-9]*\.?[0-9]*" value={distance}
                   onChange={(e) => { const v = e.target.value.replace(",", "."); if (allowDecimal(v)) setDistance(v); }}

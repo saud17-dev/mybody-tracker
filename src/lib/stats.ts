@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfDay, subWeeks } from "date-fns";
+import { startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfDay, subWeeks, startOfMonth, endOfMonth, format } from "date-fns";
+import { isSwimActivity, isHeatActivity } from "@/lib/exercises";
 import type { GymSession, PTSession, CardioSession, BodyMetric } from "@/lib/types";
 
 // ----- Body composition trends -----
@@ -393,4 +394,49 @@ export function useWorkoutStreaks(
       any: computeStreak([...gymDates, ...ptDates, ...cardioDates]),
     };
   }, [gym, pt, cardio]);
+}
+
+// ----- Swimming & heat therapy (sauna / steam room) day counts -----
+export interface WellnessCount {
+  weekDays: number;
+  monthDays: number;
+  totalDays: number;
+  lastDate?: string;
+  lastDuration?: number;
+}
+
+export function useWellnessCounts(cardio: CardioSession[]) {
+  return useMemo(() => {
+    const now = new Date();
+    const wStart = startOfWeek(now, { weekStartsOn: 1 });
+    const wEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const mStart = startOfMonth(now);
+    const mEnd = endOfMonth(now);
+
+    const build = (match: (a: string) => boolean): WellnessCount => {
+      const rows = cardio
+        .filter((s) => match(s.activity))
+        .map((s) => {
+          try { return { d: parseISO(s.date), s }; } catch { return null; }
+        })
+        .filter(Boolean) as { d: Date; s: CardioSession }[];
+      rows.sort((a, b) => b.d.getTime() - a.d.getTime());
+
+      const dayKeys = (list: { d: Date }[]) =>
+        new Set(list.map((r) => format(r.d, "yyyy-MM-dd"))).size;
+
+      return {
+        weekDays: dayKeys(rows.filter((r) => isWithinInterval(r.d, { start: wStart, end: wEnd }))),
+        monthDays: dayKeys(rows.filter((r) => isWithinInterval(r.d, { start: mStart, end: mEnd }))),
+        totalDays: dayKeys(rows),
+        lastDate: rows[0]?.s.date,
+        lastDuration: rows[0]?.s.durationMin,
+      };
+    };
+
+    return {
+      swim: build(isSwimActivity),
+      heat: build(isHeatActivity),
+    };
+  }, [cardio]);
 }
