@@ -1,0 +1,1 @@
+insert into public.share_tokens (user_id, name, token_hash) values ('156ca295-89f2-4fd7-86e2-61938feffb3f','TEMP verification token','d16064df13f2b36ddae51d73ef602523bb3ae75bcd92ffc1af120bb075b26fa9');
