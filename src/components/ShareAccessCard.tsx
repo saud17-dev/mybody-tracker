@@ -81,9 +81,10 @@ export function ShareAccessCard() {
       <div>
         <p className="text-sm font-medium">Share access (Claude / external tools)</p>
         <p className="text-[11px] text-muted-foreground">
-          Generate a read-only link that returns all your fitness data as JSON. Anyone with the link can read your data — treat it like a password. Revoke anytime.
+          Generate a read-only link that returns everything as JSON: workouts (gym, PT, cardio), body metrics, nutrition, plan, templates, favorites and a pre-computed summary with streaks and volume. Read-only — nothing can be changed through it. Anyone with the link can read your data, so treat it like a password. Revoke anytime.
         </p>
       </div>
+
 
       <div className="flex gap-2">
         <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Label" maxLength={60} />
@@ -102,8 +103,9 @@ export function ShareAccessCard() {
             </Button>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Paste this URL into Claude with a prompt like "fetch this URL and summarize my training". If Claude can't fetch URLs, open it in your browser and paste the JSON instead.
+            Paste into Claude with: "Fetch this URL — it's my fitness data. Read the `schema` and `summary` first, then tell me how my training and body composition are trending and what I should do this week." Add <span className="font-mono">&amp;since=2026-01-01</span> to limit history.
           </p>
+
         </div>
       )}
 

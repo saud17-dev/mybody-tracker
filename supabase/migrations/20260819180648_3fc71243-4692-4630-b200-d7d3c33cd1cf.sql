@@ -1,0 +1,1 @@
+delete from public.share_tokens where token_hash = 'd16064df13f2b36ddae51d73ef602523bb3ae75bcd92ffc1af120bb075b26fa9';
