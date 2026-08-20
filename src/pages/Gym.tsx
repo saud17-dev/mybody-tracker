@@ -137,6 +137,13 @@ export default function Gym() {
   const elapsedSec = startedAt
     ? Math.max(0, Math.floor((nowTick - new Date(startedAt).getTime()) / 1000))
     : 0;
+  const editDurationLabel = (() => {
+    if (!startedAt || !endedAt) return "—";
+    const secs = Math.floor((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000);
+    if (secs < 0) return "—";
+    return secs < 60 ? `${secs}s` : `${Math.floor(secs / 60)}min ${secs % 60}s`;
+  })();
+
   const elapsedLabel =
     elapsedSec < 60
       ? `${elapsedSec}s`
