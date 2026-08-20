@@ -181,8 +181,9 @@ export default function Gym() {
       clearDraft("gym", user.id);
       return;
     }
-    saveDraft<DraftPayload>("gym", user.id, { exercises, notes, doneSets });
-  }, [user, editingId, exercises, notes, doneSets]);
+    saveDraft<DraftPayload>("gym", user.id, { exercises, notes, doneSets, startedAt });
+  }, [user, editingId, exercises, notes, doneSets, startedAt]);
+
 
   // Template loader
   useEffect(() => {
