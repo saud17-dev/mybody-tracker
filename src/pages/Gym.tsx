@@ -361,6 +361,12 @@ export default function Gym() {
     }
   };
 
+  const startOrResume = () => {
+    // Keep an in-progress (minimised) workout running instead of restarting it
+    if (!editingId && exercises.length > 0) { setOpen(true); return; }
+    reset(); setOpen(true);
+  };
+
   const acceptResume = () => {
     if (!resumePrompt) return;
     setEditingId(null);
@@ -388,7 +394,7 @@ export default function Gym() {
           <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-module-foreground hover:bg-module-foreground/15" aria-label="Exercise library">
             <Link to="/exercises"><Library className="h-5 w-5" /></Link>
           </Button>
-          <Button onClick={() => { reset(); setOpen(true); }}
+          <Button onClick={startOrResume}
             className="h-11 rounded-full bg-background px-4 text-gym hover:bg-background/90 font-semibold shadow-lg">
             <Plus className="h-5 w-5" /> Log workout
           </Button>
@@ -422,7 +428,7 @@ export default function Gym() {
             <div className="rounded-xl border border-dashed py-16 text-center">
               <Dumbbell className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">No workouts yet.</p>
-              <Button onClick={() => { reset(); setOpen(true); }} className="mt-4 bg-gym hover:bg-gym/90">
+              <Button onClick={startOrResume} className="mt-4 bg-gym hover:bg-gym/90">
                 <Plus className="h-4 w-4" /> Start your first workout
               </Button>
             </div>
