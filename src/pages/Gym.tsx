@@ -587,7 +587,7 @@ export default function Gym() {
           {/* Stats strip */}
           <div className="shrink-0 border-b bg-card px-4 py-3">
             <div className="grid grid-cols-3 gap-2">
-              <Stat label="Duration" value={editingId ? "—" : elapsedLabel} accent />
+              <Stat label="Duration" value={editingId ? editDurationLabel : elapsedLabel} accent />
               <Stat label="Volume" value={formatWeight(sessionVolumeKg, unit, 0)} />
               <Stat label="Sets" value={String(completedSetCount)} />
             </div>
@@ -596,6 +596,23 @@ export default function Gym() {
               <Input type="date" value={sessionDate} max={todayInputDate()} className="h-8 w-auto text-xs"
                 onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
             </div>
+            {editingId && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Started</Label>
+                  <Input type="datetime-local" className="h-8 w-full text-xs"
+                    value={toLocalInput(startedAt)}
+                    onChange={(e) => setStartedAt(fromLocalInput(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Ended</Label>
+                  <Input type="datetime-local" className="h-8 w-full text-xs"
+                    value={toLocalInput(endedAt)}
+                    onChange={(e) => setEndedAt(fromLocalInput(e.target.value))} />
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Body */}
