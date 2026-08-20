@@ -262,7 +262,7 @@ export default function Gym() {
   const reset = () => {
     setExercises([]); setNotes(""); setDoneSets({});
     setWeightDrafts({}); setRestRunning(false); setEditingId(null);
-    setStartedAt(null); setSessionDate(todayInputDate());
+    setStartedAt(null); setEndedAt(null); setSessionDate(todayInputDate());
   };
 
   const openForEdit = (s: GymSession) => {
@@ -272,6 +272,7 @@ export default function Gym() {
     setDoneSets({});
     setWeightDrafts({});
     setStartedAt(s.startedAt ?? null);
+    setEndedAt(s.endedAt ?? null);
     setSessionDate(isoToInputDate(s.date));
     setOpen(true);
   };
@@ -292,24 +293,28 @@ export default function Gym() {
     }));
 
     try {
-      const endedAt = new Date().toISOString();
+      const now = new Date().toISOString();
       if (editingId) {
         const orig = sessions.find((s) => s.id === editingId);
+        if (startedAt && endedAt && new Date(endedAt) < new Date(startedAt)) {
+          return toast.error("End time must be after start time");
+        }
         await update({
           id: editingId,
           date: dateWithCurrentTime(sessionDate, orig?.date ? new Date(orig.date) : new Date()),
           exercises: finalExercises,
           notes: notes || undefined,
           startedAt: startedAt ?? orig?.startedAt,
-          endedAt: orig?.endedAt ?? endedAt,
+          endedAt: endedAt ?? orig?.endedAt ?? now,
         } as GymSession);
         toast.success("Workout updated");
       } else {
         const newPRs = detectNewPRs(finalExercises, historicalPRs);
         await create({
           date: dateWithCurrentTime(sessionDate), exercises: finalExercises, notes: notes || undefined,
-          startedAt: startedAt ?? endedAt, endedAt,
+          startedAt: startedAt ?? now, endedAt: now,
         });
+
         toast.success("Workout logged");
         if (newPRs.length) setPrCelebrate(newPRs);
         if (user) clearDraft("gym", user.id);
