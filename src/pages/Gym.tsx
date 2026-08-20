@@ -41,7 +41,23 @@ interface DraftPayload {
   exercises: GymExerciseEntry[];
   notes: string;
   doneSets: Record<string, boolean>;
+  startedAt?: string | null;
 }
+
+// helpers for <input type="datetime-local">
+const toLocalInput = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+const fromLocalInput = (v: string) => {
+  if (!v) return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+};
+
 
 export default function Gym() {
   const { user } = useAuth();
@@ -73,6 +89,8 @@ export default function Gym() {
   const [resumePrompt, setResumePrompt] = useState<{ at: number; data: DraftPayload } | null>(null);
   const [expandedExId, setExpandedExId] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [endedAt, setEndedAt] = useState<string | null>(null);
+
   const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
   const [addOpen, setAddOpen] = useState(false);
 
@@ -119,6 +137,13 @@ export default function Gym() {
   const elapsedSec = startedAt
     ? Math.max(0, Math.floor((nowTick - new Date(startedAt).getTime()) / 1000))
     : 0;
+  const editDurationLabel = (() => {
+    if (!startedAt || !endedAt) return "—";
+    const secs = Math.floor((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000);
+    if (secs < 0) return "—";
+    return secs < 60 ? `${secs}s` : `${Math.floor(secs / 60)}min ${secs % 60}s`;
+  })();
+
   const elapsedLabel =
     elapsedSec < 60
       ? `${elapsedSec}s`
@@ -163,8 +188,9 @@ export default function Gym() {
       clearDraft("gym", user.id);
       return;
     }
-    saveDraft<DraftPayload>("gym", user.id, { exercises, notes, doneSets });
-  }, [user, editingId, exercises, notes, doneSets]);
+    saveDraft<DraftPayload>("gym", user.id, { exercises, notes, doneSets, startedAt });
+  }, [user, editingId, exercises, notes, doneSets, startedAt]);
+
 
   // Template loader
   useEffect(() => {
@@ -243,7 +269,7 @@ export default function Gym() {
   const reset = () => {
     setExercises([]); setNotes(""); setDoneSets({});
     setWeightDrafts({}); setRestRunning(false); setEditingId(null);
-    setStartedAt(null); setSessionDate(todayInputDate());
+    setStartedAt(null); setEndedAt(null); setSessionDate(todayInputDate());
   };
 
   const openForEdit = (s: GymSession) => {
@@ -253,6 +279,7 @@ export default function Gym() {
     setDoneSets({});
     setWeightDrafts({});
     setStartedAt(s.startedAt ?? null);
+    setEndedAt(s.endedAt ?? null);
     setSessionDate(isoToInputDate(s.date));
     setOpen(true);
   };
@@ -273,24 +300,28 @@ export default function Gym() {
     }));
 
     try {
-      const endedAt = new Date().toISOString();
+      const now = new Date().toISOString();
       if (editingId) {
         const orig = sessions.find((s) => s.id === editingId);
+        if (startedAt && endedAt && new Date(endedAt) < new Date(startedAt)) {
+          return toast.error("End time must be after start time");
+        }
         await update({
           id: editingId,
           date: dateWithCurrentTime(sessionDate, orig?.date ? new Date(orig.date) : new Date()),
           exercises: finalExercises,
           notes: notes || undefined,
           startedAt: startedAt ?? orig?.startedAt,
-          endedAt: orig?.endedAt ?? endedAt,
+          endedAt: endedAt ?? orig?.endedAt ?? now,
         } as GymSession);
         toast.success("Workout updated");
       } else {
         const newPRs = detectNewPRs(finalExercises, historicalPRs);
         await create({
           date: dateWithCurrentTime(sessionDate), exercises: finalExercises, notes: notes || undefined,
-          startedAt: startedAt ?? endedAt, endedAt,
+          startedAt: startedAt ?? now, endedAt: now,
         });
+
         toast.success("Workout logged");
         if (newPRs.length) setPrCelebrate(newPRs);
         if (user) clearDraft("gym", user.id);
@@ -337,14 +368,25 @@ export default function Gym() {
     }
   };
 
+  const startOrResume = () => {
+    // Keep an in-progress (minimised) workout running instead of restarting it
+    if (!editingId && exercises.length > 0) { setOpen(true); return; }
+    reset(); setOpen(true);
+  };
+
   const acceptResume = () => {
     if (!resumePrompt) return;
+    setEditingId(null);
     setExercises(resumePrompt.data.exercises);
     setNotes(resumePrompt.data.notes);
     setDoneSets(resumePrompt.data.doneSets || {});
+    // continue the clock from the original start time
+    setStartedAt(resumePrompt.data.startedAt ?? new Date(resumePrompt.at).toISOString());
+    setEndedAt(null);
     setResumePrompt(null);
     setOpen(true);
   };
+
   const dismissResume = () => {
     if (user) clearDraft("gym", user.id);
     setResumePrompt(null);
@@ -359,7 +401,7 @@ export default function Gym() {
           <Button asChild size="icon" variant="ghost" className="h-11 w-11 rounded-full text-module-foreground hover:bg-module-foreground/15" aria-label="Exercise library">
             <Link to="/exercises"><Library className="h-5 w-5" /></Link>
           </Button>
-          <Button onClick={() => { reset(); setOpen(true); }}
+          <Button onClick={startOrResume}
             className="h-11 rounded-full bg-background px-4 text-gym hover:bg-background/90 font-semibold shadow-lg">
             <Plus className="h-5 w-5" /> Log workout
           </Button>
@@ -393,7 +435,7 @@ export default function Gym() {
             <div className="rounded-xl border border-dashed py-16 text-center">
               <Dumbbell className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">No workouts yet.</p>
-              <Button onClick={() => { reset(); setOpen(true); }} className="mt-4 bg-gym hover:bg-gym/90">
+              <Button onClick={startOrResume} className="mt-4 bg-gym hover:bg-gym/90">
                 <Plus className="h-4 w-4" /> Start your first workout
               </Button>
             </div>
@@ -552,7 +594,7 @@ export default function Gym() {
           {/* Stats strip */}
           <div className="shrink-0 border-b bg-card px-4 py-3">
             <div className="grid grid-cols-3 gap-2">
-              <Stat label="Duration" value={editingId ? "—" : elapsedLabel} accent />
+              <Stat label="Duration" value={editingId ? editDurationLabel : elapsedLabel} accent />
               <Stat label="Volume" value={formatWeight(sessionVolumeKg, unit, 0)} />
               <Stat label="Sets" value={String(completedSetCount)} />
             </div>
@@ -561,6 +603,23 @@ export default function Gym() {
               <Input type="date" value={sessionDate} max={todayInputDate()} className="h-8 w-auto text-xs"
                 onChange={(e) => setSessionDate(e.target.value || todayInputDate())} />
             </div>
+            {editingId && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Started</Label>
+                  <Input type="datetime-local" className="h-8 w-full text-xs"
+                    value={toLocalInput(startedAt)}
+                    onChange={(e) => setStartedAt(fromLocalInput(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Ended</Label>
+                  <Input type="datetime-local" className="h-8 w-full text-xs"
+                    value={toLocalInput(endedAt)}
+                    onChange={(e) => setEndedAt(fromLocalInput(e.target.value))} />
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Body */}
