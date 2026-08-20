@@ -89,6 +89,8 @@ export default function Gym() {
   const [resumePrompt, setResumePrompt] = useState<{ at: number; data: DraftPayload } | null>(null);
   const [expandedExId, setExpandedExId] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [endedAt, setEndedAt] = useState<string | null>(null);
+
   const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
   const [addOpen, setAddOpen] = useState(false);
 
