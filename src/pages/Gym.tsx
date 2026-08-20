@@ -363,12 +363,17 @@ export default function Gym() {
 
   const acceptResume = () => {
     if (!resumePrompt) return;
+    setEditingId(null);
     setExercises(resumePrompt.data.exercises);
     setNotes(resumePrompt.data.notes);
     setDoneSets(resumePrompt.data.doneSets || {});
+    // continue the clock from the original start time
+    setStartedAt(resumePrompt.data.startedAt ?? new Date(resumePrompt.at).toISOString());
+    setEndedAt(null);
     setResumePrompt(null);
     setOpen(true);
   };
+
   const dismissResume = () => {
     if (user) clearDraft("gym", user.id);
     setResumePrompt(null);
