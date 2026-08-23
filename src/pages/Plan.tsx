@@ -361,7 +361,11 @@ export default function Plan() {
               </span>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="mb-2 flex justify-end">
+              <div className="mb-2 flex flex-wrap justify-end gap-2">
+                <TemplateLibrarySheet
+                  existingNames={templates.map((t) => t.name)}
+                  onAdd={(t) => createTpl(t as any)}
+                />
                 <NewTemplateDialog onCreate={createTpl} />
               </div>
               {templates.length === 0 ? (
