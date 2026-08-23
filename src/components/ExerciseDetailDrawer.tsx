@@ -69,6 +69,38 @@ export function ExerciseDetailDrawer({
             <p className="mt-1.5 text-sm">{area}</p>
           </section>
 
+          {equip && (
+            <section className="rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Dumbbell className="h-3.5 w-3.5" />
+                Recommended equipment
+              </div>
+              <p className="mt-1.5 text-sm">{equip}</p>
+            </section>
+          )}
+
+          {secondaryMuscles && secondaryMuscles.length > 0 && (
+            <section>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Secondary muscles
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {secondaryMuscles.map((m) => (
+                  <Badge key={m} variant="outline" className="text-[11px]">{m}</Badge>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {instructions && (
+            <section>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Instructions</p>
+              <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed">{instructions}</p>
+            </section>
+          )}
+
+
+
           <section>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <ListChecks className="h-3.5 w-3.5" />

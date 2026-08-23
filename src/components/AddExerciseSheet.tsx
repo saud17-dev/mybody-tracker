@@ -232,7 +232,11 @@ function ExerciseRow({ ex, onPick, onInfo }: { ex: CatalogExercise; onPick: () =
         </span>
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">{ex.name}</span>
-          <span className="block truncate text-xs text-muted-foreground">{ex.muscleGroup}</span>
+          <span className="block truncate text-xs text-muted-foreground">
+            {ex.muscleGroup}{ex.equipment ? ` · ${ex.equipment}` : ""}
+          </span>
+        </span>
+
         </span>
       </button>
       <button type="button" onClick={onInfo} aria-label={`About ${ex.name}`}
