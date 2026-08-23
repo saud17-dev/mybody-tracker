@@ -9,7 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { ExerciseDef } from "@/lib/exercises";
+import { getExerciseTags, type ExerciseDef } from "@/lib/exercises";
+import { ExerciseTags } from "@/components/ExerciseTags";
+
 import { useFavorites, useCustomExercises } from "@/lib/cloud";
 import { toast } from "sonner";
 
@@ -119,7 +121,11 @@ export function ExercisePicker({
                     <button type="button"
                       onClick={() => { onChange(ex.name, ex.group, ex.bodyArea); setOpen(false); setQuery(""); }}
                       className="flex flex-1 items-center justify-between px-2 py-2 text-left text-sm">
-                      <span>{ex.name}</span>
+                      <span className="min-w-0">
+                        <span className="block truncate">{ex.name}</span>
+                        <ExerciseTags className="mt-0.5" {...getExerciseTags(module, ex)} />
+                      </span>
+
                       {value === ex.name && <Check className="h-4 w-4 text-primary" />}
                     </button>
                     <button type="button"
