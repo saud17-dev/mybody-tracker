@@ -1,9 +1,9 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Target, ListChecks, Plus } from "lucide-react";
+import { Star, Target, ListChecks, Plus, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ExerciseDef } from "@/lib/exercises";
+import { getExerciseTags, type ExerciseDef } from "@/lib/exercises";
 import { getExerciseCues, getTargetArea } from "@/lib/exerciseCues";
 
 interface Props {
@@ -15,13 +15,20 @@ interface Props {
   onToggleFavorite?: () => void;
   onSelect?: () => void;
   selectLabel?: string;
+  muscleLabel?: string;
+  equipment?: string;
+  secondaryMuscles?: string[];
+  instructions?: string;
 }
 
 export function ExerciseDetailDrawer({
   module, exercise, open, onOpenChange, isFavorite, onToggleFavorite, onSelect,
-  selectLabel = "Add to workout",
+  selectLabel = "Add to workout", muscleLabel, equipment, secondaryMuscles, instructions,
 }: Props) {
   if (!exercise) return null;
+  const tags = getExerciseTags(module, exercise);
+  const muscle = muscleLabel ?? tags.muscle;
+  const equip = equipment ?? tags.equipment;
   const cues = getExerciseCues(exercise.name, exercise.group);
   const area = getTargetArea({ module, name: exercise.name, group: exercise.group, bodyArea: exercise.bodyArea });
 
@@ -33,7 +40,8 @@ export function ExerciseDetailDrawer({
             <div className="min-w-0 flex-1">
               <SheetTitle className="text-xl leading-tight">{exercise.name}</SheetTitle>
               <SheetDescription className="mt-1 flex flex-wrap items-center gap-1.5">
-                <Badge variant="secondary">{exercise.group}</Badge>
+                <Badge variant="secondary">{muscle}</Badge>
+                {equip && <Badge variant="outline">{equip}</Badge>}
                 {exercise.bodyArea && <Badge variant="outline">{exercise.bodyArea}</Badge>}
               </SheetDescription>
             </div>
@@ -50,6 +58,7 @@ export function ExerciseDetailDrawer({
             )}
           </div>
         </SheetHeader>
+
 
         <div className="mt-5 space-y-5">
           <section className="rounded-lg border bg-muted/30 p-3">
