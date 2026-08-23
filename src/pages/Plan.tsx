@@ -29,6 +29,7 @@ import { SUMMER_PLAN_TEMPLATES } from "@/lib/seedPlan";
 import { parsePlanCsv, type ParsedPlan } from "@/lib/csvPlan";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { TemplateLibrarySheet } from "@/components/TemplateLibrarySheet";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -361,7 +362,11 @@ export default function Plan() {
               </span>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="mb-2 flex justify-end">
+              <div className="mb-2 flex flex-wrap justify-end gap-2">
+                <TemplateLibrarySheet
+                  existingNames={templates.map((t) => t.name)}
+                  onAdd={(t) => createTpl(t as any)}
+                />
                 <NewTemplateDialog onCreate={createTpl} />
               </div>
               {templates.length === 0 ? (
