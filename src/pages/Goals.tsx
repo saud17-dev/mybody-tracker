@@ -79,6 +79,9 @@ export default function GoalsPage() {
   const { metrics, create: createMetric, remove: removeMetric } = useBodyMetrics();
   const { goals, save: saveGoals } = useGoals();
   const { profile } = useProfile();
+  const { logs: mealLogs } = useMealLogs();
+  const { goal: nutritionGoal } = useNutritionGoal();
+
   const unit = profile?.unit ?? "kg";
 
   const weekly = useWeeklyCounts(gym, pt, cardio);
