@@ -87,6 +87,28 @@ export function MealLibrarySheet({ open, onOpenChange, onPick }: Props) {
               </button>
             ))}
           </div>
+
+          <div className="flex items-center gap-2">
+            <span className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Portion
+            </span>
+            <div className="flex flex-1 gap-1.5 overflow-x-auto">
+              {PORTIONS.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => setPortion(p.value)}
+                  className={cn(
+                    "min-w-9 shrink-0 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors",
+                    portion === p.value
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground"
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="mt-3 flex-1 overflow-y-auto pr-1">
@@ -98,7 +120,7 @@ export function MealLibrarySheet({ open, onOpenChange, onPick }: Props) {
                 <Card
                   key={m.id}
                   onClick={() => {
-                    onPick(m);
+                    onPick(scaleMeal(m, portion));
                     onOpenChange(false);
                   }}
                   className="flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:border-primary/40 active:scale-[.99]"
@@ -109,6 +131,11 @@ export function MealLibrarySheet({ open, onOpenChange, onPick }: Props) {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold leading-tight">
                       {m.name}
+                      {portion !== 1 && (
+                        <span className="ml-1 text-primary">
+                          × {PORTIONS.find((p) => p.value === portion)?.label}
+                        </span>
+                      )}
                       {m.approximate && (
                         <span className="ml-1.5 align-middle text-[9px] font-medium uppercase text-muted-foreground">≈</span>
                       )}
@@ -116,9 +143,10 @@ export function MealLibrarySheet({ open, onOpenChange, onPick }: Props) {
                     <p className="text-[11px] text-muted-foreground">{m.serving}</p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-sm font-bold tabular-nums text-primary">{m.proteinG}g</p>
-                    <p className="text-[10px] text-muted-foreground">{m.calories} kcal</p>
+                    <p className="text-sm font-bold tabular-nums text-primary">{round1(m.proteinG * portion)}g</p>
+                    <p className="text-[10px] text-muted-foreground">{Math.round(m.calories * portion)} kcal</p>
                   </div>
+
                 </Card>
               ))}
             </div>
