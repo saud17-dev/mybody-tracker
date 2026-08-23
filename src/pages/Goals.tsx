@@ -35,7 +35,7 @@ import { useMealLogs, useNutritionGoal } from "@/lib/nutrition";
 import { todayInputDate, dateWithCurrentTime } from "@/lib/duration";
 
 const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const DOW_ORDER = [0, 1, 2, 3, 4, 5, 6];
 
 interface RingProps {
   label: string;
