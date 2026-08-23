@@ -683,6 +683,8 @@ export default function Gym() {
                 unit={unit}
                 defaultRest={restDefault}
                 doneSets={doneSets}
+                prefilledSets={prefilledSets}
+
                 previousLabel={previousLabel}
                 displayWeight={displayWeight}
                 setWeightDraft={setWeightDraft}
