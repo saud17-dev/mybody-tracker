@@ -62,6 +62,21 @@ const RULES: { test: RegExp; cues: string[] }[] = [
     "Only the forearm should move",
     "Lock out fully, control on the way back",
   ]},
+  { test: /get[- ]?up|windmill/i, cues: [
+    "Eyes on the bell the whole time",
+    "Move one segment at a time — no rushing",
+    "Keep the loaded arm locked out and vertical",
+  ]},
+  { test: /halo/i, cues: [
+    "Circle the bell close around the head",
+    "Ribs down, don't arch the lower back",
+    "Slow, controlled circles both directions",
+  ]},
+  { test: /high pull/i, cues: [
+    "Power comes from the hips, not the arms",
+    "Elbow leads, keep the weight close",
+    "Stop at chest height — no shrugging up to the ears",
+  ]},
   { test: /clean|snatch|thruster|wall ball|burpee|man maker|devil press/i, cues: [
     "Set a strong start position before each rep",
     "Drive aggressively through the legs",
