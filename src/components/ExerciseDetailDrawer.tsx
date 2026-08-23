@@ -5,6 +5,7 @@ import { Star, Target, ListChecks, Plus, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getExerciseTags, type ExerciseDef } from "@/lib/exercises";
 import { getExerciseCues, getTargetArea } from "@/lib/exerciseCues";
+import { ExerciseImage } from "@/components/ExerciseImage";
 
 interface Props {
   module: "gym" | "pt";
@@ -58,6 +59,16 @@ export function ExerciseDetailDrawer({
             )}
           </div>
         </SheetHeader>
+
+        <ExerciseImage
+          name={exercise.name}
+          muscle={muscle}
+          equipment={equip}
+          variant="banner"
+          className="mt-4"
+        />
+
+
 
 
         <div className="mt-5 space-y-5">

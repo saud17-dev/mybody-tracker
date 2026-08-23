@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ExerciseImage } from "@/components/ExerciseImage";
 import {
   useExerciseCatalog, useCreateExercise, POPULAR_EXERCISES,
   MUSCLE_GROUPS, EQUIPMENT, EXERCISE_TYPES,
@@ -21,8 +22,6 @@ interface Props {
   onSelect: (e: CatalogExercise) => void;
 }
 
-const initials = (name: string) =>
-  name.replace(/\(.*?\)/g, "").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
 export function AddExerciseSheet({ open, onOpenChange, onSelect }: Props) {
   const { exercises, isLoading } = useExerciseCatalog();
@@ -227,9 +226,7 @@ function ExerciseRow({ ex, onPick, onInfo }: { ex: CatalogExercise; onPick: () =
   return (
     <div className="flex items-center gap-3 px-3 hover:bg-accent/5">
       <button type="button" onClick={onPick} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 text-left">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gym/15 text-xs font-bold text-gym">
-          {initials(ex.name)}
-        </span>
+        <ExerciseImage name={ex.name} muscle={ex.muscleGroup} equipment={ex.equipment} />
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">{ex.name}</span>
           <span className="block truncate text-xs text-muted-foreground">

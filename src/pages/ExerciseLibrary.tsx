@@ -3,6 +3,7 @@ import { Search, Star, Library as LibraryIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ExerciseDetailDrawer } from "@/components/ExerciseDetailDrawer";
 import { ExerciseTags } from "@/components/ExerciseTags";
+import { ExerciseImage } from "@/components/ExerciseImage";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -253,9 +254,12 @@ function Row({ row, isFav, onToggleFav, onOpen }: {
 }) {
   return (
     <Card className="flex items-center gap-2 p-3">
-      <button onClick={onOpen} className="min-w-0 flex-1 text-left">
-        <p className="truncate text-sm font-medium">{row.name}</p>
-        <ExerciseTags className="mt-1" muscle={row.muscle} equipment={row.equipment} />
+      <button onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <ExerciseImage name={row.name} muscle={row.muscle} equipment={row.equipment} />
+        <span className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{row.name}</p>
+          <ExerciseTags className="mt-1" muscle={row.muscle} equipment={row.equipment} />
+        </span>
       </button>
       <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={onToggleFav}
         aria-label={isFav ? "Remove favorite" : "Add favorite"}>
