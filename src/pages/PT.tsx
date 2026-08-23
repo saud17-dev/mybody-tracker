@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Plus, Trash2, HeartPulse, X, Pencil, Library, ChevronDown, RotateCcw } from "lucide-react";
@@ -57,6 +57,30 @@ export default function PT() {
   const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // last logged sets per PT exercise name (carried into the next session)
+  const previousPTByExercise = useMemo(() => {
+    const m = new Map<string, PTSet[]>();
+    const ordered = [...sessions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+    for (const s of ordered) {
+      if (editingId && s.id === editingId) continue;
+      for (const e of s.exercises) {
+        const key = e.exerciseName.toLowerCase();
+        if (!m.has(key)) m.set(key, e.sets);
+      }
+    }
+    return m;
+  }, [sessions, editingId]);
+
+  const prevPTSets = (name: string, count?: number): PTSet[] | null => {
+    const prev = previousPTByExercise.get(name.toLowerCase());
+    if (!prev || prev.length === 0) return null;
+    const src = count ? Array.from({ length: count }, (_, i) => prev[i] ?? prev[prev.length - 1]) : prev;
+    return src.map((s) => ({ reps: s.reps, weight: s.weight, painScale: 2 }));
+  };
+
+
   // Load draft once
   const draftLoadedRef = useRef(false);
   useEffect(() => {
@@ -95,7 +119,7 @@ export default function PT() {
           category: e.group,
           bodyArea: e.bodyArea,
           notes: "",
-          sets: [{ reps: e.reps || 10, painScale: 2 } as PTSet],
+          sets: prevPTSets(e.name, 1) ?? [{ reps: e.reps || 10, painScale: 2 } as PTSet],
         })),
       );
       setOverallNotes(tpl.name);
@@ -118,7 +142,7 @@ export default function PT() {
         category: picker.group,
         bodyArea: picker.bodyArea,
         notes: "",
-        sets: [{ reps: 10, painScale: 2 }],
+        sets: prevPTSets(picker.name) ?? [{ reps: 10, painScale: 2 }],
       },
     ]);
     setPicker(null);
@@ -132,8 +156,14 @@ export default function PT() {
   const addSet = (exId: string) =>
     setExercises((p) => p.map((e) => {
       if (e.id !== exId) return e;
+      const prev = previousPTByExercise.get(e.exerciseName.toLowerCase());
+      const fromPrev = prev?.[e.sets.length];
       const last = e.sets[e.sets.length - 1] || { reps: 10, painScale: 2 };
-      return { ...e, sets: [...e.sets, { ...last }] };
+      const next: PTSet = fromPrev
+        ? { reps: fromPrev.reps, weight: fromPrev.weight, painScale: last.painScale ?? 2 }
+        : { ...last };
+      return { ...e, sets: [...e.sets, next] };
+
     }));
 
   const removeSet = (exId: string, i: number) =>
