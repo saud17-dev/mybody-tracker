@@ -28,7 +28,7 @@ interface DayInfo {
   items: { module: Mod; label: string }[];
 }
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
   const [cursor, setCursor] = useState(() => new Date());
@@ -36,8 +36,8 @@ export function MonthlyActivityCalendar({ gym, pt, cardio }: Props) {
 
   const monthStart = startOfMonth(cursor);
   const monthEnd = endOfMonth(cursor);
-  const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const days = useMemo(() => eachDayOfInterval({ start: gridStart, end: gridEnd }), [gridStart, gridEnd]);
 
   const dayMap = useMemo(() => {

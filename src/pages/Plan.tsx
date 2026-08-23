@@ -154,7 +154,7 @@ export default function Plan() {
     await swapDays({ a, b });
   };
 
-  const dowOrder = [1, 2, 3, 4, 5, 6, 0];
+  const dowOrder = [0, 1, 2, 3, 4, 5, 6];
 
   // Next 4 days starting today
   const next4 = useMemo(() => {
