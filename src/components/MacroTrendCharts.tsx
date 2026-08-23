@@ -66,11 +66,11 @@ export function MacroTrendCharts({ logs, goal, weeks = 8, className }: Props) {
 
   const hasData = data.some((d) => d.days > 0);
 
-  const charts: { key: keyof WeekPoint; title: string; unit: string; color: string; target?: number }[] = [
-    { key: "protein", title: "Protein", unit: "g", color: "hsl(var(--primary))", target: goal?.dailyProteinG },
-    { key: "carbs", title: "Carbs", unit: "g", color: "hsl(var(--gym))", target: goal?.dailyCarbsG },
-    { key: "fat", title: "Fat", unit: "g", color: "hsl(var(--pt))", target: goal?.dailyFatG },
-    { key: "calories", title: "Calories", unit: "kcal", color: "hsl(var(--accent))", target: goal?.dailyCalories },
+  const charts: { field: "protein" | "carbs" | "fat" | "calories"; title: string; unit: string; color: string; target?: number }[] = [
+    { field: "protein", title: "Protein", unit: "g", color: "hsl(var(--primary))", target: goal?.dailyProteinG },
+    { field: "carbs", title: "Carbs", unit: "g", color: "hsl(var(--gym))", target: goal?.dailyCarbsG },
+    { field: "fat", title: "Fat", unit: "g", color: "hsl(var(--pt))", target: goal?.dailyFatG },
+    { field: "calories", title: "Calories", unit: "kcal", color: "hsl(var(--accent))", target: goal?.dailyCalories },
   ];
 
   if (!hasData) {
@@ -84,17 +84,96 @@ export function MacroTrendCharts({ logs, goal, weeks = 8, className }: Props) {
   return (
     <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}>
       {charts.map((c) => (
-        <MacroChart key={c.key} data={data} {...c} />
+        <MacroChart key={c.field} data={data} {...c} />
       ))}
     </div>
   );
 }
 
 function MacroChart({
-  data, dataKey, title, unit, color, target,
-}: { data: WeekPoint[]; dataKey?: never; title: string; unit: string; color: string; target?: number } & {
-  key?: string;
-} & { [k: string]: any }) {
-  const field = arguments[0].key as keyof WeekPoint;
-  return null;
+  data, field, title, unit, color, target,
+}: {
+  data: WeekPoint[];
+  field: "protein" | "carbs" | "fat" | "calories";
+  title: string;
+  unit: string;
+  color: string;
+  target?: number;
+}) {
+  const withData = data.filter((d) => d.days > 0);
+  const current = withData.at(-1)?.[field] ?? 0;
+  const previous = withData.at(-2)?.[field];
+  const delta = previous != null && previous > 0 ? Math.round(((current - previous) / previous) * 100) : null;
+  const TrendIcon = delta == null || delta === 0 ? Minus : delta > 0 ? TrendingUp : TrendingDown;
+  const gradId = `macro-grad-${field}`;
+
+  return (
+    <Card className="p-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+          <p className="mt-0.5 text-2xl font-bold tabular-nums" style={{ color }}>
+            {current}
+            <span className="ml-1 text-xs font-normal text-muted-foreground">{unit}/day</span>
+          </p>
+        </div>
+        <span
+          className={cn(
+            "flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+            delta == null || delta === 0
+              ? "bg-muted text-muted-foreground"
+              : delta > 0
+                ? "bg-primary/15 text-primary"
+                : "bg-destructive/15 text-destructive",
+          )}
+        >
+          <TrendIcon className="h-3 w-3" />
+          {delta == null ? "—" : `${delta > 0 ? "+" : ""}${delta}%`}
+        </span>
+      </div>
+
+      <div className="mt-2 h-24 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+            <defs>
+              <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <Tooltip
+              contentStyle={{
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 10,
+                fontSize: 12,
+              }}
+              labelStyle={{ color: "hsl(var(--muted-foreground))" }}
+              formatter={(v: any) => [`${v} ${unit}/day`, title]}
+              labelFormatter={(l) => `Week of ${l}`}
+            />
+            {target ? (
+              <ReferenceLine y={target} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+            ) : null}
+            <Area
+              type="monotone"
+              dataKey={field}
+              stroke={color}
+              strokeWidth={2}
+              fill={`url(#${gradId})`}
+              dot={{ r: 2, fill: color }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </Card>
+  );
 }
+
