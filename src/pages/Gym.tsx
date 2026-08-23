@@ -73,6 +73,9 @@ export default function Gym() {
   const [exercises, setExercises] = useState<GymExerciseEntry[]>([]);
   const [notes, setNotes] = useState("");
   const [doneSets, setDoneSets] = useState<Record<string, boolean>>({});
+  // sets pre-filled from the previous session (shown muted until touched)
+  const [prefilledSets, setPrefilledSets] = useState<Record<string, boolean>>({});
+
   // string-state per set so users can type "70.", "70.25" without losing the dot
   const [weightDrafts, setWeightDrafts] = useState<Record<string, string>>({});
   const [restRunning, setRestRunning] = useState(false);
