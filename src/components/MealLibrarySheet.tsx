@@ -12,9 +12,36 @@ interface Props {
   onPick: (meal: LibraryMeal) => void;
 }
 
+const PORTIONS: { value: number; label: string }[] = [
+  { value: 0.25, label: "¼" },
+  { value: 0.5, label: "½" },
+  { value: 0.75, label: "¾" },
+  { value: 1, label: "1" },
+  { value: 1.5, label: "1½" },
+  { value: 2, label: "2" },
+];
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/** Scale a library meal by a portion factor (e.g. half a chicken wrap). */
+export function scaleMeal(meal: LibraryMeal, portion: number): LibraryMeal {
+  if (portion === 1) return meal;
+  const label = PORTIONS.find((p) => p.value === portion)?.label ?? String(portion);
+  return {
+    ...meal,
+    name: `${meal.name} × ${label}`,
+    serving: `${label} × ${meal.serving}`,
+    proteinG: round1(meal.proteinG * portion),
+    calories: Math.round(meal.calories * portion),
+    approximate: true,
+  };
+}
+
 export function MealLibrarySheet({ open, onOpenChange, onPick }: Props) {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<LibraryCategory | "All">("All");
+  const [portion, setPortion] = useState(1);
+
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
