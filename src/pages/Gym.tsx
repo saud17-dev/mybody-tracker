@@ -201,12 +201,20 @@ export default function Gym() {
     if (!tplId) return;
     const tpl = templates.find((t) => t.id === tplId);
     if (tpl && tpl.module === "gym" && Array.isArray(tpl.payload?.exercises)) {
+      const marks: Record<string, boolean> = {};
       setExercises(
-        tpl.payload.exercises.map((e: any) => ({
-          id: uid(), exerciseName: e.name, muscleGroup: e.group,
-          sets: Array.from({ length: e.sets || 3 }, () => ({ reps: e.reps || 8, weight: 0 })),
-        })),
+        tpl.payload.exercises.map((e: any) => {
+          const id = uid();
+          const prev = previousByExercise.get(String(e.name).toLowerCase());
+          const sets = Array.from({ length: e.sets || 3 }, (_, i) => {
+            const p = prev?.[i] ?? prev?.[prev.length - 1];
+            if (p) { marks[`${id}:${i}`] = true; return { ...p }; }
+            return { reps: e.reps || 8, weight: 0 };
+          });
+          return { id, exerciseName: e.name, muscleGroup: e.group, sets };
+        }),
       );
+      setPrefilledSets(marks);
       setNotes(tpl.name);
       setOpen(true);
     } else if (templates.length > 0) {
@@ -219,31 +227,57 @@ export default function Gym() {
 
   // ---------- mutators ----------
   const addExercise = (e: CatalogExercise) => {
+    const id = uid();
+    const prev = previousByExercise.get(e.name.toLowerCase());
+    const emptySet = {
+      reps: e.exerciseType === "duration" || e.exerciseType === "distance_duration" ? 0 : 8,
+      weight: 0,
+    };
+    const sets = prev && prev.length > 0 ? prev.map((s) => ({ ...s })) : [emptySet];
+    if (prev && prev.length > 0) {
+      setPrefilledSets((m) => {
+        const n = { ...m };
+        prev.forEach((_, i) => { n[`${id}:${i}`] = true; });
+        return n;
+      });
+    }
     setExercises((p) => [
       ...p,
       {
-        id: uid(),
+        id,
         exerciseName: e.name,
         muscleGroup: e.muscleGroup,
         exerciseId: e.id,
         equipment: e.equipment,
         exerciseType: e.exerciseType,
-        sets: [{ reps: e.exerciseType === "duration" || e.exerciseType === "distance_duration" ? 0 : 8, weight: 0 }],
+        sets,
       },
     ]);
   };
 
-  const updateSet = (exId: string, idx: number, patch: Partial<GymSet>) =>
+  const updateSet = (exId: string, idx: number, patch: Partial<GymSet>) => {
+    setPrefilledSets((m) => {
+      if (!m[`${exId}:${idx}`]) return m;
+      const n = { ...m }; delete n[`${exId}:${idx}`]; return n;
+    });
     setExercises((p) => p.map((e) =>
       e.id === exId ? { ...e, sets: e.sets.map((s, i) => i === idx ? { ...s, ...patch } : s) } : e
     ));
+  };
 
   const addSet = (exId: string) =>
     setExercises((p) => p.map((e) => {
       if (e.id !== exId) return e;
+      const prev = previousByExercise.get(e.exerciseName.toLowerCase());
+      const fromPrev = prev?.[e.sets.length];
       const last = e.sets[e.sets.length - 1] || { reps: 8, weight: 0 };
+      if (fromPrev) {
+        setPrefilledSets((m) => ({ ...m, [`${exId}:${e.sets.length}`]: true }));
+        return { ...e, sets: [...e.sets, { ...fromPrev }] };
+      }
       return { ...e, sets: [...e.sets, { ...last }] };
     }));
+
 
   const removeSet = (exId: string, i: number) => {
     setExercises((p) => p.map((e) => e.id === exId ? { ...e, sets: e.sets.filter((_, ix) => ix !== i) } : e));
