@@ -126,9 +126,9 @@ export const GYM_EXERCISES: ExerciseDef[] = [
   { name: "Power Clean", group: "Olympic" },
   { name: "Clean & Jerk", group: "Olympic" },
   { name: "Snatch", group: "Olympic" },
-  { name: "Kettlebell Swing", group: "Olympic" },
+  { name: "Kettlebell Swing", group: "Kettlebell", equipment: "Kettlebell", primaryMuscle: "Glutes" },
   { name: "Thruster", group: "Olympic" },
-  { name: "Turkish Get-Up", group: "Olympic" },
+  { name: "Turkish Get-Up", group: "Kettlebell", equipment: "Kettlebell", primaryMuscle: "Abs" },
   { name: "Farmer's Carry", group: "Olympic" },
   // --- JEFIT-sourced expansion (curated, deduped) ---
   // Chest
@@ -252,9 +252,8 @@ export const GYM_EXERCISES: ExerciseDef[] = [
   { name: "Clean Pull", group: "Olympic" },
   { name: "Snatch Pull", group: "Olympic" },
   { name: "Overhead Squat", group: "Olympic" },
-  { name: "Kettlebell Clean", group: "Olympic" },
-  { name: "Kettlebell Snatch", group: "Olympic" },
-  { name: "Single-Arm KB Swing", group: "Olympic" },
+  { name: "Kettlebell Clean", group: "Kettlebell", equipment: "Kettlebell", primaryMuscle: "Glutes" },
+  { name: "Kettlebell Snatch", group: "Kettlebell", equipment: "Kettlebell", primaryMuscle: "Shoulders" },
   { name: "Sled Push", group: "Olympic" },
   { name: "Sled Pull", group: "Olympic" },
   { name: "Battle Ropes", group: "Olympic" },
