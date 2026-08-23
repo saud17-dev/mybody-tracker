@@ -19,6 +19,8 @@ interface Props {
   unit: string;
   defaultRest: number;
   doneSets: Record<string, boolean>;
+  prefilledSets?: Record<string, boolean>;
+
   previousLabel: (name: string, idx: number, type?: string) => string;
   displayWeight: (exId: string, i: number, kg: number) => string;
   setWeightDraft: (exId: string, i: number, raw: string) => void;
