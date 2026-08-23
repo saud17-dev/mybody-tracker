@@ -114,6 +114,11 @@ export function WorkoutExerciseCard({
 
         {ex.sets.map((s, i) => {
           const isDone = !!doneSets[`${ex.id}:${i}`];
+          const isPrefilled = !isDone && !!prefilledSets?.[`${ex.id}:${i}`];
+          const inputCls = cn(
+            "h-9 border-0 bg-muted/40 text-center font-semibold",
+            isPrefilled && "text-muted-foreground",
+          );
           return (
             <div key={i}
               className={cn(
@@ -131,7 +136,7 @@ export function WorkoutExerciseCard({
                 if (f.key === "reps") return (
                   <Input key="reps" type="number" inputMode="numeric" value={s.reps || ""}
                     onChange={(e) => onUpdateSet(ex.id, i, { reps: Number(e.target.value) || 0 })}
-                    className="h-9 border-0 bg-muted/40 text-center font-semibold" />
+                    className={inputCls} />
                 );
                 if (f.key === "weight") return (
                   <div key="weight" className="relative">
@@ -144,7 +149,7 @@ export function WorkoutExerciseCard({
                         }
                       }}
                       placeholder="0"
-                      className="h-9 border-0 bg-muted/40 pr-7 text-center font-semibold" />
+                      className={cn(inputCls, "pr-7")} />
                     <button type="button" onClick={() => onPlateCalc(ex.id, i, s.weight)}
                       aria-label="Plate calculator"
                       className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-gym">
@@ -155,14 +160,15 @@ export function WorkoutExerciseCard({
                 if (f.key === "duration") return (
                   <Input key="duration" type="number" inputMode="numeric" value={s.durationSec || ""}
                     onChange={(e) => onUpdateSet(ex.id, i, { durationSec: Number(e.target.value) || 0 })}
-                    placeholder="0" className="h-9 border-0 bg-muted/40 text-center font-semibold" />
+                    placeholder="0" className={inputCls} />
                 );
                 return (
                   <Input key="distance" type="number" inputMode="decimal" step="0.01" value={s.distanceKm ?? ""}
                     onChange={(e) => onUpdateSet(ex.id, i, { distanceKm: Number(e.target.value) || 0 })}
-                    placeholder="0" className="h-9 border-0 bg-muted/40 text-center font-semibold" />
+                    placeholder="0" className={inputCls} />
                 );
               })}
+
               <button type="button" onClick={() => onToggleDone(ex.id, i)}
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-md transition-all active:scale-90",
