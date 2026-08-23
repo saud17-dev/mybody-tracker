@@ -278,8 +278,10 @@ export type Database = {
       meal_logs: {
         Row: {
           calories: number | null
+          carbs_g: number | null
           created_at: string
           date: string
+          fat_g: number | null
           id: string
           meal_name: string
           meal_type: string
@@ -288,8 +290,10 @@ export type Database = {
         }
         Insert: {
           calories?: number | null
+          carbs_g?: number | null
           created_at?: string
           date?: string
+          fat_g?: number | null
           id?: string
           meal_name: string
           meal_type?: string
@@ -298,8 +302,10 @@ export type Database = {
         }
         Update: {
           calories?: number | null
+          carbs_g?: number | null
           created_at?: string
           date?: string
+          fat_g?: number | null
           id?: string
           meal_name?: string
           meal_type?: string
@@ -311,7 +317,9 @@ export type Database = {
       meal_presets: {
         Row: {
           calories: number | null
+          carbs_g: number | null
           created_at: string
+          fat_g: number | null
           id: string
           meal_type: string
           name: string
@@ -320,7 +328,9 @@ export type Database = {
         }
         Insert: {
           calories?: number | null
+          carbs_g?: number | null
           created_at?: string
+          fat_g?: number | null
           id?: string
           meal_type?: string
           name: string
@@ -329,7 +339,9 @@ export type Database = {
         }
         Update: {
           calories?: number | null
+          carbs_g?: number | null
           created_at?: string
+          fat_g?: number | null
           id?: string
           meal_type?: string
           name?: string
@@ -341,18 +353,24 @@ export type Database = {
       nutrition_goals: {
         Row: {
           daily_calories: number | null
+          daily_carbs_g: number | null
+          daily_fat_g: number | null
           daily_protein_g: number
           updated_at: string
           user_id: string
         }
         Insert: {
           daily_calories?: number | null
+          daily_carbs_g?: number | null
+          daily_fat_g?: number | null
           daily_protein_g?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           daily_calories?: number | null
+          daily_carbs_g?: number | null
+          daily_fat_g?: number | null
           daily_protein_g?: number
           updated_at?: string
           user_id?: string
