@@ -57,6 +57,30 @@ export default function PT() {
   const [sessionDate, setSessionDate] = useState<string>(todayInputDate());
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // last logged sets per PT exercise name (carried into the next session)
+  const previousPTByExercise = useMemo(() => {
+    const m = new Map<string, PTSet[]>();
+    const ordered = [...sessions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+    for (const s of ordered) {
+      if (editingId && s.id === editingId) continue;
+      for (const e of s.exercises) {
+        const key = e.exerciseName.toLowerCase();
+        if (!m.has(key)) m.set(key, e.sets);
+      }
+    }
+    return m;
+  }, [sessions, editingId]);
+
+  const prevPTSets = (name: string, count?: number): PTSet[] | null => {
+    const prev = previousPTByExercise.get(name.toLowerCase());
+    if (!prev || prev.length === 0) return null;
+    const src = count ? Array.from({ length: count }, (_, i) => prev[i] ?? prev[prev.length - 1]) : prev;
+    return src.map((s) => ({ reps: s.reps, weight: s.weight, painScale: 2 }));
+  };
+
+
   // Load draft once
   const draftLoadedRef = useRef(false);
   useEffect(() => {
