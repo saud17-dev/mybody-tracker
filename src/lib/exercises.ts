@@ -2,7 +2,48 @@ export interface ExerciseDef {
   name: string;
   group: string;
   bodyArea?: string; // for PT filter: Knee, Hip, Shoulder, Spine, Ankle, Core, Other
+  equipment?: string;
+  primaryMuscle?: string;
 }
+
+/** Recommended equipment for a PT/rehab exercise, inferred from its name. */
+export function getPtEquipment(name: string, group?: string): string {
+  const n = name.toLowerCase();
+  if (n.includes("band")) return "Bands";
+  if (n.includes("foam roll")) return "Foam Roller";
+  if (n.includes("lacrosse ball")) return "Lacrosse Ball";
+  if (n.includes("bosu")) return "BOSU";
+  if (n.includes("exercise ball") || n.includes("swiss ball")) return "Exercise Ball";
+  if (n.includes("towel")) return "Towel";
+  if (n.includes("wall") || n.includes("doorway")) return "Wall";
+  if (n.includes("step-up") || n.includes("step up") || n.includes("box")) return "Box / Step";
+  if (n.includes("farmer carry") || n.includes("dumbbell")) return "Dumbbell";
+  if (group === "Fascia") return "Foam Roller";
+  return "Body Weight";
+}
+
+/** Primary muscle worked by a PT/rehab exercise, inferred from its body area. */
+export function getPtMuscle(e: ExerciseDef): string {
+  if (e.primaryMuscle) return e.primaryMuscle;
+  switch (e.bodyArea) {
+    case "Knee": return "Quads / Knee";
+    case "Hip": return "Glutes / Hip";
+    case "Shoulder": return "Shoulder / Rotator Cuff";
+    case "Spine": return "Spine / Lower Back";
+    case "Ankle": return "Calves / Ankle";
+    case "Core": return "Core";
+    default: return e.group;
+  }
+}
+
+/** Resolve muscle + equipment tags for any static exercise definition. */
+export function getExerciseTags(module: "gym" | "pt", e: ExerciseDef) {
+  if (module === "pt") {
+    return { muscle: getPtMuscle(e), equipment: e.equipment ?? getPtEquipment(e.name, e.group) };
+  }
+  return { muscle: e.primaryMuscle ?? e.group, equipment: e.equipment ?? null };
+}
+
 
 export const GYM_EXERCISES: ExerciseDef[] = [
   // Chest
