@@ -283,6 +283,7 @@ export default function Gym() {
     setExercises((p) => p.map((e) => e.id === exId ? { ...e, sets: e.sets.filter((_, ix) => ix !== i) } : e));
     setDoneSets((d) => { const n = { ...d }; delete n[`${exId}:${i}`]; return n; });
     setWeightDrafts((d) => { const n = { ...d }; delete n[`${exId}:${i}`]; return n; });
+    setPrefilledSets((d) => { const n = { ...d }; delete n[`${exId}:${i}`]; return n; });
   };
 
   const removeExercise = (id: string) => setExercises((p) => p.filter((e) => e.id !== id));
@@ -292,6 +293,10 @@ export default function Gym() {
 
   const toggleSetDone = (exId: string, idx: number) => {
     const key = `${exId}:${idx}`;
+    setPrefilledSets((m) => {
+      if (!m[key]) return m;
+      const n = { ...m }; delete n[key]; return n;
+    });
     setDoneSets((d) => {
       const next = { ...d, [key]: !d[key] };
       if (next[key]) {
@@ -304,7 +309,7 @@ export default function Gym() {
 
 
   const reset = () => {
-    setExercises([]); setNotes(""); setDoneSets({});
+    setExercises([]); setNotes(""); setDoneSets({}); setPrefilledSets({});
     setWeightDrafts({}); setRestRunning(false); setEditingId(null);
     setStartedAt(null); setEndedAt(null); setSessionDate(todayInputDate());
   };
@@ -314,7 +319,9 @@ export default function Gym() {
     setExercises(s.exercises.map((e) => ({ ...e, sets: e.sets.map((st) => ({ ...st })) })));
     setNotes(s.notes ?? "");
     setDoneSets({});
+    setPrefilledSets({});
     setWeightDrafts({});
+
     setStartedAt(s.startedAt ?? null);
     setEndedAt(s.endedAt ?? null);
     setSessionDate(isoToInputDate(s.date));
