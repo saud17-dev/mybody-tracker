@@ -1,7 +1,11 @@
 import { useState, useMemo } from "react";
 import { format, parseISO, startOfWeek, isWithinInterval, endOfWeek } from "date-fns";
-import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap, BookOpen } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap, BookOpen, Pencil, LineChart } from "lucide-react";
 import { MealLibrarySheet } from "@/components/MealLibrarySheet";
+import { MealEditSheet } from "@/components/MealEditSheet";
+import { MacroTrendCharts } from "@/components/MacroTrendCharts";
+import { macrosFor } from "@/lib/mealLibrary";
+import type { MealLog } from "@/lib/nutrition";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +35,7 @@ const MEAL_ICONS: Record<MealType, string> = {
 
 export default function NutritionPage() {
   const today = new Date().toISOString().slice(0, 10);
-  const { logs, loading, create: createLog, remove: removeLog } = useMealLogs();
+  const { logs, loading, create: createLog, update: updateLog, remove: removeLog } = useMealLogs();
   const { presets, addPreset, removePreset } = useMealPresets();
   const { goal, save: saveGoal } = useNutritionGoal();
 
@@ -40,12 +44,15 @@ export default function NutritionPage() {
   const [presetOpen, setPresetOpen] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [editing, setEditing] = useState<MealLog | null>(null);
 
   // Log form state
   const [mealName, setMealName] = useState("");
   const [mealType, setMealType] = useState<MealType>("Lunch");
   const [protein, setProtein] = useState<number | "">("");
   const [calories, setCalories] = useState<number | "">("");
+  const [carbs, setCarbs] = useState<number | "">("");
+  const [fat, setFat] = useState<number | "">("");
 
   // Preset form state
   const [presetName, setPresetName] = useState("");
@@ -96,10 +103,13 @@ export default function NutritionPage() {
     name: string,
     type: MealType,
     prot: number | "",
-    cal: number | ""
+    cal: number | "",
+    carb?: number | "",
+    fatG?: number | ""
   ) => {
     if (!name.trim()) return toast.error("Enter a meal name");
     if (prot === "" || prot <= 0) return toast.error("Enter protein grams");
+    const est = macrosFor({ proteinG: Number(prot), calories: cal === "" ? 0 : Number(cal) });
     try {
       await createLog({
         date: today,
@@ -107,6 +117,8 @@ export default function NutritionPage() {
         mealType: type,
         proteinG: Number(prot),
         calories: cal === "" ? undefined : Number(cal),
+        carbsG: carb === "" || carb == null ? est.carbsG : Number(carb),
+        fatG: fatG === "" || fatG == null ? est.fatG : Number(fatG),
       });
       toast.success("Meal logged");
     } catch (e: any) {
@@ -115,13 +127,13 @@ export default function NutritionPage() {
   };
 
   const handleLogSubmit = async () => {
-    await logMeal(mealName, mealType, protein, calories);
-    setMealName(""); setProtein(""); setCalories("");
+    await logMeal(mealName, mealType, protein, calories, carbs, fat);
+    setMealName(""); setProtein(""); setCalories(""); setCarbs(""); setFat("");
     setLogOpen(false);
   };
 
   const handlePresetTap = async (p: typeof presets[0]) => {
-    await logMeal(p.name, p.mealType as MealType, p.proteinG, p.calories ?? "");
+    await logMeal(p.name, p.mealType as MealType, p.proteinG, p.calories ?? "", p.carbsG ?? "", p.fatG ?? "");
     toast.success(`${p.name} logged`);
   };
 
@@ -354,6 +366,16 @@ export default function NutritionPage() {
                   <Input type="number" inputMode="decimal" step="1" value={calories}
                     onChange={(e) => setCalories(e.target.value === "" ? "" : Number(e.target.value))} />
                 </div>
+                <div className="space-y-1">
+                  <Label>Carbs (g, optional)</Label>
+                  <Input type="number" inputMode="decimal" step="0.1" value={carbs}
+                    onChange={(e) => setCarbs(e.target.value === "" ? "" : Number(e.target.value))} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Fat (g, optional)</Label>
+                  <Input type="number" inputMode="decimal" step="0.1" value={fat}
+                    onChange={(e) => setFat(e.target.value === "" ? "" : Number(e.target.value))} />
+                </div>
               </div>
               <Button onClick={handleLogSubmit} className="w-full" size="lg">Save</Button>
             </div>
@@ -373,16 +395,25 @@ export default function NutritionPage() {
                 </p>
                 {entries.map((log) => (
                   <Card key={log.id} className="mb-1.5 flex items-center justify-between px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium">{log.mealName}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{log.mealName}</p>
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold text-primary">{log.proteinG}g</span> protein
+                        <span className="font-semibold text-primary">{log.proteinG}g</span> P
+                        {log.carbsG != null ? ` · ${log.carbsG}g C` : ""}
+                        {log.fatG != null ? ` · ${log.fatG}g F` : ""}
                         {log.calories ? ` · ${log.calories} kcal` : ""}
                       </p>
                     </div>
-                    <button onClick={() => removeLog(log.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button onClick={() => setEditing(log)} aria-label="Edit meal"
+                        className="rounded-full p-2 text-muted-foreground hover:text-primary">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => removeLog(log.id)} aria-label="Delete meal"
+                        className="rounded-full p-2 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </Card>
                 ))}
               </div>
@@ -417,6 +448,14 @@ export default function NutritionPage() {
         </Card>
       </section>
 
+      {/* ── Weekly macro trends */}
+      <section className="mt-7">
+        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <LineChart className="h-3.5 w-3.5" /> Weekly macro trends
+        </h2>
+        <MacroTrendCharts logs={logs} goal={goal} />
+      </section>
+
       {/* ── History */}
       {logs.length > 0 && (
         <section className="mt-7">
@@ -435,19 +474,39 @@ export default function NutritionPage() {
                 const dayCalories = dayLogs.reduce((s, l) => s + (l.calories ?? 0), 0);
                 const hitTarget = dayProtein >= goal.dailyProteinG;
                 return (
-                  <Card key={date} className="flex items-center justify-between px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium">{format(parseISO(date), "EEE, MMM d")}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {dayLogs.length} meal{dayLogs.length !== 1 ? "s" : ""}
-                        {dayCalories > 0 ? ` · ${dayCalories} kcal` : ""}
-                      </p>
+                  <Card key={date} className="px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{format(parseISO(date), "EEE, MMM d")}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {dayLogs.length} meal{dayLogs.length !== 1 ? "s" : ""}
+                          {dayCalories > 0 ? ` · ${dayCalories} kcal` : ""}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={cn("text-sm font-bold tabular-nums", hitTarget ? "text-primary" : "text-foreground")}>
+                          {Math.round(dayProtein)}g
+                        </p>
+                        {hitTarget && <p className="text-[10px] text-primary">✓ goal</p>}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className={cn("text-sm font-bold tabular-nums", hitTarget ? "text-primary" : "text-foreground")}>
-                        {Math.round(dayProtein)}g
-                      </p>
-                      {hitTarget && <p className="text-[10px] text-primary">✓ goal</p>}
+                    <div className="mt-2 space-y-1 border-t pt-2">
+                      {dayLogs.map((log) => (
+                        <div key={log.id} className="flex items-center justify-between gap-2">
+                          <p className="min-w-0 flex-1 truncate text-xs">
+                            {log.mealName}
+                            <span className="text-muted-foreground"> · {log.proteinG}g P</span>
+                          </p>
+                          <button onClick={() => setEditing(log)} aria-label="Edit meal"
+                            className="rounded-full p-1.5 text-muted-foreground hover:text-primary">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => removeLog(log.id)} aria-label="Delete meal"
+                            className="rounded-full p-1.5 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </Card>
                 );
@@ -457,11 +516,19 @@ export default function NutritionPage() {
         </section>
       )}
 
+      {/* ── Edit logged meal */}
+      <MealEditSheet
+        log={editing}
+        open={!!editing}
+        onOpenChange={(o) => { if (!o) setEditing(null); }}
+        onSave={(m) => updateLog(m)}
+      />
+
       {/* ── Meal library sheet */}
       <MealLibrarySheet
         open={libraryOpen}
         onOpenChange={setLibraryOpen}
-        onPick={(m) => logMeal(m.name, m.mealType, m.proteinG, m.calories)}
+        onPick={(m) => logMeal(m.name, m.mealType, m.proteinG, m.calories, m.carbsG ?? "", m.fatG ?? "")}
       />
 
       {/* ── Goal editor sheet */}
