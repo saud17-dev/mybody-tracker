@@ -2,12 +2,14 @@
 // Values are rounded estimates suitable for daily tracking.
 
 export type LibraryCategory =
+  | "Saudi"
   | "Protein"
   | "Carbs"
   | "Meals"
   | "Breakfast"
   | "Snacks"
   | "Restaurant";
+
 
 export interface LibraryMeal {
   id: string;
@@ -157,7 +159,9 @@ export const MEAL_LIBRARY: LibraryMeal[] = [
 
 export const LIBRARY_CATEGORIES: { id: LibraryCategory | "All"; label: string }[] = [
   { id: "All", label: "All" },
+  { id: "Saudi", label: "🇸🇦 Saudi" },
   { id: "Protein", label: "Protein" },
+
   { id: "Carbs", label: "Carbs" },
   { id: "Meals", label: "Meals" },
   { id: "Breakfast", label: "Breakfast" },
