@@ -22,8 +22,6 @@ interface Props {
   onSelect: (e: CatalogExercise) => void;
 }
 
-const initials = (name: string) =>
-  name.replace(/\(.*?\)/g, "").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
 export function AddExerciseSheet({ open, onOpenChange, onSelect }: Props) {
   const { exercises, isLoading } = useExerciseCatalog();
