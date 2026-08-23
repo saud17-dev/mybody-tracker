@@ -236,8 +236,6 @@ function ExerciseRow({ ex, onPick, onInfo }: { ex: CatalogExercise; onPick: () =
             {ex.muscleGroup}{ex.equipment ? ` · ${ex.equipment}` : ""}
           </span>
         </span>
-
-        </span>
       </button>
       <button type="button" onClick={onInfo} aria-label={`About ${ex.name}`}
         className="rounded-full p-2 text-muted-foreground/60 hover:text-gym">
