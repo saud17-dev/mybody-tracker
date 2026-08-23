@@ -109,8 +109,8 @@ export function useWeeklyCounts(
 ) {
   return useMemo(() => {
     const now = new Date();
-    const start = startOfWeek(now, { weekStartsOn: 1 });
-    const end = endOfWeek(now, { weekStartsOn: 1 });
+    const start = startOfWeek(now, { weekStartsOn: 0 });
+    const end = endOfWeek(now, { weekStartsOn: 0 });
     const inWeek = (d: string) => {
       try { return isWithinInterval(parseISO(d), { start, end }); } catch { return false; }
     };
@@ -126,8 +126,8 @@ export function useWeeklyCounts(
 export function useWeeklyMuscleVolume(gym: GymSession[]) {
   return useMemo(() => {
     const now = new Date();
-    const start = startOfWeek(now, { weekStartsOn: 1 });
-    const end = endOfWeek(now, { weekStartsOn: 1 });
+    const start = startOfWeek(now, { weekStartsOn: 0 });
+    const end = endOfWeek(now, { weekStartsOn: 0 });
     const map = new Map<string, { sets: number; volume: number }>();
     for (const s of gym) {
       try {
@@ -150,10 +150,10 @@ export function useWeeklyMuscleVolume(gym: GymSession[]) {
 export function useTwoWeekMuscleVolume(gym: GymSession[]) {
   return useMemo(() => {
     const now = new Date();
-    const thisStart = startOfWeek(now, { weekStartsOn: 1 });
-    const thisEnd = endOfWeek(now, { weekStartsOn: 1 });
-    const lastStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
-    const lastEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+    const thisStart = startOfWeek(now, { weekStartsOn: 0 });
+    const thisEnd = endOfWeek(now, { weekStartsOn: 0 });
+    const lastStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 0 });
+    const lastEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 0 });
     const map = new Map<string, { thisWeek: number; lastWeek: number; thisSets: number; lastSets: number }>();
     for (const s of gym) {
       let bucket: "this" | "last" | null = null;
@@ -191,8 +191,8 @@ export function useLastWeekSessions(
 ) {
   return useMemo(() => {
     const now = new Date();
-    const start = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
-    const end = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+    const start = startOfWeek(subWeeks(now, 1), { weekStartsOn: 0 });
+    const end = endOfWeek(subWeeks(now, 1), { weekStartsOn: 0 });
     const inRange = (d: string) => {
       try { return isWithinInterval(parseISO(d), { start, end }); } catch { return false; }
     };
@@ -408,8 +408,8 @@ export interface WellnessCount {
 export function useWellnessCounts(cardio: CardioSession[]) {
   return useMemo(() => {
     const now = new Date();
-    const wStart = startOfWeek(now, { weekStartsOn: 1 });
-    const wEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const wStart = startOfWeek(now, { weekStartsOn: 0 });
+    const wEnd = endOfWeek(now, { weekStartsOn: 0 });
     const mStart = startOfMonth(now);
     const mEnd = endOfMonth(now);
 

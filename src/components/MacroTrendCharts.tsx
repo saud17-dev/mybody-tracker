@@ -32,13 +32,13 @@ function macrosOf(l: MealLog) {
 /** Weekly average-per-day macro trends (protein, carbs, fat, calories). */
 export function MacroTrendCharts({ logs, goal, weeks = 8, className }: Props) {
   const data = useMemo<WeekPoint[]>(() => {
-    const firstWeek = startOfWeek(addWeeks(new Date(), -(weeks - 1)), { weekStartsOn: 6 });
+    const firstWeek = startOfWeek(addWeeks(new Date(), -(weeks - 1)), { weekStartsOn: 0 });
     const buckets: WeekPoint[] = [];
     for (let i = 0; i < weeks; i++) {
       const start = addWeeks(firstWeek, i);
       const inWeek = logs.filter((l) => {
         const d = new Date(`${l.date}T00:00:00`);
-        return isSameWeek(d, start, { weekStartsOn: 6 });
+        return isSameWeek(d, start, { weekStartsOn: 0 });
       });
       const dayCount = new Set(inWeek.map((l) => l.date)).size || 1;
       const sum = inWeek.reduce(

@@ -5,16 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
 import { toast } from "sonner";
 
-// ISO week start = Monday at 00:00 in local TZ, formatted YYYY-MM-DD.
+// Week start = Sunday at 00:00 in local TZ, formatted YYYY-MM-DD.
 export function currentWeekStart(d = new Date()): string {
   const day = d.getDay(); // 0 Sun..6 Sat
-  const diffToMon = (day + 6) % 7; // Mon=>0, Tue=>1, ..., Sun=>6
-  const monday = new Date(d);
-  monday.setHours(0, 0, 0, 0);
-  monday.setDate(monday.getDate() - diffToMon);
-  const yyyy = monday.getFullYear();
-  const mm = String(monday.getMonth() + 1).padStart(2, "0");
-  const dd = String(monday.getDate()).padStart(2, "0");
+  const sunday = new Date(d);
+  sunday.setHours(0, 0, 0, 0);
+  sunday.setDate(sunday.getDate() - day);
+  const yyyy = sunday.getFullYear();
+  const mm = String(sunday.getMonth() + 1).padStart(2, "0");
+  const dd = String(sunday.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
