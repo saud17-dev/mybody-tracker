@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { MEAL_LIBRARY, LIBRARY_CATEGORIES, type LibraryMeal, type LibraryCategory } from "@/lib/mealLibrary";
+import { macrosFor } from "@/lib/mealLibrary";
 
 interface Props {
   open: boolean;
@@ -25,10 +26,13 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Scale a library meal by a portion factor (e.g. half a chicken wrap). */
 export function scaleMeal(meal: LibraryMeal, portion: number): LibraryMeal {
-  if (portion === 1) return meal;
+  if (portion === 1) return { ...meal, ...macrosFor(meal) };
   const label = PORTIONS.find((p) => p.value === portion)?.label ?? String(portion);
+  const { carbsG, fatG } = macrosFor(meal);
   return {
     ...meal,
+    carbsG: round1(carbsG * portion),
+    fatG: round1(fatG * portion),
     name: `${meal.name} × ${label}`,
     serving: `${label} × ${meal.serving}`,
     proteinG: round1(meal.proteinG * portion),
