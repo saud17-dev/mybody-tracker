@@ -34,7 +34,7 @@ interface Props {
 }
 
 export function WorkoutExerciseCard({
-  ex, unit, defaultRest, doneSets, previousLabel, displayWeight, setWeightDraft,
+  ex, unit, defaultRest, doneSets, prefilledSets, previousLabel, displayWeight, setWeightDraft,
   onUpdateSet, onToggleDone, onAddSet, onRemoveSet, onRemoveExercise, onPatchExercise, onPlateCalc,
 }: Props) {
   const [editRest, setEditRest] = useState(false);
