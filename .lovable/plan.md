@@ -1,31 +1,29 @@
-# Show muscle + recommended equipment everywhere, from one shared source
+# Carry last session's weights, reps and sets into the next workout
 
-Today the Gym picker on `/gym` reads the `exercises` catalog in the database (178 rows, every row has a muscle group and equipment), while the Exercise Library page and the PT picker read a separate hardcoded list in `src/lib/exercises.ts` that only has a name and a group — no equipment. That is why the library and the lists don't match.
+Today the Gym log only *shows* your last performance in the small grey "PREVIOUS" column, but every new exercise starts at 0 kg / 8 reps with a single set. This change pre-fills the new session with exactly what you did last time.
 
 ## What changes
 
-### 1. One source of truth for Gym
-The Exercise Library's Gym tab switches to the same database catalog the `/gym` picker uses. Same 178 exercises, same names, same muscle group, same equipment — library and list can no longer drift.
+### Adding an exercise
+When you pick an exercise from the Add Exercise sheet:
+- If you have logged it before, the card is created with the **same number of sets** and each set pre-filled with the **weight and reps (or time/distance)** from that last session.
+- Pre-filled sets are not marked done — they are editable starting points you tick off as you go.
+- Never logged before: unchanged behaviour (one empty set).
 
-### 2. Equipment shown everywhere
-Every exercise row (library, Gym picker, PT picker, and the logged-exercise cards in an active workout) shows two tags:
-- muscle group (e.g. Chest, Upper Legs)
-- recommended equipment (Barbell, Dumbbell, Kettlebell, Body Weight, Strength Machine, Bands, ...)
+### Adding a set inside an exercise
+"+ Add Set" already copies the last row; if the row being added matches an existing set index from last time, use last time's values for that index instead.
 
-The detail drawer additionally lists secondary muscles worked and instructions where the catalog has them.
+### Loading a template
+Templates keep their prescribed set count, but each set's weight/reps are seeded from your last logged performance for that exercise instead of 0.
 
-### 3. PT exercises get equipment too
-PT exercises stay in the code list (they're not in the catalog), but each one gains a `primaryMuscle` and an `equipment` value so PT rows show the same two tags in the same style. Values used: Body Weight, Bands, Foam Roller, Lacrosse Ball, Wall, Box/Step, Dumbbell, BOSU — assigned per exercise (e.g. Band Pull-Apart -> Bands, Foam Roll - Quad -> Foam Roller, Dead Bug -> Body Weight).
+### Visual clarity
+Pre-filled values render slightly muted until you edit or tick the set, so it's obvious they are suggestions from last time, not logged data.
 
-### 4. Filters match
-The library's Gym tab gets the same two filter chips as the Gym picker (muscle and equipment) so filtering behaves identically in both places. PT keeps its body-area chips and gains an equipment chip.
+### PT page
+Same carry-over applies to PT exercises (reps/weight from last PT session for that exercise); pain scale is not carried over.
 
 ## Technical notes
-
-- `ExerciseDef` in `src/lib/exercises.ts` gains optional `equipment` and `primaryMuscle`; PT entries are filled in.
-- New shared row component (`ExerciseRow`) rendering name + muscle badge + equipment badge, used by `ExerciseLibrary.tsx`, `ExercisePicker.tsx`, and `AddExerciseSheet.tsx` so all three look identical.
-- `ExerciseLibrary.tsx` Gym tab uses `useExerciseCatalog()` from `src/lib/exerciseDb.ts`; custom exercises created from `/gym` (stored in the catalog as `is_custom`) now appear in the library automatically.
-- `ExerciseDetailDrawer.tsx` accepts the catalog shape (equipment, secondary muscles, instructions) in addition to the existing static shape.
-- `WorkoutExerciseCard` shows the equipment tag next to the muscle group using the `equipment` already stored on each logged entry.
-- Favorites keep working — they are keyed by exercise name, which is unchanged.
+- Reuse the existing `previousByExercise` map in `src/pages/Gym.tsx` (already excludes the session being edited); extend it to also return set count.
+- Seed in `addExercise`, in the template loader, and in `addSet`.
+- Editing a past workout is unaffected — it loads the saved session as-is.
 - No database or schema changes.
