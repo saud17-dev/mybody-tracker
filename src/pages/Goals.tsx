@@ -30,6 +30,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MetricsImportWizard } from "@/components/MetricsImportWizard";
 import { MonthlyActivityCalendar } from "@/components/MonthlyActivityCalendar";
+import { MacroTrendCharts } from "@/components/MacroTrendCharts";
+import { useMealLogs, useNutritionGoal } from "@/lib/nutrition";
 import { todayInputDate, dateWithCurrentTime } from "@/lib/duration";
 
 const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -77,6 +79,9 @@ export default function GoalsPage() {
   const { metrics, create: createMetric, remove: removeMetric } = useBodyMetrics();
   const { goals, save: saveGoals } = useGoals();
   const { profile } = useProfile();
+  const { logs: mealLogs } = useMealLogs();
+  const { goal: nutritionGoal } = useNutritionGoal();
+
   const unit = profile?.unit ?? "kg";
 
   const weekly = useWeeklyCounts(gym, pt, cardio);
@@ -221,6 +226,14 @@ export default function GoalsPage() {
             label="Heat therapy" icon={<Flame className="h-4 w-4" />}
             tint="heat" stats={wellness.heat} />
         </div>
+      </section>
+
+      {/* Weekly macro trends */}
+      <section className="mt-7">
+        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Weekly macro trends
+        </h2>
+        <MacroTrendCharts logs={mealLogs} goal={nutritionGoal} />
       </section>
 
       {/* Monthly activity calendar */}

@@ -20,7 +20,24 @@ export interface LibraryMeal {
   mealType: "Breakfast" | "Lunch" | "Dinner" | "Snack" | "Shake";
   category: LibraryCategory;
   emoji: string;
+  /** Carbohydrates in grams. Estimated from calories when not set. */
+  carbsG?: number;
+  /** Fat in grams. Estimated from calories when not set. */
+  fatG?: number;
   approximate?: boolean;
+}
+
+/**
+ * Carbs/fat for a library meal. When a meal only has protein + calories we
+ * split the remaining energy 55% carbs / 45% fat — a rough but useful estimate
+ * that keeps the macro charts populated. Values are always editable after logging.
+ */
+export function macrosFor(meal: { proteinG: number; calories: number; carbsG?: number; fatG?: number }) {
+  const remaining = Math.max(0, meal.calories - meal.proteinG * 4);
+  return {
+    carbsG: meal.carbsG ?? Math.round((remaining * 0.55) / 4),
+    fatG: meal.fatG ?? Math.round((remaining * 0.45) / 9),
+  };
 }
 
 export const MEAL_LIBRARY: LibraryMeal[] = [

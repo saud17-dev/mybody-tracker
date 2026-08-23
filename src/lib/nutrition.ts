@@ -15,6 +15,8 @@ export interface MealLog {
   mealType: string;       // Breakfast | Lunch | Dinner | Snack | Shake
   proteinG: number;
   calories?: number;
+  carbsG?: number;
+  fatG?: number;
 }
 
 export interface MealPreset {
@@ -23,11 +25,15 @@ export interface MealPreset {
   mealType: string;
   proteinG: number;
   calories?: number;
+  carbsG?: number;
+  fatG?: number;
 }
 
 export interface NutritionGoal {
   dailyProteinG: number;
   dailyCalories?: number;
+  dailyCarbsG?: number;
+  dailyFatG?: number;
 }
 
 // ── Error helper ──────────────────────────────────────────────────────────
@@ -51,6 +57,8 @@ function rowToLog(r: any): MealLog {
     mealType: r.meal_type,
     proteinG: Number(r.protein_g),
     calories: r.calories == null ? undefined : Number(r.calories),
+    carbsG: r.carbs_g == null ? undefined : Number(r.carbs_g),
+    fatG: r.fat_g == null ? undefined : Number(r.fat_g),
   };
 }
 
@@ -82,7 +90,29 @@ export function useMealLogs() {
         meal_type: m.mealType,
         protein_g: m.proteinG,
         calories: m.calories ?? null,
+        carbs_g: m.carbsG ?? null,
+        fat_g: m.fatG ?? null,
       });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["meal_logs", user?.id] }),
+    onError: onSaveError,
+  });
+
+  const update = useMutation({
+    mutationFn: async (m: MealLog) => {
+      const { error } = await supabase
+        .from("meal_logs")
+        .update({
+          date: m.date,
+          meal_name: m.mealName,
+          meal_type: m.mealType,
+          protein_g: m.proteinG,
+          calories: m.calories ?? null,
+          carbs_g: m.carbsG ?? null,
+          fat_g: m.fatG ?? null,
+        })
+        .eq("id", m.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["meal_logs", user?.id] }),
@@ -102,6 +132,7 @@ export function useMealLogs() {
     logs: q.data ?? [],
     loading: q.isLoading,
     create: create.mutateAsync,
+    update: update.mutateAsync,
     remove: remove.mutateAsync,
   };
 }
@@ -115,6 +146,8 @@ function rowToPreset(r: any): MealPreset {
     mealType: r.meal_type,
     proteinG: Number(r.protein_g),
     calories: r.calories == null ? undefined : Number(r.calories),
+    carbsG: r.carbs_g == null ? undefined : Number(r.carbs_g),
+    fatG: r.fat_g == null ? undefined : Number(r.fat_g),
   };
 }
 
@@ -144,6 +177,8 @@ export function useMealPresets() {
         meal_type: p.mealType,
         protein_g: p.proteinG,
         calories: p.calories ?? null,
+        carbs_g: p.carbsG ?? null,
+        fat_g: p.fatG ?? null,
       });
       if (error) throw error;
     },
@@ -186,6 +221,8 @@ export function useNutritionGoal() {
       return {
         dailyProteinG: data?.daily_protein_g ?? 160,
         dailyCalories: data?.daily_calories ?? undefined,
+        dailyCarbsG: (data as any)?.daily_carbs_g ?? undefined,
+        dailyFatG: (data as any)?.daily_fat_g ?? undefined,
       };
     },
   });
@@ -196,6 +233,8 @@ export function useNutritionGoal() {
         user_id: user!.id,
         daily_protein_g: g.dailyProteinG,
         daily_calories: g.dailyCalories ?? null,
+        daily_carbs_g: g.dailyCarbsG ?? null,
+        daily_fat_g: g.dailyFatG ?? null,
         updated_at: new Date().toISOString(),
       });
       if (error) throw error;
