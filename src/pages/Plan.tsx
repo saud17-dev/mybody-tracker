@@ -29,6 +29,7 @@ import { SUMMER_PLAN_TEMPLATES } from "@/lib/seedPlan";
 import { parsePlanCsv, type ParsedPlan } from "@/lib/csvPlan";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { TemplateLibrarySheet } from "@/components/TemplateLibrarySheet";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
