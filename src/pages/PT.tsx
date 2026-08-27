@@ -190,7 +190,7 @@ export default function PT() {
 
   const removeExercise = (exId: string) => setExercises((p) => p.filter((e) => e.id !== exId));
 
-  const reset = () => { setExercises([]); setOverallNotes(""); setPicker(null); setEditingId(null); setStartedAt(null); setSessionDate(todayInputDate()); };
+  const reset = () => { setExercises([]); setOverallNotes(""); setPicker(null); setEditingId(null); setStartedAt(null); setDoneSets({}); setSessionDate(todayInputDate()); };
 
   const openForEdit = (s: PTSession) => {
     setEditingId(s.id);
