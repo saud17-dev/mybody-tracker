@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, HeartPulse, X, Pencil, Library, ChevronDown, RotateCcw } from "lucide-react";
+import { Plus, Trash2, HeartPulse, Pencil, Library, ChevronDown, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { PTExerciseCard } from "@/components/PTExerciseCard";
@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
