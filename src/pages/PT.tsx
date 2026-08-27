@@ -353,8 +353,10 @@ export default function PT() {
                             {e.sets.map((st, i) => (
                               <div key={i} className="flex items-center gap-2 tabular-nums">
                                 <span className="w-5 text-right">{i + 1}.</span>
-                                <span className="font-semibold text-foreground">{st.reps}</span>
-                                <span>reps · pain</span>
+                                <span className="font-semibold text-foreground">
+                                  {st.weight ? `${st.weight}kg × ${st.reps}` : st.reps}
+                                </span>
+                                <span>{st.weight ? "· pain" : "reps · pain"}</span>
                                 <span className={cn("font-semibold", painColor(st.painScale))}>{st.painScale}</span>
                               </div>
                             ))}
