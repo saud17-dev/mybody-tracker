@@ -80,6 +80,22 @@ export default function PT() {
     return src.map((s) => ({ reps: s.reps, weight: s.weight, painScale: 2 }));
   };
 
+  const previousLabel = (name: string, idx: number) => {
+    const prev = previousPTByExercise.get(name.toLowerCase());
+    const s = prev?.[idx];
+    if (!s) return "—";
+    return s.weight ? `${s.weight}kg × ${s.reps}` : `${s.reps} reps`;
+  };
+
+  const [doneSets, setDoneSets] = useState<Record<string, boolean>>({});
+  const toggleDone = (exId: string, i: number) =>
+    setDoneSets((p) => ({ ...p, [`${exId}:${i}`]: !p[`${exId}:${i}`] }));
+
+  const setPainForExercise = (exId: string, pain: number) =>
+    setExercises((p) => p.map((e) =>
+      e.id === exId ? { ...e, sets: e.sets.map((s) => ({ ...s, painScale: pain })) } : e
+    ));
+
 
   // Load draft once
   const draftLoadedRef = useRef(false);
