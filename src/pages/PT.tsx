@@ -1,16 +1,15 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, HeartPulse, X, Pencil, Library, ChevronDown, RotateCcw } from "lucide-react";
+import { Plus, Trash2, HeartPulse, Pencil, Library, ChevronDown, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ExercisePicker } from "@/components/ExercisePicker";
-import { ExerciseCountdown } from "@/components/ExerciseCountdown";
+import { PTExerciseCard } from "@/components/PTExerciseCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -79,6 +78,22 @@ export default function PT() {
     const src = count ? Array.from({ length: count }, (_, i) => prev[i] ?? prev[prev.length - 1]) : prev;
     return src.map((s) => ({ reps: s.reps, weight: s.weight, painScale: 2 }));
   };
+
+  const previousLabel = (name: string, idx: number) => {
+    const prev = previousPTByExercise.get(name.toLowerCase());
+    const s = prev?.[idx];
+    if (!s) return "—";
+    return s.weight ? `${s.weight}kg × ${s.reps}` : `${s.reps} reps`;
+  };
+
+  const [doneSets, setDoneSets] = useState<Record<string, boolean>>({});
+  const toggleDone = (exId: string, i: number) =>
+    setDoneSets((p) => ({ ...p, [`${exId}:${i}`]: !p[`${exId}:${i}`] }));
+
+  const setPainForExercise = (exId: string, pain: number) =>
+    setExercises((p) => p.map((e) =>
+      e.id === exId ? { ...e, sets: e.sets.map((s) => ({ ...s, painScale: pain })) } : e
+    ));
 
 
   // Load draft once
@@ -174,7 +189,7 @@ export default function PT() {
 
   const removeExercise = (exId: string) => setExercises((p) => p.filter((e) => e.id !== exId));
 
-  const reset = () => { setExercises([]); setOverallNotes(""); setPicker(null); setEditingId(null); setStartedAt(null); setSessionDate(todayInputDate()); };
+  const reset = () => { setExercises([]); setOverallNotes(""); setPicker(null); setEditingId(null); setStartedAt(null); setDoneSets({}); setSessionDate(todayInputDate()); };
 
   const openForEdit = (s: PTSession) => {
     setEditingId(s.id);
@@ -338,8 +353,10 @@ export default function PT() {
                             {e.sets.map((st, i) => (
                               <div key={i} className="flex items-center gap-2 tabular-nums">
                                 <span className="w-5 text-right">{i + 1}.</span>
-                                <span className="font-semibold text-foreground">{st.reps}</span>
-                                <span>reps · pain</span>
+                                <span className="font-semibold text-foreground">
+                                  {st.weight ? `${st.weight}kg × ${st.reps}` : st.reps}
+                                </span>
+                                <span>{st.weight ? "· pain" : "reps · pain"}</span>
                                 <span className={cn("font-semibold", painColor(st.painScale))}>{st.painScale}</span>
                               </div>
                             ))}
@@ -419,50 +436,20 @@ export default function PT() {
             )}
 
             {exercises.map((ex) => (
-              <Card key={ex.id} className="overflow-hidden">
-                <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{ex.exerciseName}</p>
-                    <p className="text-xs text-muted-foreground">{ex.category}{ex.bodyArea ? ` · ${ex.bodyArea}` : ""}</p>
-                  </div>
-                  <ExerciseCountdown defaultSeconds={30} />
-                  <Button size="icon" variant="ghost" onClick={() => removeExercise(ex.id)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="space-y-3 p-3">
-                  <div className="grid grid-cols-[2rem_1fr_3fr_2rem] items-center gap-2 px-1 text-xs font-medium text-muted-foreground">
-                    <span>#</span><span>Reps/sec</span><span>Pain (1-10)</span><span />
-                  </div>
-                  {ex.sets.map((s, i) => (
-                    <div key={i} className="grid grid-cols-[2rem_1fr_3fr_2rem] items-center gap-2">
-                      <span className="text-sm font-semibold text-muted-foreground">{i + 1}</span>
-                      <Input type="number" inputMode="numeric" value={s.reps || ""}
-                        onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })} />
-                      <div className="flex items-center gap-2">
-                        <Slider min={1} max={10} step={1} value={[s.painScale]}
-                          onValueChange={([v]) => updateSet(ex.id, i, { painScale: v })}
-                          className="flex-1" />
-                        <span className={cn("w-6 text-right text-sm font-bold tabular-nums", painColor(s.painScale))}>
-                          {s.painScale}
-                        </span>
-                      </div>
-                      <Button size="icon" variant="ghost" className="h-8 w-8"
-                        onClick={() => removeSet(ex.id, i)} disabled={ex.sets.length === 1}>
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => addSet(ex.id)}>
-                    <Plus className="h-4 w-4" /> Add set
-                  </Button>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Notes</Label>
-                    <Textarea value={ex.notes || ""} onChange={(e) => updateNotes(ex.id, e.target.value)}
-                      placeholder="Form cues, sensations..." rows={2} />
-                  </div>
-                </div>
-              </Card>
+              <PTExerciseCard
+                key={ex.id}
+                ex={ex}
+                unit="kg"
+                doneSets={doneSets}
+                previousLabel={previousLabel}
+                onUpdateSet={updateSet}
+                onToggleDone={toggleDone}
+                onAddSet={addSet}
+                onRemoveSet={removeSet}
+                onRemoveExercise={removeExercise}
+                onNotes={updateNotes}
+                onPainAll={setPainForExercise}
+              />
             ))}
 
             <div className="space-y-2">
