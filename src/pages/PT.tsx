@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns";
 import { Plus, Trash2, HeartPulse, X, Pencil, Library, ChevronDown, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ExercisePicker } from "@/components/ExercisePicker";
-import { ExerciseCountdown } from "@/components/ExerciseCountdown";
+import { PTExerciseCard } from "@/components/PTExerciseCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
