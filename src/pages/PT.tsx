@@ -419,50 +419,20 @@ export default function PT() {
             )}
 
             {exercises.map((ex) => (
-              <Card key={ex.id} className="overflow-hidden">
-                <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{ex.exerciseName}</p>
-                    <p className="text-xs text-muted-foreground">{ex.category}{ex.bodyArea ? ` · ${ex.bodyArea}` : ""}</p>
-                  </div>
-                  <ExerciseCountdown defaultSeconds={30} />
-                  <Button size="icon" variant="ghost" onClick={() => removeExercise(ex.id)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="space-y-3 p-3">
-                  <div className="grid grid-cols-[2rem_1fr_3fr_2rem] items-center gap-2 px-1 text-xs font-medium text-muted-foreground">
-                    <span>#</span><span>Reps/sec</span><span>Pain (1-10)</span><span />
-                  </div>
-                  {ex.sets.map((s, i) => (
-                    <div key={i} className="grid grid-cols-[2rem_1fr_3fr_2rem] items-center gap-2">
-                      <span className="text-sm font-semibold text-muted-foreground">{i + 1}</span>
-                      <Input type="number" inputMode="numeric" value={s.reps || ""}
-                        onChange={(e) => updateSet(ex.id, i, { reps: Number(e.target.value) || 0 })} />
-                      <div className="flex items-center gap-2">
-                        <Slider min={1} max={10} step={1} value={[s.painScale]}
-                          onValueChange={([v]) => updateSet(ex.id, i, { painScale: v })}
-                          className="flex-1" />
-                        <span className={cn("w-6 text-right text-sm font-bold tabular-nums", painColor(s.painScale))}>
-                          {s.painScale}
-                        </span>
-                      </div>
-                      <Button size="icon" variant="ghost" className="h-8 w-8"
-                        onClick={() => removeSet(ex.id, i)} disabled={ex.sets.length === 1}>
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => addSet(ex.id)}>
-                    <Plus className="h-4 w-4" /> Add set
-                  </Button>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Notes</Label>
-                    <Textarea value={ex.notes || ""} onChange={(e) => updateNotes(ex.id, e.target.value)}
-                      placeholder="Form cues, sensations..." rows={2} />
-                  </div>
-                </div>
-              </Card>
+              <PTExerciseCard
+                key={ex.id}
+                ex={ex}
+                unit="kg"
+                doneSets={doneSets}
+                previousLabel={previousLabel}
+                onUpdateSet={updateSet}
+                onToggleDone={toggleDone}
+                onAddSet={addSet}
+                onRemoveSet={removeSet}
+                onRemoveExercise={removeExercise}
+                onNotes={updateNotes}
+                onPainAll={setPainForExercise}
+              />
             ))}
 
             <div className="space-y-2">
