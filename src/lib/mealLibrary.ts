@@ -3,6 +3,7 @@
 
 export type LibraryCategory =
   | "Saudi"
+  | "Fruits"
   | "Protein"
   | "Carbs"
   | "Meals"
@@ -215,11 +216,68 @@ export const MEAL_LIBRARY: LibraryMeal[] = [
   { id: "r-dominoslice", name: "Domino's pizza slice", serving: "2 slices large", proteinG: 22, calories: 540, mealType: "Dinner", category: "Restaurant", emoji: "🍕", approximate: true },
   { id: "r-fivguys", name: "Five Guys cheeseburger", serving: "1 burger", proteinG: 30, calories: 840, mealType: "Dinner", category: "Restaurant", emoji: "🍔", approximate: true },
   { id: "r-wagamama", name: "Wagamama chicken katsu curry", serving: "Standard", proteinG: 42, calories: 1050, mealType: "Dinner", category: "Restaurant", emoji: "🍛", approximate: true },
+
+  // ── Fruits — standardized to 100 g raw, edible portion (USDA FoodData Central)
+  { id: "fr-apple", name: "Apple", serving: "100 g raw", proteinG: 0.3, carbsG: 13.8, fatG: 0.2, calories: 52, mealType: "Snack", category: "Fruits", emoji: "🍎" },
+  { id: "fr-banana", name: "Banana", serving: "100 g raw", proteinG: 1.1, carbsG: 22.8, fatG: 0.3, calories: 89, mealType: "Snack", category: "Fruits", emoji: "🍌" },
+  { id: "fr-orange", name: "Orange", serving: "100 g raw", proteinG: 0.9, carbsG: 11.8, fatG: 0.1, calories: 47, mealType: "Snack", category: "Fruits", emoji: "🍊" },
+  { id: "fr-mandarin", name: "Mandarin / clementine", serving: "100 g raw", proteinG: 0.8, carbsG: 13.3, fatG: 0.3, calories: 53, mealType: "Snack", category: "Fruits", emoji: "🍊" },
+  { id: "fr-grapefruit", name: "Grapefruit", serving: "100 g raw", proteinG: 0.8, carbsG: 10.7, fatG: 0.1, calories: 42, mealType: "Snack", category: "Fruits", emoji: "🍊" },
+  { id: "fr-lemon", name: "Lemon", serving: "100 g raw", proteinG: 1.1, carbsG: 9.3, fatG: 0.3, calories: 29, mealType: "Snack", category: "Fruits", emoji: "🍋" },
+  { id: "fr-lime", name: "Lime", serving: "100 g raw", proteinG: 0.7, carbsG: 10.5, fatG: 0.2, calories: 30, mealType: "Snack", category: "Fruits", emoji: "🍋" },
+  { id: "fr-grapes", name: "Grapes", serving: "100 g raw", proteinG: 0.7, carbsG: 18.1, fatG: 0.2, calories: 69, mealType: "Snack", category: "Fruits", emoji: "🍇" },
+  { id: "fr-strawberry", name: "Strawberries", serving: "100 g raw", proteinG: 0.7, carbsG: 7.7, fatG: 0.3, calories: 32, mealType: "Snack", category: "Fruits", emoji: "🍓" },
+  { id: "fr-blueberry", name: "Blueberries", serving: "100 g raw", proteinG: 0.7, carbsG: 14.5, fatG: 0.3, calories: 57, mealType: "Snack", category: "Fruits", emoji: "🫐" },
+  { id: "fr-raspberry", name: "Raspberries", serving: "100 g raw", proteinG: 1.2, carbsG: 11.9, fatG: 0.7, calories: 52, mealType: "Snack", category: "Fruits", emoji: "🍇" },
+  { id: "fr-blackberry", name: "Blackberries", serving: "100 g raw", proteinG: 1.4, carbsG: 9.6, fatG: 0.5, calories: 43, mealType: "Snack", category: "Fruits", emoji: "🍇" },
+  { id: "fr-cranberry", name: "Cranberries", serving: "100 g raw", proteinG: 0.4, carbsG: 12.2, fatG: 0.1, calories: 46, mealType: "Snack", category: "Fruits", emoji: "🍒" },
+  { id: "fr-cherry", name: "Cherries (sweet)", serving: "100 g raw", proteinG: 1.1, carbsG: 16.0, fatG: 0.2, calories: 63, mealType: "Snack", category: "Fruits", emoji: "🍒" },
+  { id: "fr-watermelon", name: "Watermelon", serving: "100 g raw", proteinG: 0.6, carbsG: 7.6, fatG: 0.2, calories: 30, mealType: "Snack", category: "Fruits", emoji: "🍉" },
+  { id: "fr-cantaloupe", name: "Cantaloupe melon", serving: "100 g raw", proteinG: 0.8, carbsG: 8.2, fatG: 0.2, calories: 34, mealType: "Snack", category: "Fruits", emoji: "🍈" },
+  { id: "fr-honeydew", name: "Honeydew melon", serving: "100 g raw", proteinG: 0.5, carbsG: 9.1, fatG: 0.1, calories: 36, mealType: "Snack", category: "Fruits", emoji: "🍈" },
+  { id: "fr-mango", name: "Mango", serving: "100 g raw", proteinG: 0.8, carbsG: 15.0, fatG: 0.4, calories: 60, mealType: "Snack", category: "Fruits", emoji: "🥭" },
+  { id: "fr-pineapple", name: "Pineapple", serving: "100 g raw", proteinG: 0.5, carbsG: 13.1, fatG: 0.1, calories: 50, mealType: "Snack", category: "Fruits", emoji: "🍍" },
+  { id: "fr-papaya", name: "Papaya", serving: "100 g raw", proteinG: 0.5, carbsG: 10.8, fatG: 0.3, calories: 43, mealType: "Snack", category: "Fruits", emoji: "🍈" },
+  { id: "fr-guava", name: "Guava", serving: "100 g raw", proteinG: 2.6, carbsG: 14.3, fatG: 1.0, calories: 68, mealType: "Snack", category: "Fruits", emoji: "🍐" },
+  { id: "fr-kiwi", name: "Kiwi", serving: "100 g raw", proteinG: 1.1, carbsG: 14.7, fatG: 0.5, calories: 61, mealType: "Snack", category: "Fruits", emoji: "🥝" },
+  { id: "fr-pear", name: "Pear", serving: "100 g raw", proteinG: 0.4, carbsG: 15.2, fatG: 0.1, calories: 57, mealType: "Snack", category: "Fruits", emoji: "🍐" },
+  { id: "fr-peach", name: "Peach", serving: "100 g raw", proteinG: 0.9, carbsG: 9.5, fatG: 0.3, calories: 39, mealType: "Snack", category: "Fruits", emoji: "🍑" },
+  { id: "fr-nectarine", name: "Nectarine", serving: "100 g raw", proteinG: 1.1, carbsG: 10.6, fatG: 0.3, calories: 44, mealType: "Snack", category: "Fruits", emoji: "🍑" },
+  { id: "fr-plum", name: "Plum", serving: "100 g raw", proteinG: 0.7, carbsG: 11.4, fatG: 0.3, calories: 46, mealType: "Snack", category: "Fruits", emoji: "🍑" },
+  { id: "fr-apricot", name: "Apricot", serving: "100 g raw", proteinG: 1.4, carbsG: 11.1, fatG: 0.4, calories: 48, mealType: "Snack", category: "Fruits", emoji: "🍑" },
+  { id: "fr-pomegranate", name: "Pomegranate arils", serving: "100 g raw", proteinG: 1.7, carbsG: 18.7, fatG: 1.2, calories: 83, mealType: "Snack", category: "Fruits", emoji: "🍎" },
+  { id: "fr-fig", name: "Figs (fresh)", serving: "100 g raw", proteinG: 0.8, carbsG: 19.2, fatG: 0.3, calories: 74, mealType: "Snack", category: "Fruits", emoji: "🫒" },
+  { id: "fr-datemedjool", name: "Dates (Medjool)", serving: "100 g", proteinG: 1.8, carbsG: 75.0, fatG: 0.2, calories: 277, mealType: "Snack", category: "Fruits", emoji: "🌴" },
+  { id: "fr-datedeglet", name: "Dates (Deglet Noor)", serving: "100 g", proteinG: 2.4, carbsG: 75.0, fatG: 0.4, calories: 282, mealType: "Snack", category: "Fruits", emoji: "🌴" },
+  { id: "fr-raisin", name: "Raisins", serving: "100 g", proteinG: 3.1, carbsG: 79.2, fatG: 0.5, calories: 299, mealType: "Snack", category: "Fruits", emoji: "🍇" },
+  { id: "fr-prune", name: "Prunes (dried plums)", serving: "100 g", proteinG: 2.2, carbsG: 63.9, fatG: 0.4, calories: 240, mealType: "Snack", category: "Fruits", emoji: "🟤" },
+  { id: "fr-driedapricot", name: "Dried apricots", serving: "100 g", proteinG: 3.4, carbsG: 62.6, fatG: 0.5, calories: 241, mealType: "Snack", category: "Fruits", emoji: "🍑" },
+  { id: "fr-driedfig", name: "Dried figs", serving: "100 g", proteinG: 3.3, carbsG: 63.9, fatG: 0.9, calories: 249, mealType: "Snack", category: "Fruits", emoji: "🫒" },
+  { id: "fr-avocado", name: "Avocado", serving: "100 g raw", proteinG: 2.0, carbsG: 8.5, fatG: 14.7, calories: 160, mealType: "Snack", category: "Fruits", emoji: "🥑" },
+  { id: "fr-olivegreen", name: "Olives (green, pickled)", serving: "100 g", proteinG: 1.0, carbsG: 3.8, fatG: 15.3, calories: 145, mealType: "Snack", category: "Fruits", emoji: "🫒" },
+  { id: "fr-coconut", name: "Coconut meat (fresh)", serving: "100 g raw", proteinG: 3.3, carbsG: 15.2, fatG: 33.5, calories: 354, mealType: "Snack", category: "Fruits", emoji: "🥥" },
+  { id: "fr-banana-plantain", name: "Plantain (raw)", serving: "100 g raw", proteinG: 1.3, carbsG: 31.9, fatG: 0.4, calories: 122, mealType: "Snack", category: "Fruits", emoji: "🍌" },
+  { id: "fr-persimmon", name: "Persimmon", serving: "100 g raw", proteinG: 0.6, carbsG: 18.6, fatG: 0.2, calories: 70, mealType: "Snack", category: "Fruits", emoji: "🍅" },
+  { id: "fr-dragonfruit", name: "Dragon fruit (pitaya)", serving: "100 g raw", proteinG: 1.2, carbsG: 13.0, fatG: 0.4, calories: 60, mealType: "Snack", category: "Fruits", emoji: "🐉" },
+  { id: "fr-passionfruit", name: "Passion fruit", serving: "100 g raw", proteinG: 2.2, carbsG: 23.4, fatG: 0.7, calories: 97, mealType: "Snack", category: "Fruits", emoji: "🥭" },
+  { id: "fr-lychee", name: "Lychee", serving: "100 g raw", proteinG: 0.8, carbsG: 16.5, fatG: 0.4, calories: 66, mealType: "Snack", category: "Fruits", emoji: "🍒" },
+  { id: "fr-starfruit", name: "Starfruit (carambola)", serving: "100 g raw", proteinG: 1.0, carbsG: 6.7, fatG: 0.3, calories: 31, mealType: "Snack", category: "Fruits", emoji: "⭐" },
+  { id: "fr-jackfruit", name: "Jackfruit", serving: "100 g raw", proteinG: 1.7, carbsG: 23.2, fatG: 0.6, calories: 95, mealType: "Snack", category: "Fruits", emoji: "🥭" },
+  { id: "fr-guanabana", name: "Soursop (guanabana)", serving: "100 g raw", proteinG: 1.0, carbsG: 16.8, fatG: 0.3, calories: 66, mealType: "Snack", category: "Fruits", emoji: "🍈" },
+  { id: "fr-tangerinejuice", name: "Orange juice (fresh)", serving: "100 g / ~100 ml", proteinG: 0.7, carbsG: 10.4, fatG: 0.2, calories: 45, mealType: "Breakfast", category: "Fruits", emoji: "🧃" },
+  { id: "fr-applesauce", name: "Applesauce (unsweetened)", serving: "100 g", proteinG: 0.2, carbsG: 11.3, fatG: 0.1, calories: 42, mealType: "Snack", category: "Fruits", emoji: "🍎" },
+  { id: "fr-mulberry", name: "Mulberries", serving: "100 g raw", proteinG: 1.4, carbsG: 9.8, fatG: 0.4, calories: 43, mealType: "Snack", category: "Fruits", emoji: "🍇" },
+  { id: "fr-gooseberry", name: "Gooseberries", serving: "100 g raw", proteinG: 0.9, carbsG: 10.2, fatG: 0.6, calories: 44, mealType: "Snack", category: "Fruits", emoji: "🍏" },
+  { id: "fr-rhubarb", name: "Rhubarb", serving: "100 g raw", proteinG: 0.9, carbsG: 4.5, fatG: 0.2, calories: 21, mealType: "Snack", category: "Fruits", emoji: "🌱" },
+  { id: "fr-quince", name: "Quince", serving: "100 g raw", proteinG: 0.4, carbsG: 15.3, fatG: 0.1, calories: 57, mealType: "Snack", category: "Fruits", emoji: "🍐" },
+  { id: "fr-tamarind", name: "Tamarind", serving: "100 g raw", proteinG: 2.8, carbsG: 62.5, fatG: 0.6, calories: 239, mealType: "Snack", category: "Fruits", emoji: "🫘" },
+  { id: "fr-cactuspear", name: "Prickly pear (cactus fruit)", serving: "100 g raw", proteinG: 0.7, carbsG: 9.6, fatG: 0.5, calories: 41, mealType: "Snack", category: "Fruits", emoji: "🌵" },
 ];
 
 export const LIBRARY_CATEGORIES: { id: LibraryCategory | "All"; label: string }[] = [
   { id: "All", label: "All" },
   { id: "Saudi", label: "🇸🇦 Saudi" },
+  { id: "Fruits", label: "🍎 Fruits" },
   { id: "Protein", label: "Protein" },
 
   { id: "Carbs", label: "Carbs" },
@@ -228,3 +286,4 @@ export const LIBRARY_CATEGORIES: { id: LibraryCategory | "All"; label: string }[
   { id: "Snacks", label: "Snacks" },
   { id: "Restaurant", label: "Restaurant" },
 ];
+
