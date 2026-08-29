@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format, parseISO, startOfWeek, isWithinInterval, endOfWeek } from "date-fns";
-import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap, BookOpen, Pencil, LineChart } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap, BookOpen, Pencil, LineChart, Repeat, CalendarDays } from "lucide-react";
 import { MealLibrarySheet } from "@/components/MealLibrarySheet";
 import { MealEditSheet } from "@/components/MealEditSheet";
 import { MacroTrendCharts } from "@/components/MacroTrendCharts";
@@ -47,6 +47,7 @@ export default function NutritionPage() {
   const [editing, setEditing] = useState<MealLog | null>(null);
 
   // Log form state
+  const [logDate, setLogDate] = useState(today);
   const [mealName, setMealName] = useState("");
   const [mealType, setMealType] = useState<MealType>("Lunch");
   const [protein, setProtein] = useState<number | "">("");
@@ -99,6 +100,22 @@ export default function NutritionPage() {
     return days.length > 0 ? Math.round(days.reduce((s, d) => s + d.protein, 0) / days.length) : 0;
   }, [weeklyData]);
 
+  // Meals logged most often — surfaced as one-tap quick adds.
+  const frequentMeals = useMemo(() => {
+    const map = new Map<string, { key: string; name: string; mealType: string; count: number;
+      proteinG: number; calories?: number; carbsG?: number; fatG?: number }>();
+    for (const l of logs) {
+      const key = l.mealName.trim().toLowerCase();
+      const existing = map.get(key);
+      if (existing) existing.count += 1;
+      else map.set(key, {
+        key, name: l.mealName.trim(), mealType: l.mealType, count: 1,
+        proteinG: l.proteinG, calories: l.calories, carbsG: l.carbsG, fatG: l.fatG,
+      });
+    }
+    return [...map.values()].filter((m) => m.count >= 2).sort((a, b) => b.count - a.count).slice(0, 6);
+  }, [logs]);
+
   const logMeal = async (
     name: string,
     type: MealType,
@@ -112,7 +129,7 @@ export default function NutritionPage() {
     const est = macrosFor({ proteinG: Number(prot), calories: cal === "" ? 0 : Number(cal) });
     try {
       await createLog({
-        date: today,
+        date: logDate || today,
         mealName: name.trim(),
         mealType: type,
         proteinG: Number(prot),
@@ -120,7 +137,7 @@ export default function NutritionPage() {
         carbsG: carb === "" || carb == null ? est.carbsG : Number(carb),
         fatG: fatG === "" || fatG == null ? est.fatG : Number(fatG),
       });
-      toast.success("Meal logged");
+      toast.success(logDate === today ? "Meal logged" : `Logged for ${format(parseISO(logDate), "MMM d")}`);
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -321,8 +338,62 @@ export default function NutritionPage() {
         )}
       </section>
 
+      {/* ── Frequent meals */}
+      <section className="mt-7">
+        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Repeat className="h-3.5 w-3.5" /> Frequent meals
+        </h2>
+        {frequentMeals.length === 0 ? (
+          <Card className="p-5 text-center text-sm text-muted-foreground">
+            Log a few meals and the ones you eat most will appear here for one-tap adding.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            {frequentMeals.map((f) => (
+              <Card
+                key={f.key}
+                onClick={() => logMeal(f.name, f.mealType as MealType, f.proteinG, f.calories ?? "", f.carbsG ?? "", f.fatG ?? "")}
+                className="flex cursor-pointer flex-col gap-0.5 p-3 transition-colors hover:border-primary/40 active:scale-[.98]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base">{MEAL_ICONS[f.mealType as MealType] ?? "🍽️"}</span>
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                    ×{f.count}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm font-semibold leading-tight">{f.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {f.proteinG}g protein{f.calories ? ` · ${f.calories} kcal` : ""}
+                </p>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Log date (applies to every quick-add below) */}
+      <section className="mt-5">
+        <Card className="flex items-center gap-3 px-4 py-3">
+          <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-muted-foreground">Logging for</p>
+            <p className="text-sm font-semibold">
+              {logDate === today ? "Today" : format(parseISO(logDate), "EEE, MMM d")}
+            </p>
+          </div>
+          <Input
+            type="date"
+            value={logDate}
+            max={today}
+            onChange={(e) => setLogDate(e.target.value || today)}
+            className="h-9 w-[150px]"
+            aria-label="Log date"
+          />
+        </Card>
+      </section>
+
       {/* ── Log a custom meal */}
-      <section className="mt-5 grid grid-cols-2 gap-2">
+      <section className="mt-3 grid grid-cols-2 gap-2">
         <Button variant="outline" size="lg" onClick={() => setLibraryOpen(true)}>
           <BookOpen className="mr-2 h-4 w-4" /> Library
         </Button>
@@ -332,9 +403,14 @@ export default function NutritionPage() {
               <Plus className="mr-2 h-4 w-4" /> Log meal
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-3xl">
+          <SheetContent side="bottom" className="max-h-[92vh] overflow-y-auto rounded-t-3xl">
             <SheetHeader><SheetTitle>Log meal</SheetTitle></SheetHeader>
             <div className="mt-5 space-y-4">
+              <div className="space-y-1">
+                <Label>Date</Label>
+                <Input type="date" value={logDate} max={today}
+                  onChange={(e) => setLogDate(e.target.value || today)} />
+              </div>
               <div className="space-y-1">
                 <Label>Meal name</Label>
                 <Input placeholder="e.g. Grilled salmon" value={mealName} onChange={(e) => setMealName(e.target.value)} />
