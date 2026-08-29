@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { MetricsImportWizard } from "@/components/MetricsImportWizard";
 import { MonthlyActivityCalendar } from "@/components/MonthlyActivityCalendar";
 import { MacroTrendCharts } from "@/components/MacroTrendCharts";
-import { useMealLogs, useNutritionGoal } from "@/lib/nutrition";
+import { useMealLogs, useNutritionGoal, type NutritionGoal } from "@/lib/nutrition";
 import { todayInputDate, dateWithCurrentTime } from "@/lib/duration";
 
 const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -628,6 +628,47 @@ function GoalEditor({ goals, unit, onSave }: { goals: Goals; unit: "kg" | "lbs";
           </div>
           <Button size="lg" className="w-full" onClick={async () => { await onSave(draft); setOpen(false); }}>
             Save goals
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function NutritionGoalEditor({ goal, onSave }: { goal: NutritionGoal; onSave: (g: NutritionGoal) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [draftProtein, setDraftProtein] = useState(goal.dailyProteinG);
+  const [draftCalories, setDraftCalories] = useState<number | "">(goal.dailyCalories ?? "");
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => {
+      setOpen(o);
+      if (o) { setDraftProtein(goal.dailyProteinG); setDraftCalories(goal.dailyCalories ?? ""); }
+    }}>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full">
+          <Flame className="h-4 w-4 mr-1" /> Edit nutrition targets
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="bottom" className="rounded-t-3xl">
+        <SheetHeader><SheetTitle>Daily nutrition targets</SheetTitle></SheetHeader>
+        <div className="mt-5 space-y-4">
+          <div className="space-y-1">
+            <Label>Daily protein target (g)</Label>
+            <Input type="number" inputMode="decimal" min={0} value={draftProtein}
+              onChange={(e) => setDraftProtein(Number(e.target.value) || 0)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Daily calorie target (kcal, optional)</Label>
+            <Input type="number" inputMode="decimal" min={0} placeholder="e.g. 2200" value={draftCalories}
+              onChange={(e) => setDraftCalories(e.target.value === "" ? "" : Number(e.target.value))} />
+            <p className="text-[11px] text-muted-foreground">Leave empty to remove the calorie target.</p>
+          </div>
+          <Button size="lg" className="w-full" onClick={async () => {
+            await onSave({ ...goal, dailyProteinG: draftProtein, dailyCalories: draftCalories === "" ? undefined : Number(draftCalories) });
+            setOpen(false);
+          }}>
+            Save targets
           </Button>
         </div>
       </SheetContent>
