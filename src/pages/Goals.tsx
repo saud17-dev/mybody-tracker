@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import {
-  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, CalendarDays, ChevronRight, Coffee, Pencil,
+  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, CalendarDays, ChevronRight, Coffee, Pencil, Beef,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid,
@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { MetricsImportWizard } from "@/components/MetricsImportWizard";
 import { MonthlyActivityCalendar } from "@/components/MonthlyActivityCalendar";
 import { MacroTrendCharts } from "@/components/MacroTrendCharts";
-import { useMealLogs, useNutritionGoal } from "@/lib/nutrition";
+import { useMealLogs, useNutritionGoal, type NutritionGoal } from "@/lib/nutrition";
 import { todayInputDate, dateWithCurrentTime } from "@/lib/duration";
 
 const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -80,7 +80,7 @@ export default function GoalsPage() {
   const { goals, save: saveGoals } = useGoals();
   const { profile } = useProfile();
   const { logs: mealLogs } = useMealLogs();
-  const { goal: nutritionGoal } = useNutritionGoal();
+  const { goal: nutritionGoal, save: saveNutritionGoal } = useNutritionGoal();
 
   const unit = profile?.unit ?? "kg";
 
@@ -156,6 +156,37 @@ export default function GoalsPage() {
       <div className="mt-4 px-1">
         <GoalEditor goals={goals} unit={unit} onSave={async (g) => { await saveGoals(g); toast.success("Goals updated"); }} />
       </div>
+
+      {/* Daily nutrition targets */}
+      <section className="mt-7">
+        <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Flame className="h-3.5 w-3.5" /> Daily nutrition
+        </h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="p-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <Beef className="h-4 w-4 text-primary" />
+            </div>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Protein target</p>
+            <p className="mt-1 text-xl font-bold tabular-nums">
+              {nutritionGoal.dailyProteinG}<span className="text-xs font-normal text-muted-foreground">g / day</span>
+            </p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
+              <Flame className="h-4 w-4 text-accent" />
+            </div>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Calorie target</p>
+            <p className="mt-1 text-xl font-bold tabular-nums">
+              {nutritionGoal.dailyCalories ? nutritionGoal.dailyCalories : "—"}
+              {nutritionGoal.dailyCalories != null && <span className="text-xs font-normal text-muted-foreground"> kcal / day</span>}
+            </p>
+          </Card>
+        </div>
+        <div className="mt-3 px-1">
+          <NutritionGoalEditor goal={nutritionGoal} onSave={async (g) => { await saveNutritionGoal(g); toast.success("Nutrition targets updated"); }} />
+        </div>
+      </section>
 
       {/* This week's plan */}
       <section className="mt-7">
@@ -597,6 +628,47 @@ function GoalEditor({ goals, unit, onSave }: { goals: Goals; unit: "kg" | "lbs";
           </div>
           <Button size="lg" className="w-full" onClick={async () => { await onSave(draft); setOpen(false); }}>
             Save goals
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function NutritionGoalEditor({ goal, onSave }: { goal: NutritionGoal; onSave: (g: NutritionGoal) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [draftProtein, setDraftProtein] = useState(goal.dailyProteinG);
+  const [draftCalories, setDraftCalories] = useState<number | "">(goal.dailyCalories ?? "");
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => {
+      setOpen(o);
+      if (o) { setDraftProtein(goal.dailyProteinG); setDraftCalories(goal.dailyCalories ?? ""); }
+    }}>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full">
+          <Flame className="h-4 w-4 mr-1" /> Edit nutrition targets
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="bottom" className="rounded-t-3xl">
+        <SheetHeader><SheetTitle>Daily nutrition targets</SheetTitle></SheetHeader>
+        <div className="mt-5 space-y-4">
+          <div className="space-y-1">
+            <Label>Daily protein target (g)</Label>
+            <Input type="number" inputMode="decimal" min={0} value={draftProtein}
+              onChange={(e) => setDraftProtein(Number(e.target.value) || 0)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Daily calorie target (kcal, optional)</Label>
+            <Input type="number" inputMode="decimal" min={0} placeholder="e.g. 2200" value={draftCalories}
+              onChange={(e) => setDraftCalories(e.target.value === "" ? "" : Number(e.target.value))} />
+            <p className="text-[11px] text-muted-foreground">Leave empty to remove the calorie target.</p>
+          </div>
+          <Button size="lg" className="w-full" onClick={async () => {
+            await onSave({ ...goal, dailyProteinG: draftProtein, dailyCalories: draftCalories === "" ? undefined : Number(draftCalories) });
+            setOpen(false);
+          }}>
+            Save targets
           </Button>
         </div>
       </SheetContent>
