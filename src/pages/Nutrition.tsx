@@ -100,6 +100,22 @@ export default function NutritionPage() {
     return days.length > 0 ? Math.round(days.reduce((s, d) => s + d.protein, 0) / days.length) : 0;
   }, [weeklyData]);
 
+  // Meals logged most often — surfaced as one-tap quick adds.
+  const frequentMeals = useMemo(() => {
+    const map = new Map<string, { key: string; name: string; mealType: string; count: number;
+      proteinG: number; calories?: number; carbsG?: number; fatG?: number }>();
+    for (const l of logs) {
+      const key = l.mealName.trim().toLowerCase();
+      const existing = map.get(key);
+      if (existing) existing.count += 1;
+      else map.set(key, {
+        key, name: l.mealName.trim(), mealType: l.mealType, count: 1,
+        proteinG: l.proteinG, calories: l.calories, carbsG: l.carbsG, fatG: l.fatG,
+      });
+    }
+    return [...map.values()].filter((m) => m.count >= 2).sort((a, b) => b.count - a.count).slice(0, 6);
+  }, [logs]);
+
   const logMeal = async (
     name: string,
     type: MealType,
@@ -113,7 +129,7 @@ export default function NutritionPage() {
     const est = macrosFor({ proteinG: Number(prot), calories: cal === "" ? 0 : Number(cal) });
     try {
       await createLog({
-        date: today,
+        date: logDate || today,
         mealName: name.trim(),
         mealType: type,
         proteinG: Number(prot),
@@ -121,7 +137,7 @@ export default function NutritionPage() {
         carbsG: carb === "" || carb == null ? est.carbsG : Number(carb),
         fatG: fatG === "" || fatG == null ? est.fatG : Number(fatG),
       });
-      toast.success("Meal logged");
+      toast.success(logDate === today ? "Meal logged" : `Logged for ${format(parseISO(logDate), "MMM d")}`);
     } catch (e: any) {
       toast.error(e.message);
     }
