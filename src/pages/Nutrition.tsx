@@ -93,6 +93,7 @@ export default function NutritionPage() {
   const todayCalories = todayLogs.reduce((s, l) => s + (l.calories ?? 0), 0);
   const proteinPct = goal.dailyProteinG > 0 ? Math.min(100, (todayProtein / goal.dailyProteinG) * 100) : 0;
   const calPct = goal.dailyCalories && goal.dailyCalories > 0 ? Math.min(100, (todayCalories / goal.dailyCalories) * 100) : 0;
+  const calOver = !!goal.dailyCalories && goal.dailyCalories > 0 && todayCalories > goal.dailyCalories;
   const proteinRemaining = Math.max(0, goal.dailyProteinG - todayProtein);
 
   const weekAvgProtein = useMemo(() => {
@@ -226,9 +227,12 @@ export default function NutritionPage() {
 
           {/* Calories card (optional) */}
           {goal.dailyCalories && goal.dailyCalories > 0 ? (
-            <Card className="p-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
-                <Flame className="h-4 w-4 text-accent" />
+            <Card className={cn("p-4", calOver && "border-destructive/40")}>
+              <div className="flex items-center justify-between">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
+                  <Flame className="h-4 w-4 text-accent" />
+                </div>
+                <span className="text-xs font-semibold text-muted-foreground">{Math.round(calPct)}%</span>
               </div>
               <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Calories</p>
               <p className="mt-1 text-xl font-bold tabular-nums">
@@ -236,11 +240,23 @@ export default function NutritionPage() {
                 <span className="text-xs font-normal text-muted-foreground">/{goal.dailyCalories}</span>
               </p>
               <Progress value={calPct} className="mt-2 h-1.5 [&>div]:bg-accent" />
+              {calOver ? (
+                <p className="mt-1.5 text-xs font-semibold text-destructive">
+                  {Math.round(todayCalories - goal.dailyCalories)} kcal over target
+                </p>
+              ) : (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  <span className="font-semibold text-accent">{Math.round(goal.dailyCalories - todayCalories)} kcal</span> remaining
+                </p>
+              )}
             </Card>
           ) : (
-            <Card className="flex flex-col items-center justify-center p-4 text-center">
+            <Card
+              className="flex cursor-pointer flex-col items-center justify-center p-4 text-center transition-colors hover:border-primary/40"
+              onClick={() => { setDraftProtein(goal.dailyProteinG); setDraftCalories(goal.dailyCalories); setGoalOpen(true); }}
+            >
               <Flame className="h-5 w-5 text-muted-foreground/40" />
-              <p className="mt-1 text-xs text-muted-foreground">No calorie goal set</p>
+              <p className="mt-1 text-xs text-muted-foreground">No calorie goal set — tap to add one</p>
             </Card>
           )}
 
@@ -626,7 +642,7 @@ export default function NutritionPage() {
               size="lg"
               className="w-full"
               onClick={async () => {
-                await saveGoal({ dailyProteinG: draftProtein, dailyCalories: draftCalories });
+                await saveGoal({ ...goal, dailyProteinG: draftProtein, dailyCalories: draftCalories });
                 toast.success("Goals updated");
                 setGoalOpen(false);
               }}
