@@ -47,6 +47,7 @@ export default function NutritionPage() {
   const [editing, setEditing] = useState<MealLog | null>(null);
 
   // Log form state
+  const [logDate, setLogDate] = useState(today);
   const [mealName, setMealName] = useState("");
   const [mealType, setMealType] = useState<MealType>("Lunch");
   const [protein, setProtein] = useState<number | "">("");
