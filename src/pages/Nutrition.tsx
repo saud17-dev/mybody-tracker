@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format, parseISO, startOfWeek, isWithinInterval, endOfWeek } from "date-fns";
-import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap, BookOpen, Pencil, LineChart } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, Flame, ChevronDown, ChevronUp, Zap, BookOpen, Pencil, LineChart, Repeat, CalendarDays } from "lucide-react";
 import { MealLibrarySheet } from "@/components/MealLibrarySheet";
 import { MealEditSheet } from "@/components/MealEditSheet";
 import { MacroTrendCharts } from "@/components/MacroTrendCharts";
