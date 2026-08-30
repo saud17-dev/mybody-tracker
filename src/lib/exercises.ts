@@ -437,9 +437,12 @@ export const PT_BODY_AREAS = ["All", "Knee", "Hip", "Shoulder", "Spine", "Ankle"
 
 export const CARDIO_ACTIVITIES = [
   "Sauna", "Steam Room",
-  "Running", "Treadmill", "Cycling", "Stationary Bike", "Rowing", "Swimming",
-  "Elliptical", "Stair Climber", "Walking", "Incline Walk", "Jump Rope", "HIIT", "Boxing", "Football",
+  "Treadmill", "Cycling", "Stationary Bike", "Rowing", "Swimming",
+  "Stair Climber", "Walking", "Incline Walk", "HIIT", "Football",
 ];
+
+// Kept only so historical logs and old templates still display/select correctly.
+export const RETIRED_CARDIO_ACTIVITIES = ["Running", "Elliptical", "Jump Rope", "Boxing"];
 
 export const HEAT_ACTIVITIES = ["Sauna", "Steam Room"];
 export const SWIM_ACTIVITIES = ["Swimming"];
