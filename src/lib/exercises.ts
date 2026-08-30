@@ -436,9 +436,9 @@ export const PT_EXERCISES: ExerciseDef[] = [
 export const PT_BODY_AREAS = ["All", "Knee", "Hip", "Shoulder", "Spine", "Ankle", "Core"] as const;
 
 export const CARDIO_ACTIVITIES = [
-  "Running", "Treadmill", "Cycling", "Stationary Bike", "Rowing", "Swimming",
-  "Elliptical", "Stair Climber", "Walking", "Hiking", "Jump Rope", "HIIT", "Boxing", "Football",
   "Sauna", "Steam Room",
+  "Running", "Treadmill", "Cycling", "Stationary Bike", "Rowing", "Swimming",
+  "Elliptical", "Stair Climber", "Walking", "Incline Walk", "Jump Rope", "HIIT", "Boxing", "Football",
 ];
 
 export const HEAT_ACTIVITIES = ["Sauna", "Steam Room"];
