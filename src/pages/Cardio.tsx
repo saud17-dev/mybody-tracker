@@ -102,6 +102,10 @@ export default function Cardio() {
   };
 
   const sorted = sessions;
+  // Include the current value even if it's a retired activity (e.g. loaded from an old template)
+  const activityOptions = CARDIO_ACTIVITIES.includes(activity)
+    ? CARDIO_ACTIVITIES
+    : [activity, ...CARDIO_ACTIVITIES];
   const totalMin = sessions.reduce((a, s) => a + s.durationMin, 0);
   const totalDistDisp = sessions.reduce((a, s) => a + (distanceToDisplay(s.distanceKm, unit) ?? 0), 0);
 
