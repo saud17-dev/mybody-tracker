@@ -320,35 +320,41 @@ export default function Plan() {
                 </div>
               )}
               <p className="mb-2 text-[11px] text-muted-foreground">
-                Drag <GripVertical className="inline h-3 w-3" /> to swap days. Tap a card to edit.
+                Tap <span className="font-semibold text-foreground">Move</span> to send a workout to another day. Tap the card to edit it.
               </p>
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={dowOrder.map(String)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-2">
-                    {dowOrder.map((dow) => {
-                      const plan = dayMap.get(dow);
-                      const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
-                      return (
-                        <SortableDayRow
-                          key={dow}
-                          dow={dow}
-                          plan={plan}
-                          tplName={tpl?.name}
-                          isToday={dow === todayDow}
-                          isSkipped={skipped.has(dow)}
-                          templates={templates}
-                          onSave={async (m, tplId, label) => {
-                            await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
-                            toast.success(`${DAYS[dow]} updated`);
-                          }}
-                          onSkipToggle={() => toggleSkip(dow)}
-                          onMoveToToday={() => moveToToday(dow)}
-                        />
-                      );
-                    })}
-                  </div>
-                </SortableContext>
-              </DndContext>
+              <div className="space-y-2">
+                {dowOrder.map((dow) => {
+                  const plan = dayMap.get(dow);
+                  const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
+                  return (
+                    <DayRow
+                      key={dow}
+                      dow={dow}
+                      plan={plan}
+                      tplName={tpl?.name}
+                      isToday={dow === todayDow}
+                      isSkipped={skipped.has(dow)}
+                      templates={templates}
+                      dayMap={dayMap}
+                      allTemplates={templates}
+                      onSave={async (m, tplId, label) => {
+                        await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
+                        toast.success(`${DAYS[dow]} updated`);
+                      }}
+                      onSkipToggle={() => toggleSkip(dow)}
+                      onMoveToToday={() => moveToToday(dow)}
+                      onMoveTo={async (target) => {
+                        await moveDay({ from: dow, to: target });
+                        toast.success(
+                          dayMap.get(target)
+                            ? `Swapped ${DAYS[dow]} with ${DAYS[target]}`
+                            : `Moved to ${DAYS[target]}`,
+                        );
+                      }}
+                    />
+                  );
+                })}
+              </div>
             </AccordionContent>
           </AccordionItem>
 
