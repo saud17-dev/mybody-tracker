@@ -534,7 +534,40 @@ export function usePlanSchedule() {
     onError: onSaveError,
   });
 
-  return { days: q.data ?? [], upsertDay: upsertDay.mutateAsync, swapDays: swapDays.mutateAsync };
+  // Move a planned day to another weekday. If the target day already has a plan,
+  // the two days swap (nothing is ever lost).
+  const moveDay = useMutation({
+    mutationFn: async ({ from, to }: { from: number; to: number }) => {
+      if (from === to) return;
+      const days = q.data ?? [];
+      const src = days.find((d) => d.day_of_week === from);
+      if (!src) return;
+      const dest = days.find((d) => d.day_of_week === to);
+      const { error: delErr } = await supabase
+        .from("plan_schedule")
+        .delete()
+        .eq("user_id", user!.id)
+        .in("day_of_week", [from, to]);
+      if (delErr) throw delErr;
+      const rows: any[] = [
+        { user_id: user!.id, day_of_week: to, module: src.module, template_id: src.template_id ?? null, label: src.label ?? null },
+      ];
+      if (dest) {
+        rows.push({ user_id: user!.id, day_of_week: from, module: dest.module, template_id: dest.template_id ?? null, label: dest.label ?? null });
+      }
+      const { error: insErr } = await supabase.from("plan_schedule").insert(rows);
+      if (insErr) throw insErr;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sched", user?.id] }),
+    onError: onSaveError,
+  });
+
+  return {
+    days: q.data ?? [],
+    upsertDay: upsertDay.mutateAsync,
+    swapDays: swapDays.mutateAsync,
+    moveDay: moveDay.mutateAsync,
+  };
 }
 
 // ---------- Workout templates ----------
