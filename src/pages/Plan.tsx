@@ -1,16 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDays, format } from "date-fns";
-import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee, GripVertical, ArrowDownToLine, RotateCcw, EyeOff, Eye } from "lucide-react";
+import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee, ArrowDownToLine, MoveRight, RotateCcw, EyeOff, Eye } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import {
-  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,7 +72,7 @@ export default function Plan() {
   const navigate = useNavigate();
   const today = new Date();
   const todayDow = today.getDay();
-  const { days, upsertDay, swapDays } = usePlanSchedule();
+  const { days, upsertDay, swapDays, moveDay } = usePlanSchedule();
   const { templates, create: createTpl, remove: removeTpl } = useWorkoutTemplates();
   const { skipped, toggle: toggleSkip, clearAll: clearSkips } = usePlanSkips();
   const [importing, setImporting] = useState(false);
@@ -95,11 +87,6 @@ export default function Plan() {
     const w = card.getBoundingClientRect().width + 12; // gap-3 = 12px
     setActiveCard(Math.round(el.scrollLeft / w));
   };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
 
   const canImportSummer =
     days.length === 0 && !templates.some((t) => t.name === "Push");
@@ -145,14 +132,6 @@ export default function Plan() {
     if (sourceDow === todayDow) return;
     await swapDays({ a: sourceDow, b: todayDow });
     toast.success(`Moved to ${DAYS[todayDow]}`);
-  };
-
-  const handleDragEnd = async (e: DragEndEvent) => {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-    const a = Number(active.id);
-    const b = Number(over.id);
-    await swapDays({ a, b });
   };
 
   const dowOrder = [0, 1, 2, 3, 4, 5, 6];
