@@ -1,16 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDays, format } from "date-fns";
-import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee, GripVertical, ArrowDownToLine, RotateCcw, EyeOff, Eye } from "lucide-react";
+import { CalendarDays, Play, Plus, Sparkles, Pencil, Trash2, Dumbbell, HeartPulse, Activity, Coffee, ArrowDownToLine, MoveRight, RotateCcw, EyeOff, Eye } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import {
-  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,7 +72,7 @@ export default function Plan() {
   const navigate = useNavigate();
   const today = new Date();
   const todayDow = today.getDay();
-  const { days, upsertDay, swapDays } = usePlanSchedule();
+  const { days, upsertDay, swapDays, moveDay } = usePlanSchedule();
   const { templates, create: createTpl, remove: removeTpl } = useWorkoutTemplates();
   const { skipped, toggle: toggleSkip, clearAll: clearSkips } = usePlanSkips();
   const [importing, setImporting] = useState(false);
@@ -95,11 +87,6 @@ export default function Plan() {
     const w = card.getBoundingClientRect().width + 12; // gap-3 = 12px
     setActiveCard(Math.round(el.scrollLeft / w));
   };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
 
   const canImportSummer =
     days.length === 0 && !templates.some((t) => t.name === "Push");
@@ -145,14 +132,6 @@ export default function Plan() {
     if (sourceDow === todayDow) return;
     await swapDays({ a: sourceDow, b: todayDow });
     toast.success(`Moved to ${DAYS[todayDow]}`);
-  };
-
-  const handleDragEnd = async (e: DragEndEvent) => {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-    const a = Number(active.id);
-    const b = Number(over.id);
-    await swapDays({ a, b });
   };
 
   const dowOrder = [0, 1, 2, 3, 4, 5, 6];
@@ -320,35 +299,41 @@ export default function Plan() {
                 </div>
               )}
               <p className="mb-2 text-[11px] text-muted-foreground">
-                Drag <GripVertical className="inline h-3 w-3" /> to swap days. Tap a card to edit.
+                Tap <span className="font-semibold text-foreground">Move</span> to send a workout to another day. Tap the card to edit it.
               </p>
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={dowOrder.map(String)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-2">
-                    {dowOrder.map((dow) => {
-                      const plan = dayMap.get(dow);
-                      const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
-                      return (
-                        <SortableDayRow
-                          key={dow}
-                          dow={dow}
-                          plan={plan}
-                          tplName={tpl?.name}
-                          isToday={dow === todayDow}
-                          isSkipped={skipped.has(dow)}
-                          templates={templates}
-                          onSave={async (m, tplId, label) => {
-                            await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
-                            toast.success(`${DAYS[dow]} updated`);
-                          }}
-                          onSkipToggle={() => toggleSkip(dow)}
-                          onMoveToToday={() => moveToToday(dow)}
-                        />
-                      );
-                    })}
-                  </div>
-                </SortableContext>
-              </DndContext>
+              <div className="space-y-2">
+                {dowOrder.map((dow) => {
+                  const plan = dayMap.get(dow);
+                  const tpl = plan?.template_id ? templates.find((t) => t.id === plan.template_id) : null;
+                  return (
+                    <DayRow
+                      key={dow}
+                      dow={dow}
+                      plan={plan}
+                      tplName={tpl?.name}
+                      isToday={dow === todayDow}
+                      isSkipped={skipped.has(dow)}
+                      templates={templates}
+                      dayMap={dayMap}
+                      allTemplates={templates}
+                      onSave={async (m, tplId, label) => {
+                        await upsertDay({ day_of_week: dow, module: m, template_id: tplId ?? null, label: label ?? null });
+                        toast.success(`${DAYS[dow]} updated`);
+                      }}
+                      onSkipToggle={() => toggleSkip(dow)}
+                      onMoveToToday={() => moveToToday(dow)}
+                      onMoveTo={async (target) => {
+                        await moveDay({ from: dow, to: target });
+                        toast.success(
+                          dayMap.get(target)
+                            ? `Swapped ${DAYS[dow]} with ${DAYS[target]}`
+                            : `Moved to ${DAYS[target]}`,
+                        );
+                      }}
+                    />
+                  );
+                })}
+              </div>
             </AccordionContent>
           </AccordionItem>
 
@@ -460,88 +445,162 @@ export default function Plan() {
   );
 }
 
-function SortableDayRow({
-  dow, plan, tplName, isToday, isSkipped, templates, onSave, onSkipToggle, onMoveToToday,
+type DayPlan = { module: "gym" | "pt" | "cardio" | "rest"; template_id?: string | null; label?: string | null };
+
+function DayRow({
+  dow, plan, tplName, isToday, isSkipped, templates, dayMap, allTemplates, onSave, onSkipToggle, onMoveToToday, onMoveTo,
 }: {
   dow: number;
-  plan?: { module: "gym" | "pt" | "cardio" | "rest"; template_id?: string | null; label?: string | null };
+  plan?: DayPlan;
   tplName?: string;
   isToday: boolean;
   isSkipped: boolean;
   templates: { id: string; name: string; module: string }[];
+  dayMap: Map<number, DayPlan>;
+  allTemplates: { id: string; name: string; module: string }[];
   onSave: (m: "gym" | "pt" | "cardio" | "rest", tplId?: string | null, label?: string | null) => Promise<void>;
   onSkipToggle: () => void;
   onMoveToToday: () => void;
+  onMoveTo: (target: number) => Promise<void>;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(dow) });
-  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 50 : "auto" } as React.CSSProperties;
   const ms = plan ? moduleStyle[plan.module] : moduleStyle.rest;
   const Icon = ms.icon;
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-80")}>
-      <Card className={cn(
-        "flex items-center gap-2 p-3 transition",
-        isToday && "ring-1 ring-primary/30",
-        isSkipped && "opacity-60",
-      )}>
-        <button
-          {...attributes}
-          {...listeners}
-          aria-label="Drag day"
-          className="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground active:cursor-grabbing"
-        >
-          <GripVertical className="h-4 w-4" />
-        </button>
-        <div className="w-10 text-xs font-bold uppercase text-muted-foreground">{DAYS[dow]}</div>
-        <div className={cn("flex h-9 w-9 items-center justify-center rounded-full", ms.bg)}>
-          <Icon className={cn("h-4 w-4", ms.text)} />
+    <Card className={cn(
+      "flex items-center gap-2 p-3 transition",
+      isToday && "ring-1 ring-primary/30",
+      isSkipped && "opacity-60",
+    )}>
+      <div className="w-10 shrink-0 text-xs font-bold uppercase text-muted-foreground">{DAYS[dow]}</div>
+      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", ms.bg)}>
+        <Icon className={cn("h-4 w-4", ms.text)} />
+      </div>
+      <DayEditor
+        dayOfWeek={dow}
+        current={plan}
+        templates={templates}
+        onSave={onSave}
+      >
+        <div className="min-w-0 flex-1 cursor-pointer py-1">
+          {plan ? (
+            <>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                {plan.module}{isSkipped && " · skipped"}
+              </p>
+              <p className={cn("truncate text-sm font-medium", isSkipped && "line-through")}>
+                {tplName || plan.label || (plan.module === "rest" ? "Rest" : "No template")}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">Tap to schedule</p>
+          )}
         </div>
-        <DayEditor
-          dayOfWeek={dow}
-          current={plan}
-          templates={templates}
-          onSave={onSave}
-        >
-          <div className="min-w-0 flex-1 cursor-pointer py-1">
-            {plan ? (
-              <>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {plan.module}{isSkipped && " · skipped"}
-                </p>
-                <p className={cn("truncate text-sm font-medium", isSkipped && "line-through")}>
-                  {tplName || plan.label || (plan.module === "rest" ? "Rest" : "No template")}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Tap to schedule</p>
-            )}
-          </div>
-        </DayEditor>
-        {!isToday && plan && plan.module !== "rest" && (
-          <Button
-            size="icon"
-            variant="ghost"
-            aria-label="Move to today"
-            className="h-8 w-8 shrink-0"
-            onClick={onMoveToToday}
-            title="Swap with today"
-          >
-            <ArrowDownToLine className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        )}
+      </DayEditor>
+      {plan && (
+        <MoveDaySheet
+          dow={dow}
+          dayMap={dayMap}
+          templates={allTemplates}
+          onMoveTo={onMoveTo}
+        />
+      )}
+      {!isToday && plan && plan.module !== "rest" && (
         <Button
           size="icon"
           variant="ghost"
-          aria-label={isSkipped ? "Unskip this week" : "Skip this week"}
-          title={isSkipped ? "Unskip this week" : "Skip this week"}
-          className="h-8 w-8 shrink-0"
-          onClick={onSkipToggle}
+          aria-label="Move to today"
+          className="h-9 w-9 shrink-0"
+          onClick={onMoveToToday}
+          title="Swap with today"
         >
-          {isSkipped ? <Eye className="h-4 w-4 text-muted-foreground" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+          <ArrowDownToLine className="h-4 w-4 text-muted-foreground" />
         </Button>
-      </Card>
-    </div>
+      )}
+      <Button
+        size="icon"
+        variant="ghost"
+        aria-label={isSkipped ? "Unskip this week" : "Skip this week"}
+        title={isSkipped ? "Unskip this week" : "Skip this week"}
+        className="h-9 w-9 shrink-0"
+        onClick={onSkipToggle}
+      >
+        {isSkipped ? <Eye className="h-4 w-4 text-muted-foreground" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+      </Button>
+    </Card>
+  );
+}
+
+function MoveDaySheet({
+  dow, dayMap, templates, onMoveTo,
+}: {
+  dow: number;
+  dayMap: Map<number, DayPlan>;
+  templates: { id: string; name: string; module: string }[];
+  onMoveTo: (target: number) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const describe = (d: number) => {
+    const p = dayMap.get(d);
+    if (!p) return "Empty";
+    const tpl = p.template_id ? templates.find((t) => t.id === p.template_id) : null;
+    return tpl?.name || p.label || (p.module === "rest" ? "Rest" : p.module.toUpperCase());
+  };
+
+  const handle = async (target: number) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await onMoveTo(target);
+      setOpen(false);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button size="sm" variant="outline" className="h-9 shrink-0 gap-1 px-2.5 text-xs">
+          <MoveRight className="h-3.5 w-3.5" /> Move
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="bottom" className="rounded-t-3xl">
+        <SheetHeader>
+          <SheetTitle>Move {DAYS[dow]}'s workout</SheetTitle>
+        </SheetHeader>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Pick the day it should land on. If that day already has a workout, the two simply swap — nothing is lost.
+        </p>
+        <div className="mt-4 grid grid-cols-1 gap-2 pb-2">
+          {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+            const isSelf = d === dow;
+            const occupied = !!dayMap.get(d);
+            return (
+              <button
+                key={d}
+                disabled={isSelf || busy}
+                onClick={() => handle(d)}
+                className={cn(
+                  "flex min-h-[52px] items-center justify-between rounded-xl border px-4 text-left transition active:scale-[0.99]",
+                  isSelf ? "border-dashed opacity-50" : "hover:bg-accent",
+                )}
+              >
+                <span className="flex flex-col">
+                  <span className="text-sm font-semibold">{DAYS[d]}</span>
+                  <span className="text-[11px] text-muted-foreground">{describe(d)}</span>
+                </span>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {isSelf ? "Current" : occupied ? "Swap" : "Move here"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
