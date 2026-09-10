@@ -436,9 +436,9 @@ export const PT_EXERCISES: ExerciseDef[] = [
 export const PT_BODY_AREAS = ["All", "Knee", "Hip", "Shoulder", "Spine", "Ankle", "Core"] as const;
 
 export const CARDIO_ACTIVITIES = [
-  "Sauna", "Steam Room",
+  "Sauna", "Football", "Incline Walk", "Steam Room",
   "Treadmill", "Cycling", "Stationary Bike", "Rowing", "Swimming",
-  "Stair Climber", "Walking", "Incline Walk", "HIIT", "Football",
+  "Stair Climber", "Walking", "HIIT",
 ];
 
 // Kept only so historical logs and old templates still display/select correctly.
