@@ -88,6 +88,7 @@ const App = () => (
             <Route path="/nutrition" element={<Shell><Nutrition /></Shell>} />
             <Route path="/exercises" element={<Shell><ExerciseLibrary /></Shell>} />
             <Route path="/settings" element={<Shell><Settings /></Shell>} />
+            <Route path="/settings/api" element={<Shell><ApiAccess /></Shell>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

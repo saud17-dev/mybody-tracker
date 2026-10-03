@@ -14,7 +14,6 @@ import {
 } from "@/lib/cloud";
 import { metricsToCsv } from "@/lib/csvMetrics";
 import { isHealthAvailable, requestHealthPermissions, fetchHealthMetrics, fetchHealthWorkouts } from "@/lib/health";
-import { ShareAccessCard } from "@/components/ShareAccessCard";
 import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -215,7 +214,7 @@ npx cap run ios`}</pre>
         <h2 className="mb-3 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <KeyRound className="h-3.5 w-3.5" /> Claude / external access
         </h2>
-        <ShareAccessCard />
+        <Link to="/settings/api" className="mb-2 block rounded-xl border bg-card p-4 text-sm font-medium">API access (tokens &amp; activity) →</Link>
         <Link to="/import" className="block rounded-xl border bg-card p-4 text-sm font-medium">Import Fitbit / Google Health CSV →</Link>
       </section>
 

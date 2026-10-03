@@ -392,7 +392,7 @@ Deno.serve(async (req) => {
   const dry = tool.write ? parsed.data.dry_run === true : false
   try {
     const r = await tool.run(parsed.data, ctx)
-    if (tool.write || true) await audit(dry, r.summary, tool.write ? r.rows : 0)
+    await audit(dry, r.summary, tool.write ? r.rows : 0)
     return reply({ content: [{ type: 'text', text: JSON.stringify({ dry_run: tool.write ? dry : undefined, summary: r.summary, result: r.data }) }] })
   } catch (e) {
     const m = e instanceof ToolErr ? e.message : 'Unexpected error; nothing was written.'
