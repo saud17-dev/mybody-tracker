@@ -455,6 +455,45 @@ export type Database = {
         }
         Relationships: []
       }
+      program_templates: {
+        Row: {
+          active: boolean
+          code: string
+          day_of_week: number | null
+          id: string
+          name: string
+          notes: string | null
+          session_type: string
+          sort_order: number
+          target_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          day_of_week?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          session_type: string
+          sort_order?: number
+          target_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          day_of_week?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          session_type?: string
+          sort_order?: number
+          target_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pt_sessions: {
         Row: {
           created_at: string
@@ -517,6 +556,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      template_exercises: {
+        Row: {
+          coaching_cue: string | null
+          exercise_name: string
+          id: string
+          is_knee_critical: boolean
+          load_note: string | null
+          reps: string | null
+          sets: number | null
+          sort_order: number
+          template_id: string
+        }
+        Insert: {
+          coaching_cue?: string | null
+          exercise_name: string
+          id?: string
+          is_knee_critical?: boolean
+          load_note?: string | null
+          reps?: string | null
+          sets?: number | null
+          sort_order: number
+          template_id: string
+        }
+        Update: {
+          coaching_cue?: string | null
+          exercise_name?: string
+          id?: string
+          is_knee_critical?: boolean
+          load_note?: string | null
+          reps?: string | null
+          sets?: number | null
+          sort_order?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_exercises_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "program_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workout_templates: {
         Row: {
