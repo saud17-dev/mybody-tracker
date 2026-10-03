@@ -93,6 +93,7 @@ export interface Goals {
   weeklyGym: number;
   weeklyPT: number;
   weeklyCardio: number;
+  weeklySport: number;
   targetWeightKg?: number;
   targetMuscleMassPct?: number;
   targetBodyFatPct?: number;

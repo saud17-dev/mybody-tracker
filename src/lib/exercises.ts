@@ -435,6 +435,10 @@ export const PT_EXERCISES: ExerciseDef[] = [
 
 export const PT_BODY_AREAS = ["All", "Knee", "Hip", "Shoulder", "Spine", "Ankle", "Core"] as const;
 
+/** Activities counted toward the weekly "Sport" goal instead of Cardio. */
+export const SPORT_ACTIVITIES = ["Football", "Basketball", "Tennis", "Padel", "Squash", "Volleyball"];
+export const isSportActivity = (a: string) => SPORT_ACTIVITIES.includes(a);
+
 export const CARDIO_ACTIVITIES = [
   "Sauna", "Football", "Incline Walk", "Steam Room",
   "Treadmill", "Cycling", "Stationary Bike", "Rowing", "Swimming",

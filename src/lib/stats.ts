@@ -1,3 +1,4 @@
+import { isSportActivity } from "@/lib/exercises";
 import { useMemo } from "react";
 import { startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfDay, subWeeks, startOfMonth, endOfMonth, format } from "date-fns";
 import { isSwimActivity, isHeatActivity } from "@/lib/exercises";
@@ -117,7 +118,8 @@ export function useWeeklyCounts(
     return {
       gym: gym.filter((s) => inWeek(s.date)).length,
       pt: pt.filter((s) => inWeek(s.date)).length,
-      cardio: cardio.filter((s) => inWeek(s.date)).length,
+      cardio: cardio.filter((s) => inWeek(s.date) && !isSportActivity(s.activity)).length,
+      sport: cardio.filter((s) => inWeek(s.date) && isSportActivity(s.activity)).length,
     };
   }, [gym, pt, cardio]);
 }

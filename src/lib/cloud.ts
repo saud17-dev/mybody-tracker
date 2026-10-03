@@ -76,6 +76,7 @@ export function useGoals() {
         weeklyGym: data?.weekly_gym ?? 4,
         weeklyPT: data?.weekly_pt ?? 1,
         weeklyCardio: data?.weekly_cardio ?? 2,
+        weeklySport: data?.weekly_sport ?? 1,
         targetWeightKg: data?.target_weight ?? undefined,
         targetMuscleMassPct: data?.target_muscle_mass_pct ?? undefined,
         targetBodyFatPct: data?.target_body_fat_pct ?? undefined,
@@ -90,6 +91,7 @@ export function useGoals() {
         weekly_gym: g.weeklyGym,
         weekly_pt: g.weeklyPT,
         weekly_cardio: g.weeklyCardio,
+        weekly_sport: g.weeklySport,
         target_weight: g.targetWeightKg ?? null,
         target_muscle_mass_pct: g.targetMuscleMassPct ?? null,
         target_body_fat_pct: g.targetBodyFatPct ?? null,
@@ -102,7 +104,7 @@ export function useGoals() {
   });
 
   return {
-    goals: q.data ?? { weeklyGym: 4, weeklyPT: 1, weeklyCardio: 2 } as Goals,
+    goals: q.data ?? { weeklyGym: 4, weeklyPT: 1, weeklyCardio: 2, weeklySport: 1 } as Goals,
     save: save.mutateAsync,
   };
 }
