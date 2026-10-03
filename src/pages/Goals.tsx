@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { DailyCheckinCard } from "@/components/DailyCheckinCard";
 import { format, parseISO } from "date-fns";
 import {
   Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, CalendarDays, ChevronRight, Coffee, Pencil, Beef,
@@ -143,6 +144,7 @@ export default function GoalsPage() {
           </Button>
         </div>
       }>
+      <div className="mb-6"><DailyCheckinCard /></div>
       <section>
         <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">This week</h2>
         <div className="grid grid-cols-3 gap-3">

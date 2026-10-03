@@ -146,6 +146,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_checkin: {
+        Row: {
+          date: string
+          knee_left: number | null
+          knee_right: number | null
+          note: string | null
+          sleep_felt: number | null
+          soreness: number | null
+          swelling: boolean | null
+          user_id: string
+        }
+        Insert: {
+          date: string
+          knee_left?: number | null
+          knee_right?: number | null
+          note?: string | null
+          sleep_felt?: number | null
+          soreness?: number | null
+          swelling?: boolean | null
+          user_id: string
+        }
+        Update: {
+          date?: string
+          knee_left?: number | null
+          knee_right?: number | null
+          note?: string | null
+          sleep_felt?: number | null
+          soreness?: number | null
+          swelling?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string

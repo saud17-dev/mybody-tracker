@@ -11,6 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { usePTSessions, uid } from "@/lib/cloud";
+import { useCheckins, trafficLight } from "@/lib/checkin";
+import { TrafficLightBanner } from "@/components/DailyCheckinCard";
 import {
   useProgramTemplates, loggingRoute, setProgramPrefill, parseReps, exerciseNote,
   type ProgramTemplate, type ProgramSessionType,
@@ -41,6 +43,8 @@ export default function Program() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<ProgramTemplate | null>(null);
   const [starting, setStarting] = useState(false);
+  const { today: checkin } = useCheckins();
+  const isRed = !!checkin && trafficLight(checkin) === "red";
   const todayDow = new Date().getDay();
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
   const knee = templates.find((t) => t.code === "KNEE");
@@ -73,6 +77,7 @@ export default function Program() {
   return (
     <AppShell title="Program" subtitle="Your week, Sunday → Saturday" accent="primary">
       <div className="space-y-3">
+        {isRed && <TrafficLightBanner light="red" />}
         {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
         {DAYS.map((day, dow) => {
           const date = addDays(weekStart, dow);
@@ -86,6 +91,9 @@ export default function Program() {
                 <span className="text-xs text-muted-foreground">{format(date, "MMM d")}</span>
                 {isToday && <Badge className="h-5 px-2 text-[10px]">Today</Badge>}
               </div>
+              {dow === 0 && (
+                <p className="mb-1.5 px-1 text-xs font-semibold text-accent">Post-football check — this is the one that matters.</p>
+              )}
               {tpls.length > 0 ? tpls.map((t) => (
                 <TemplateCard key={t.id} t={t} onClick={() => setSelected(t)} highlight={isToday} />
               )) : stat ? (
@@ -128,8 +136,11 @@ export default function Program() {
                 {selected.notes && <p className="text-sm text-muted-foreground">{selected.notes}</p>}
               </SheetHeader>
               <ol className="flex-1 space-y-2 overflow-y-auto p-4">
+                {isRed && selected.exercises.some((e) => e.is_knee_critical) && (
+                  <li><TrafficLightBanner light="red" /></li>
+                )}
                 {selected.exercises.map((e, i) => (
-                  <li key={e.id} className={cn("rounded-xl border bg-card p-3", e.is_knee_critical && "border-destructive/50")}>
+                  <li key={e.id} className={cn("rounded-xl border bg-card p-3", e.is_knee_critical && "border-destructive/50", isRed && e.is_knee_critical && "opacity-40 grayscale")}>
                     <div className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">{i + 1}</span>
                       <div className="min-w-0 flex-1">
