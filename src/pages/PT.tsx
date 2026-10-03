@@ -27,6 +27,7 @@ import { formatSessionTimes, todayInputDate, dateWithCurrentTime, isoToInputDate
 import { useAuth } from "@/lib/auth";
 import type { PTExerciseEntry, PTSet, PTSession } from "@/lib/types";
 import { toast } from "sonner";
+import { takeProgramPrefill, parseReps, exerciseNote } from "@/lib/program";
 import { cn } from "@/lib/utils";
 
 const painColor = (n: number) =>
@@ -146,6 +147,23 @@ export default function PT() {
     setSearchParams(searchParams, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templates.length]);
+
+  // Program template loader (from /program "Start this session")
+  useEffect(() => {
+    const p = takeProgramPrefill();
+    if (!p) return;
+    setExercises(p.exercises.map((e) => ({
+      id: uid(),
+      exerciseName: e.exercise_name,
+      category: "Program",
+      notes: exerciseNote(e),
+      sets: Array.from({ length: e.sets || 1 }, () => ({ reps: parseReps(e.reps, 10), painScale: 2 } as PTSet)),
+    })));
+    setOverallNotes(p.name);
+    setStartedAt(new Date().toISOString());
+    setOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addExercise = () => {
     if (!picker) return;

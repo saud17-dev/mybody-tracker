@@ -22,6 +22,7 @@ import { distanceLabel, distanceToDisplay, distanceFromInput } from "@/lib/units
 import { formatSessionTimes, todayInputDate, dateWithCurrentTime } from "@/lib/duration";
 import type { CardioSession } from "@/lib/types";
 import { toast } from "sonner";
+import { takeProgramPrefill } from "@/lib/program";
 
 export default function Cardio() {
   const { sessions, create, remove, restore } = useCardioSessions();
@@ -43,6 +44,15 @@ export default function Cardio() {
   useEffect(() => {
     if (open && !startedAt) setStartedAt(new Date().toISOString());
   }, [open, startedAt]);
+
+  useEffect(() => {
+    const p = takeProgramPrefill();
+    if (!p) return;
+    if (p.targetMinutes) setDuration(String(p.targetMinutes));
+    setNotes(p.name);
+    setOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const tplId = searchParams.get("template");
