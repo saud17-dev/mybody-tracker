@@ -36,6 +36,7 @@ import { formatSessionTimes, todayInputDate, dateWithCurrentTime, isoToInputDate
 import { useAuth } from "@/lib/auth";
 import type { GymExerciseEntry, GymSet, GymSession } from "@/lib/types";
 import { toast } from "sonner";
+import { takeProgramPrefill, parseReps, exerciseNote } from "@/lib/program";
 
 interface DraftPayload {
   exercises: GymExerciseEntry[];
@@ -224,6 +225,28 @@ export default function Gym() {
     setSearchParams(searchParams, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templates.length]);
+
+  // Program template loader (from /program "Start this session")
+  useEffect(() => {
+    const p = takeProgramPrefill();
+    if (!p) return;
+    const marks: Record<string, boolean> = {};
+    setExercises(p.exercises.map((e) => {
+      const id = uid();
+      const prev = previousByExercise.get(e.exercise_name.toLowerCase());
+      const sets = Array.from({ length: e.sets || 3 }, (_, i) => {
+        const pr = prev?.[i] ?? prev?.[prev.length - 1];
+        if (pr) { marks[`${id}:${i}`] = true; return { ...pr }; }
+        return { reps: parseReps(e.reps), weight: 0 };
+      });
+      return { id, exerciseName: e.exercise_name, muscleGroup: "Program", sets, notes: exerciseNote(e) || undefined };
+    }));
+    setPrefilledSets(marks);
+    setNotes(p.name);
+    setStartedAt(new Date().toISOString());
+    setOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---------- mutators ----------
   const addExercise = (e: CatalogExercise) => {
