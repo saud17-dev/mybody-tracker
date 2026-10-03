@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
@@ -113,7 +112,7 @@ export default function ImportPage() {
           Upload a CSV whose header uses these exact column names. <span className="font-mono">date</span> (YYYY-MM-DD) is required; blank cells leave existing values untouched.
         </p>
         <p className="break-words rounded-xl bg-muted/40 p-3 font-mono text-[11px] text-muted-foreground">
-          {["date", ...INT.slice(0, 2), ...NUM.slice(0, 2), ...INT.slice(2, 6), ...TS, ...NUM.slice(2, 5), "steps", "cardio_load", "workout_min", "workout_peak_min", "workouts", "vo2max", "weight_kg", "body_fat_pct"].filter((v, i, a) => a.indexOf(v) === i).join(", ")}
+          {["date", ...INT, ...NUM, ...TS, ...TEXT].join(", ")}
         </p>
         <label className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-primary-foreground">
           <Upload className="h-5 w-5" />{busy ? "Importing…" : "Choose CSV file"}
@@ -134,7 +133,6 @@ export default function ImportPage() {
             <AlertTriangle className="h-5 w-5 shrink-0" />{error}
           </div>
         )}
-        {!busy && !result && !error && <Button variant="ghost" className="hidden" />}
       </Card>
     </AppShell>
   );
