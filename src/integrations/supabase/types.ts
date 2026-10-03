@@ -179,6 +179,90 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_metrics: {
+        Row: {
+          body_fat_pct: number | null
+          cardio_load: number | null
+          date: string
+          hrv_ms: number | null
+          imported_at: string | null
+          nonrem_hr: number | null
+          resting_hr: number | null
+          sleep_asleep_min: number | null
+          sleep_deep_min: number | null
+          sleep_efficiency: number | null
+          sleep_end: string | null
+          sleep_in_bed_min: number | null
+          sleep_light_min: number | null
+          sleep_rem_min: number | null
+          sleep_score: number | null
+          sleep_start: string | null
+          sleep_wake_min: number | null
+          source: string | null
+          steps: number | null
+          user_id: string
+          vo2max: number | null
+          weight_kg: number | null
+          workout_min: number | null
+          workout_peak_min: number | null
+          workouts: string | null
+        }
+        Insert: {
+          body_fat_pct?: number | null
+          cardio_load?: number | null
+          date: string
+          hrv_ms?: number | null
+          imported_at?: string | null
+          nonrem_hr?: number | null
+          resting_hr?: number | null
+          sleep_asleep_min?: number | null
+          sleep_deep_min?: number | null
+          sleep_efficiency?: number | null
+          sleep_end?: string | null
+          sleep_in_bed_min?: number | null
+          sleep_light_min?: number | null
+          sleep_rem_min?: number | null
+          sleep_score?: number | null
+          sleep_start?: string | null
+          sleep_wake_min?: number | null
+          source?: string | null
+          steps?: number | null
+          user_id: string
+          vo2max?: number | null
+          weight_kg?: number | null
+          workout_min?: number | null
+          workout_peak_min?: number | null
+          workouts?: string | null
+        }
+        Update: {
+          body_fat_pct?: number | null
+          cardio_load?: number | null
+          date?: string
+          hrv_ms?: number | null
+          imported_at?: string | null
+          nonrem_hr?: number | null
+          resting_hr?: number | null
+          sleep_asleep_min?: number | null
+          sleep_deep_min?: number | null
+          sleep_efficiency?: number | null
+          sleep_end?: string | null
+          sleep_in_bed_min?: number | null
+          sleep_light_min?: number | null
+          sleep_rem_min?: number | null
+          sleep_score?: number | null
+          sleep_start?: string | null
+          sleep_wake_min?: number | null
+          source?: string | null
+          steps?: number | null
+          user_id?: string
+          vo2max?: number | null
+          weight_kg?: number | null
+          workout_min?: number | null
+          workout_peak_min?: number | null
+          workouts?: string | null
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string
@@ -252,6 +336,7 @@ export type Database = {
           weekly_cardio: number
           weekly_gym: number
           weekly_pt: number
+          weekly_sport: number
         }
         Insert: {
           target_body_fat_pct?: number | null
@@ -262,6 +347,7 @@ export type Database = {
           weekly_cardio?: number
           weekly_gym?: number
           weekly_pt?: number
+          weekly_sport?: number
         }
         Update: {
           target_body_fat_pct?: number | null
@@ -272,6 +358,7 @@ export type Database = {
           weekly_cardio?: number
           weekly_gym?: number
           weekly_pt?: number
+          weekly_sport?: number
         }
         Relationships: []
       }
@@ -563,6 +650,7 @@ export type Database = {
       share_tokens: {
         Row: {
           created_at: string
+          expires_at: string | null
           id: string
           last_used_at: string | null
           name: string
@@ -572,6 +660,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          expires_at?: string | null
           id?: string
           last_used_at?: string | null
           name?: string
@@ -581,6 +670,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          expires_at?: string | null
           id?: string
           last_used_at?: string | null
           name?: string

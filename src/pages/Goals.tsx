@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DailyCheckinCard } from "@/components/DailyCheckinCard";
 import { format, parseISO } from "date-fns";
 import {
-  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, CalendarDays, ChevronRight, Coffee, Pencil, Beef,
+  Plus, Trophy, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, CalendarDays, ChevronRight, Coffee, Pencil, Beef,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid,
@@ -42,7 +42,7 @@ interface RingProps {
   label: string;
   current: number;
   target: number;
-  variant: "gym" | "pt" | "cardio";
+  variant: "gym" | "pt" | "cardio" | "sport";
   Icon: React.ComponentType<{ className?: string }>;
 }
 
@@ -50,6 +50,7 @@ const variantStyles = {
   gym: { bg: "bg-gym/10", text: "text-gym", bar: "[&>div]:bg-gym" },
   pt: { bg: "bg-pt/10", text: "text-pt", bar: "[&>div]:bg-pt" },
   cardio: { bg: "bg-cardio/10", text: "text-cardio", bar: "[&>div]:bg-cardio" },
+  sport: { bg: "bg-accent/10", text: "text-accent", bar: "[&>div]:bg-accent" },
 } as const;
 
 function GoalRing({ label, current, target, variant, Icon }: RingProps) {
@@ -147,10 +148,11 @@ export default function GoalsPage() {
       <div className="mb-6"><DailyCheckinCard /></div>
       <section>
         <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">This week</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <GoalRing label="Gym" current={weekly.gym} target={goals.weeklyGym} variant="gym" Icon={Dumbbell} />
           <GoalRing label="PT" current={weekly.pt} target={goals.weeklyPT} variant="pt" Icon={HeartPulse} />
           <GoalRing label="Cardio" current={weekly.cardio} target={goals.weeklyCardio} variant="cardio" Icon={Activity} />
+          <GoalRing label="Sport" current={weekly.sport} target={goals.weeklySport} variant="sport" Icon={Trophy} />
         </div>
       </section>
 
@@ -595,10 +597,10 @@ function GoalEditor({ goals, unit, onSave }: { goals: Goals; unit: "kg" | "lbs";
         <div className="mt-5 space-y-5">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Weekly frequency</p>
-            <div className="grid grid-cols-3 gap-3">
-              {(["weeklyGym","weeklyPT","weeklyCardio"] as const).map((k, i) => (
+            <div className="grid grid-cols-4 gap-3">
+              {(["weeklyGym","weeklyPT","weeklyCardio","weeklySport"] as const).map((k, i) => (
                 <div key={k} className="space-y-1">
-                  <Label className="text-xs">{["Gym","PT","Cardio"][i]}</Label>
+                  <Label className="text-xs">{["Gym","PT","Cardio","Sport"][i]}</Label>
                   <Input type="number" min={0} value={draft[k]}
                     onChange={(e) => setDraft({ ...draft, [k]: Number(e.target.value) || 0 })} />
                 </div>

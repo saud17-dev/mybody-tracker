@@ -15,6 +15,13 @@
       "when": 1791051697078,
       "tag": "0001_daily_checkin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791051804838,
+      "tag": "0002_sport_goal_daily_metrics_token_expiry",
+      "breakpoints": true
     }
   ]
 }

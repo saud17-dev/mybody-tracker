@@ -9,6 +9,7 @@ import { migrateLocalToCloud } from "@/lib/migrate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Goals from "./pages/Goals";
+import ImportPage from "./pages/Import";
 import Program from "./pages/Program";
 import Gym from "./pages/Gym";
 import PT from "./pages/PT";
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="/" element={<Shell><Goals /></Shell>} />
             <Route path="/plan" element={<Shell><Plan /></Shell>} />
             <Route path="/program" element={<Shell><Program /></Shell>} />
+            <Route path="/import" element={<Shell><ImportPage /></Shell>} />
             <Route path="/gym" element={<Shell><Gym /></Shell>} />
             <Route path="/pt" element={<Shell><PT /></Shell>} />
             <Route path="/cardio" element={<Shell><Cardio /></Shell>} />
