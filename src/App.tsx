@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Goals from "./pages/Goals";
 import ImportPage from "./pages/Import";
+import ApiAccess from "./pages/ApiAccess";
 import Program from "./pages/Program";
 import Gym from "./pages/Gym";
 import PT from "./pages/PT";
