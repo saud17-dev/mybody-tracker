@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
 
     const tokenHash = await sha256Hex(token)
     const { data: tokenRow, error: tokenErr } = await admin
-      .from('share_tokens')
+      .from('api_tokens')
       .select('id, user_id, revoked_at, expires_at')
       .eq('token_hash', tokenHash)
       .maybeSingle()
@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
       },
     }
 
-    admin.from('share_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', tokenRow.id).then(() => {})
+    admin.from('api_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', tokenRow.id).then(() => {})
 
     return json({
       generated_at: new Date().toISOString(),

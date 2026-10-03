@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Goals from "./pages/Goals";
 import ImportPage from "./pages/Import";
+import ApiAccess from "./pages/ApiAccess";
 import Program from "./pages/Program";
 import Gym from "./pages/Gym";
 import PT from "./pages/PT";
@@ -88,6 +89,7 @@ const App = () => (
             <Route path="/nutrition" element={<Shell><Nutrition /></Shell>} />
             <Route path="/exercises" element={<Shell><ExerciseLibrary /></Shell>} />
             <Route path="/settings" element={<Shell><Settings /></Shell>} />
+            <Route path="/settings/api" element={<Shell><ApiAccess /></Shell>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
