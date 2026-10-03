@@ -1,5 +1,5 @@
-import { ClipboardList, NavLink, useNavigate } from "react-router-dom";
-import { Dumbbell, HeartPulse, Activity, Target, CalendarDays, LogOut, Settings as SettingsIcon, UtensilsCrossed, Library } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { ClipboardList, Dumbbell, HeartPulse, Activity, Target, CalendarDays, LogOut, Settings as SettingsIcon, UtensilsCrossed, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import {

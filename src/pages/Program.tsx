@@ -23,11 +23,11 @@ const STATIC_DAYS: Record<number, { title: string; icon: typeof Moon }> = {
 };
 
 const typeStyle: Record<ProgramSessionType, string> = {
-  gym: "bg-gym text-gym-foreground",
-  pt: "bg-pt text-pt-foreground",
-  cardio: "bg-cardio text-cardio-foreground",
-  sport: "bg-cardio text-cardio-foreground",
-  recovery: "bg-accent text-accent-foreground",
+  gym: "bg-gym/20 text-gym hover:bg-gym/20",
+  pt: "bg-pt/20 text-pt hover:bg-pt/20",
+  cardio: "bg-cardio/20 text-cardio hover:bg-cardio/20",
+  sport: "bg-cardio/20 text-cardio hover:bg-cardio/20",
+  recovery: "bg-accent/20 text-accent hover:bg-accent/20",
 };
 const typeBorder: Record<ProgramSessionType, string> = {
   gym: "border-l-gym", pt: "border-l-pt", cardio: "border-l-cardio", sport: "border-l-cardio", recovery: "border-l-accent",
