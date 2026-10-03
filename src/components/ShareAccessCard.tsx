@@ -7,7 +7,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Copy, Trash2, Check } from "lucide-react";
+import { Loader2, RefreshCw, Copy, Trash2, Check } from "lucide-react";
 import { toast } from "sonner";
 
 type TokenRow = {
@@ -16,6 +16,7 @@ type TokenRow = {
   created_at: string;
   last_used_at: string | null;
   revoked_at: string | null;
+  expires_at: string | null;
 };
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-data`;
@@ -51,6 +52,17 @@ export function ShareAccessCard() {
     setJustCreated({ id: data.record.id, token, url });
     await load();
     toast.success("Share link created — copy it now, it won't be shown again.");
+  };
+
+  const rotate = async (id: string) => {
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("manage-share-token", { body: { action: "rotate", id } });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    const token = data?.token as string;
+    setJustCreated({ id: data.record.id, token, url: `${FN_URL}?token=${encodeURIComponent(token)}` });
+    await load();
+    toast.success("Token rotated — the old link no longer works. Copy the new one now.");
   };
 
   const doConfirmed = async () => {
@@ -121,10 +133,20 @@ export function ShareAccessCard() {
                 <div className="font-medium truncate">{t.name}</div>
                 <div className="text-[10px] text-muted-foreground">
                   Created {fmt(t.created_at)} · Used {fmt(t.last_used_at)}
+                  {t.expires_at && !t.revoked_at && (
+                    new Date(t.expires_at) <= new Date()
+                      ? <span className="text-destructive"> · Expired</span>
+                      : <> · Expires {new Date(t.expires_at).toLocaleDateString()}</>
+                  )}
                   {t.revoked_at && <span className="text-destructive"> · Revoked</span>}
                 </div>
               </div>
               <div className="flex gap-1 shrink-0">
+                {!t.revoked_at && (
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => rotate(t.id)}>
+                    <RefreshCw className="size-4 mr-1" />Rotate
+                  </Button>
+                )}
                 {!t.revoked_at && (
                   <Button size="sm" variant="outline" disabled={busy}
                     onClick={() => setConfirm({ kind: "revoke", id: t.id, name: t.name })}>
