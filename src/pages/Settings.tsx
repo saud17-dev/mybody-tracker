@@ -216,6 +216,7 @@ npx cap run ios`}</pre>
           <KeyRound className="h-3.5 w-3.5" /> Claude / external access
         </h2>
         <ShareAccessCard />
+        <Link to="/import" className="block rounded-xl border bg-card p-4 text-sm font-medium">Import Fitbit / Google Health CSV →</Link>
       </section>
 
       <section className="mt-7">
