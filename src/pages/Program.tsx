@@ -10,12 +10,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { usePTSessions } from "@/lib/cloud";
+import { usePTSessions, uid } from "@/lib/cloud";
 import {
   useProgramTemplates, loggingRoute, setProgramPrefill, parseReps, exerciseNote,
   type ProgramTemplate, type ProgramSessionType,
 } from "@/lib/program";
-import { uid } from "@/lib/cloud";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const STATIC_DAYS: Record<number, { title: string; icon: typeof Moon }> = {

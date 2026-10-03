@@ -1,9 +1,10 @@
 import { NavLink } from "react-router-dom";
-import { Dumbbell, HeartPulse, Activity, Target, UtensilsCrossed } from "lucide-react";
+import { ClipboardList, Dumbbell, HeartPulse, Activity, Target, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", label: "Goals", icon: Target, end: true },
+  { to: "/program", label: "Program", icon: ClipboardList },
   { to: "/gym", label: "Gym", icon: Dumbbell },
   { to: "/pt", label: "PT", icon: HeartPulse },
   { to: "/cardio", label: "Cardio", icon: Activity },
@@ -12,6 +13,7 @@ const items = [
 
 const colorMap: Record<string, string> = {
   "/": "text-primary",
+  "/program": "text-primary",
   "/gym": "text-gym",
   "/pt": "text-pt",
   "/cardio": "text-cardio",
@@ -21,7 +23,7 @@ const colorMap: Record<string, string> = {
 export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-xl safe-bottom md:hidden">
-      <ul className="mx-auto grid max-w-md grid-cols-5">
+      <ul className="mx-auto grid max-w-md grid-cols-6">
         {items.map((it) => {
           const Icon = it.icon;
           return (

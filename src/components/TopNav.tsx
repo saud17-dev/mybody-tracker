@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { ClipboardList, NavLink, useNavigate } from "react-router-dom";
 import { Dumbbell, HeartPulse, Activity, Target, CalendarDays, LogOut, Settings as SettingsIcon, UtensilsCrossed, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 const items = [
   { to: "/", label: "Goals", icon: Target, end: true, color: "text-primary" },
   { to: "/plan", label: "Plan", icon: CalendarDays, color: "text-accent" },
+  { to: "/program", label: "Program", icon: ClipboardList, color: "text-primary" },
   { to: "/gym", label: "Gym", icon: Dumbbell, color: "text-gym" },
   { to: "/pt", label: "PT", icon: HeartPulse, color: "text-pt" },
   { to: "/cardio", label: "Cardio", icon: Activity, color: "text-cardio" },
