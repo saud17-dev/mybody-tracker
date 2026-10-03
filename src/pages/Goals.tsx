@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DailyCheckinCard } from "@/components/DailyCheckinCard";
 import { format, parseISO } from "date-fns";
 import {
-  Plus, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, CalendarDays, ChevronRight, Coffee, Pencil, Beef,
+  Plus, Trophy, Settings as SettingsIcon, Dumbbell, HeartPulse, Activity, Scale, TrendingUp, TrendingDown, Minus, Trash2, BarChart3, Sparkles, Target, CalendarDays, ChevronRight, Coffee, Pencil, Beef,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid,

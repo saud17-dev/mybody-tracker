@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
   if (action === 'list') {
     const { data, error } = await admin
       .from('share_tokens')
-      .select('id, name, created_at, last_used_at, revoked_at')
+      .select('id, name, created_at, last_used_at, revoked_at, expires_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
     if (error) return json({ error: error.message }, 500)
@@ -62,6 +62,23 @@ Deno.serve(async (req) => {
       .select('id, name, created_at')
       .single()
     if (error) return json({ error: error.message }, 500)
+    return json({ token, record: data }, 200)
+  }
+
+  if (action === 'rotate') {
+    if (!body.id) return json({ error: 'id required' }, 400)
+    const { data: old, error: oErr } = await admin
+      .from('share_tokens').select('id, name').eq('id', body.id).eq('user_id', userId).maybeSingle()
+    if (oErr || !old) return json({ error: 'Not found' }, 404)
+    const token = randomToken()
+    const tokenHash = await sha256Hex(token)
+    const { data, error } = await admin
+      .from('share_tokens')
+      .insert({ user_id: userId, name: old.name, token_hash: tokenHash })
+      .select('id, name, created_at, expires_at')
+      .single()
+    if (error) return json({ error: error.message }, 500)
+    await admin.from('share_tokens').update({ revoked_at: new Date().toISOString() }).eq('id', old.id).eq('user_id', userId)
     return json({ token, record: data }, 200)
   }
 

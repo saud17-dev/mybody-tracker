@@ -101,12 +101,14 @@ Deno.serve(async (req) => {
     const tokenHash = await sha256Hex(token)
     const { data: tokenRow, error: tokenErr } = await admin
       .from('share_tokens')
-      .select('id, user_id, revoked_at')
+      .select('id, user_id, revoked_at, expires_at')
       .eq('token_hash', tokenHash)
       .maybeSingle()
 
     if (tokenErr) return json({ error: 'Lookup failed' }, 500)
     if (!tokenRow || tokenRow.revoked_at) return json({ error: 'Invalid or revoked token' }, 401)
+
+    if (tokenRow.expires_at && new Date(tokenRow.expires_at as string) <= new Date()) return json({ error: 'Token expired' }, 401)
 
     const uid = tokenRow.user_id as string
 
