@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_audit: {
+        Row: {
+          arguments: Json
+          created_at: string
+          dry_run: boolean
+          id: number
+          result_summary: string | null
+          rows_affected: number | null
+          token_id: string | null
+          tool_name: string
+          user_id: string
+        }
+        Insert: {
+          arguments: Json
+          created_at?: string
+          dry_run: boolean
+          id?: number
+          result_summary?: string | null
+          rows_affected?: number | null
+          token_id?: string | null
+          tool_name: string
+          user_id: string
+        }
+        Update: {
+          arguments?: Json
+          created_at?: string
+          dry_run?: boolean
+          id?: number
+          result_summary?: string | null
+          rows_affected?: number | null
+          token_id?: string | null
+          tool_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          label: string | null
+          last_used_at: string | null
+          revoked_at: string | null
+          scope: string
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scope: string
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scope?: string
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       body_metrics: {
         Row: {
           bmi: number | null
@@ -762,7 +834,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      mcp_set_template_exercises: {
+        Args: { p_code: string; p_exercises: Json; p_user: string }
+        Returns: number
+      }
+      mcp_upsert_daily_metrics: {
+        Args: { p_rows: Json; p_user: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
