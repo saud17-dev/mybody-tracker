@@ -8,6 +8,13 @@
       "when": 1791051229768,
       "tag": "0000_program_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791051697078,
+      "tag": "0001_daily_checkin",
+      "breakpoints": true
     }
   ]
 }
