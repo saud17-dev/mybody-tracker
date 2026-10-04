@@ -2,3 +2,6 @@ project_id = "pjbkxogbzwakrexmaqvn"
 
 [functions.share-data]
 verify_jwt = false
+
+[functions.fitness-mcp]
+verify_jwt = false

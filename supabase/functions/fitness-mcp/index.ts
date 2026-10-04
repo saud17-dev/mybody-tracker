@@ -6,11 +6,12 @@ import { zodToJsonSchema } from 'npm:zod-to-json-schema@3.23.5'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, mcp-session-id, mcp-protocol-version',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info, apikey, mcp-session-id, mcp-protocol-version, accept',
+  'Access-Control-Expose-Headers': 'mcp-session-id',
 }
-const json = (b: unknown, status = 200) =>
-  new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
+const json = (b: unknown, status = 200, extra: Record<string, string> = {}) =>
+  new Response(JSON.stringify(b), { status, headers: { ...cors, ...extra, 'Content-Type': 'application/json' } })
 
 const SPORT = ['Football', 'Basketball', 'Tennis', 'Padel', 'Squash', 'Volleyball']
 const TZ = 'Asia/Riyadh'
@@ -337,7 +338,13 @@ function toolList() {
 
 // ---------- HTTP ----------
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: { ...cors, 'Access-Control-Max-Age': '86400' } })
+  }
+  if (req.method === 'GET') {
+    // Unauthenticated health check: no user data, only the tool count.
+    return json({ status: 'ok', transport: 'streamable-http', tools: tools.length })
+  }
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   const auth = req.headers.get('Authorization') ?? ''
@@ -352,10 +359,13 @@ Deno.serve(async (req) => {
   try { msg = await req.json() } catch { return json({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }, 400) }
   if (Array.isArray(msg)) return json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Batching not supported' } }, 400)
   const id = msg?.id ?? null
-  const reply = (result: unknown) => json({ jsonrpc: '2.0', id, result })
-  const rpcErr = (code: number, message: string) => json({ jsonrpc: '2.0', id, error: { code, message } })
+  // Reuse the client's session id; mint one on initialize or when it is missing.
+  const sessionId = req.headers.get('mcp-session-id') ?? crypto.randomUUID()
+  const sess = { 'mcp-session-id': sessionId }
+  const reply = (result: unknown) => json({ jsonrpc: '2.0', id, result }, 200, sess)
+  const rpcErr = (code: number, message: string) => json({ jsonrpc: '2.0', id, error: { code, message } }, 200, sess)
 
-  if (id === null && typeof msg?.method === 'string' && msg.method.startsWith('notifications/')) return new Response(null, { status: 202, headers: cors })
+  if (id === null && typeof msg?.method === 'string' && msg.method.startsWith('notifications/')) return new Response(null, { status: 202, headers: { ...cors, ...sess } })
   db.from('api_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', tok.id).then(() => {})
 
   switch (msg?.method) {
